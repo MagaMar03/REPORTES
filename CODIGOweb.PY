@@ -15,6 +15,10 @@ import numpy as np
 import os
 import json
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
+import time
+from functools import lru_cache
 
 # ------------------------------
 # CONFIGURACIÓN DE CONEXIÓN
@@ -25,13 +29,20 @@ DB_CONFIG = {
     "database": "mi_base"
 }
 
-# Engine de SQLAlchemy para pandas
+# Engine de SQLAlchemy para pandas - OPTIMIZADO
 DB_ENGINE = create_engine(
     f"mysql+pymysql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@"
     f"{DB_CONFIG['host']}/{DB_CONFIG['database']}",
     pool_pre_ping=True,
-    pool_recycle=3600
+    pool_recycle=3600,
+    pool_size=20,           # Aumentar pool size para consultas paralelas
+    max_overflow=30,        # Permitir más conexiones temporales
+    pool_timeout=30,        # Timeout para obtener conexión
+    echo=False              # Desactivar logs SQL para mejor rendimiento
 )
+
+# ThreadPoolExecutor global para consultas asíncronas
+SQL_EXECUTOR = ThreadPoolExecutor(max_workers=10, thread_name_prefix="sql_worker")
 # ------------------------------
 #fiscalizaciones1: OF (solo aqui cambia la tipografia del encabezado)
 #fiscalizaciones2: OFR (Recaudación)
@@ -100,10 +111,21 @@ banner_label_modulo.pack(fill="both", expand=True)
 # FUNCIONES LOGO Y BANNERS (sin cambios)
 # ==========================
 def mostrar_logo(ruta):
+    """Carga logo con cache para mejor rendimiento"""
     try:
         if ruta and os.path.exists(ruta):
-            img = Image.open(ruta).resize((120, 60))
+            # Usar cache
+            cache_key = f"logo_{ruta}_120x60"
+            if cache_key in image_cache:
+                logo_label.configure(image=image_cache[cache_key], text="")
+                logo_label.image = image_cache[cache_key]
+                return
+
+            # Cargar y cachear
+            img = Image.open(ruta).resize((120, 60), Image.Resampling.LANCZOS)
             logo_img = ImageTk.PhotoImage(img)
+            image_cache[cache_key] = logo_img
+
             logo_label.configure(image=logo_img, text="")
             logo_label.image = logo_img
     except Exception as e:
@@ -117,10 +139,19 @@ def subir_logo():
         mostrar_logo(ruta)
 
 def mostrar_banner(ruta):
+    """Carga banner con cache para mejor rendimiento"""
     try:
         if ruta and os.path.exists(ruta):
-            img = Image.open(ruta).resize((1600, 100))
+            cache_key = f"banner_{ruta}_1600x100"
+            if cache_key in image_cache:
+                banner_label.configure(image=image_cache[cache_key], text="")
+                banner_label.image = image_cache[cache_key]
+                return
+
+            img = Image.open(ruta).resize((1600, 100), Image.Resampling.LANCZOS)
             banner_img = ImageTk.PhotoImage(img)
+            image_cache[cache_key] = banner_img
+
             banner_label.configure(image=banner_img, text="")
             banner_label.image = banner_img
     except Exception as e:
@@ -134,10 +165,19 @@ def subir_banner():
         mostrar_banner(ruta)
 
 def mostrar_banner_modulo(ruta):
+    """Carga banner módulo con cache"""
     try:
         if ruta and os.path.exists(ruta):
-            img = Image.open(ruta).resize((1600, 150))
+            cache_key = f"banner_modulo_{ruta}_1600x150"
+            if cache_key in image_cache:
+                banner_label_modulo.configure(image=image_cache[cache_key], text="")
+                banner_label_modulo.image = image_cache[cache_key]
+                return
+
+            img = Image.open(ruta).resize((1600, 150), Image.Resampling.LANCZOS)
             banner_img = ImageTk.PhotoImage(img)
+            image_cache[cache_key] = banner_img
+
             banner_label_modulo.configure(image=banner_img, text="")
             banner_label_modulo.image = banner_img
     except Exception as e:
@@ -151,10 +191,19 @@ def subir_banner_modulo():
         mostrar_banner_modulo(ruta)
 
 def mostrar_banner_supervisores(ruta):
+    """Carga banner supervisores con cache"""
     try:
         if ruta and os.path.exists(ruta):
-            img = Image.open(ruta).resize((1600, 150))
+            cache_key = f"banner_supervisores_{ruta}_1600x150"
+            if cache_key in image_cache:
+                banner_label_modulo.configure(image=image_cache[cache_key], text="")
+                banner_label_modulo.image = image_cache[cache_key]
+                return
+
+            img = Image.open(ruta).resize((1600, 150), Image.Resampling.LANCZOS)
             banner_img = ImageTk.PhotoImage(img)
+            image_cache[cache_key] = banner_img
+
             banner_label_modulo.configure(image=banner_img, text="")
             banner_label_modulo.image = banner_img
     except Exception as e:
@@ -7624,33 +7673,145 @@ def exportar_datos_excel(query, nombre_base, filtros_texto):
 # CACHE DE DATOS
 # ============================================================================
 class DataCache:
-    """Cache simple para datos del dashboard"""
+    """Cache optimizado con soporte para gráficos y datos - MEJORADO"""
     def __init__(self):
         self.cache = {}
         self.timestamps = {}
-        self.ttl = 300  # 5 minutos
-    
-    def get(self, key):
-        """Obtener datos del cache"""
-        import time
-        if key in self.cache:
-            if time.time() - self.timestamps.get(key, 0) < self.ttl:
-                return self.cache[key]
-        return None
-    
-    def set(self, key, value):
-        """Guardar datos en cache"""
-        import time
-        self.cache[key] = value
-        self.timestamps[key] = time.time()
-    
+        self.ttl = 300  # 5 minutos (ajustable por tipo de dato)
+        self.lock = threading.Lock()  # Thread-safe
+        self.hit_count = 0
+        self.miss_count = 0
+
+    def get(self, key, max_age=None):
+        """Obtener datos del cache (thread-safe)"""
+        with self.lock:
+            if key in self.cache:
+                age = time.time() - self.timestamps.get(key, 0)
+                ttl_to_use = max_age if max_age else self.ttl
+
+                if age < ttl_to_use:
+                    self.hit_count += 1
+                    return self.cache[key]
+                else:
+                    # Dato expirado, eliminarlo
+                    del self.cache[key]
+                    del self.timestamps[key]
+
+            self.miss_count += 1
+            return None
+
+    def set(self, key, value, ttl=None):
+        """Guardar datos en cache (thread-safe)"""
+        with self.lock:
+            self.cache[key] = value
+            self.timestamps[key] = time.time()
+
+            # Limitar tamaño del cache (máximo 100 elementos)
+            if len(self.cache) > 100:
+                # Eliminar el elemento más antiguo
+                oldest_key = min(self.timestamps, key=self.timestamps.get)
+                del self.cache[oldest_key]
+                del self.timestamps[oldest_key]
+
     def clear(self):
         """Limpiar cache"""
-        self.cache.clear()
-        self.timestamps.clear()
+        with self.lock:
+            self.cache.clear()
+            self.timestamps.clear()
+            self.hit_count = 0
+            self.miss_count = 0
+
+    def get_stats(self):
+        """Obtener estadísticas del cache"""
+        total = self.hit_count + self.miss_count
+        hit_rate = (self.hit_count / total * 100) if total > 0 else 0
+        return {
+            'hits': self.hit_count,
+            'misses': self.miss_count,
+            'hit_rate': f"{hit_rate:.1f}%",
+            'size': len(self.cache)
+        }
 
 # Instancia global de cache
 data_cache = DataCache()
+
+# Cache de imágenes (separado)
+image_cache = {}
+
+# ============================================================================
+# FUNCIONES HELPER PARA CONSULTAS ASÍNCRONAS
+# ============================================================================
+
+def ejecutar_query_async(query, cache_key=None, cache_ttl=300):
+    """
+    Ejecuta una query SQL de forma asíncrona con cache automático
+
+    Args:
+        query: Query SQL a ejecutar
+        cache_key: Key para el cache (si None, no cachea)
+        cache_ttl: Tiempo de vida del cache en segundos
+
+    Returns:
+        DataFrame de pandas con los resultados
+    """
+    # Revisar cache primero
+    if cache_key:
+        cached_data = data_cache.get(cache_key, max_age=cache_ttl)
+        if cached_data is not None:
+            return cached_data
+
+    # Ejecutar query
+    try:
+        df = pd.read_sql(query, DB_ENGINE)
+
+        # Guardar en cache
+        if cache_key:
+            data_cache.set(cache_key, df, ttl=cache_ttl)
+
+        return df
+    except Exception as e:
+        print(f"Error en query: {e}")
+        return pd.DataFrame()
+
+
+def ejecutar_queries_paralelo(queries_dict):
+    """
+    Ejecuta múltiples queries en paralelo
+
+    Args:
+        queries_dict: Dict con formato {
+            'nombre_query': {
+                'query': 'SELECT ...',
+                'cache_key': 'key_opcional',
+                'cache_ttl': 300
+            }
+        }
+
+    Returns:
+        Dict con los resultados: {'nombre_query': DataFrame}
+    """
+    resultados = {}
+    futures = {}
+
+    # Lanzar todas las queries en paralelo
+    for nombre, config in queries_dict.items():
+        query = config['query']
+        cache_key = config.get('cache_key')
+        cache_ttl = config.get('cache_ttl', 300)
+
+        future = SQL_EXECUTOR.submit(ejecutar_query_async, query, cache_key, cache_ttl)
+        futures[future] = nombre
+
+    # Recolectar resultados
+    for future in as_completed(futures):
+        nombre = futures[future]
+        try:
+            resultados[nombre] = future.result()
+        except Exception as e:
+            print(f"Error en query '{nombre}': {e}")
+            resultados[nombre] = pd.DataFrame()
+
+    return resultados
 
 # ============================================================================
 # FUNCIÓN PRINCIPAL DEL DASHBOARD
@@ -7919,56 +8080,74 @@ def mostrar_dashboard_completo(conexion=None):
         # Actualizar la interfaz
         scroll_container.update()
 
-        # ===== CARGAR DATOS INICIALES =====
+        # ===== CARGAR DATOS INICIALES (OPTIMIZADO CON CONSULTAS PARALELAS) =====
         try:
             # KPIs básicos (cache de 5 minutos)
             kpi_cache_key = "kpis_basicos"
             kpis_data = data_cache.get(kpi_cache_key)
-            
+
             if kpis_data is None:
-                query_total = "SELECT COUNT(*) as total FROM fiscalizaciones1"
-                total_ofs = pd.read_sql(query_total, DB_ENGINE).iloc[0, 0]
-                
-                query_terminadas = "SELECT COUNT(*) as total FROM fiscalizaciones1 WHERE LOWER(Estado) = 'terminado'"
-                ofs_terminadas = pd.read_sql(query_terminadas, DB_ENGINE).iloc[0, 0]
-                
-                query_pendientes = "SELECT COUNT(*) as total FROM fiscalizaciones1 WHERE LOWER(Estado) = 'pendiente'"
-                ofs_pendientes = pd.read_sql(query_pendientes, DB_ENGINE).iloc[0, 0]
-                
+                # ⚡ EJECUTAR LAS 3 CONSULTAS EN PARALELO EN VEZ DE SECUENCIAL
+                queries_kpi = {
+                    'total': {
+                        'query': "SELECT COUNT(*) as total FROM fiscalizaciones1",
+                        'cache_key': 'query_total_ofs'
+                    },
+                    'terminadas': {
+                        'query': "SELECT COUNT(*) as total FROM fiscalizaciones1 WHERE LOWER(Estado) = 'terminado'",
+                        'cache_key': 'query_terminadas_ofs'
+                    },
+                    'pendientes': {
+                        'query': "SELECT COUNT(*) as total FROM fiscalizaciones1 WHERE LOWER(Estado) = 'pendiente'",
+                        'cache_key': 'query_pendientes_ofs'
+                    }
+                }
+
+                resultados_kpi = ejecutar_queries_paralelo(queries_kpi)
+
+                total_ofs = resultados_kpi['total'].iloc[0, 0] if not resultados_kpi['total'].empty else 0
+                ofs_terminadas = resultados_kpi['terminadas'].iloc[0, 0] if not resultados_kpi['terminadas'].empty else 0
+                ofs_pendientes = resultados_kpi['pendientes'].iloc[0, 0] if not resultados_kpi['pendientes'].empty else 0
+
                 kpis_data = {
                     'total': total_ofs,
                     'terminadas': ofs_terminadas,
                     'pendientes': ofs_pendientes
                 }
                 data_cache.set(kpi_cache_key, kpis_data)
-            
+
             total_ofs = kpis_data['total']
             ofs_terminadas = kpis_data['terminadas']
             ofs_pendientes = kpis_data['pendientes']
-            
+
             # Años disponibles (cache)
             anios_cache_key = "anios_disponibles"
             anios_data = data_cache.get(anios_cache_key)
-            
+
             if anios_data is None:
-                df_anios_termino = pd.read_sql(
-                    "SELECT DISTINCT Anio_Termino FROM fiscalizaciones1 WHERE Anio_Termino IS NOT NULL ORDER BY Anio_Termino DESC", 
-                    DB_ENGINE
-                )
-                anios_termino = [str(int(a)) for a in df_anios_termino['Anio_Termino'].tolist()]
-                
-                df_anios_emis = pd.read_sql(
-                    "SELECT DISTINCT Anio_Emis FROM fiscalizaciones1 WHERE Anio_Emis IS NOT NULL ORDER BY Anio_Emis DESC", 
-                    DB_ENGINE
-                )
-                anios_emis = [str(int(a)) for a in df_anios_emis['Anio_Emis'].tolist()]
-                
+                # ⚡ EJECUTAR CONSULTAS DE AÑOS EN PARALELO
+                queries_anios = {
+                    'termino': {
+                        'query': "SELECT DISTINCT Anio_Termino FROM fiscalizaciones1 WHERE Anio_Termino IS NOT NULL ORDER BY Anio_Termino DESC",
+                        'cache_key': 'query_anios_termino'
+                    },
+                    'emision': {
+                        'query': "SELECT DISTINCT Anio_Emis FROM fiscalizaciones1 WHERE Anio_Emis IS NOT NULL ORDER BY Anio_Emis DESC",
+                        'cache_key': 'query_anios_emision'
+                    }
+                }
+
+                resultados_anios = ejecutar_queries_paralelo(queries_anios)
+
+                anios_termino = [str(int(a)) for a in resultados_anios['termino']['Anio_Termino'].tolist()] if not resultados_anios['termino'].empty else ["2025"]
+                anios_emis = [str(int(a)) for a in resultados_anios['emision']['Anio_Emis'].tolist()] if not resultados_anios['emision'].empty else ["2025"]
+
                 anios_data = {
                     'termino': anios_termino,
                     'emision': anios_emis
                 }
                 data_cache.set(anios_cache_key, anios_data)
-            
+
             anios_termino = anios_data['termino']
             anios_emision = anios_data['emision']
             
