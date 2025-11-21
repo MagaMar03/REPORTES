@@ -35,6 +35,13 @@ CREATE INDEX IF NOT EXISTS idx_nombre_supervisor ON fiscalizaciones1(NOMBRE_SUPE
 -- Índice para NUM_ORD_FI (clave primaria probable, verificar)
 CREATE INDEX IF NOT EXISTS idx_num_ord_fi ON fiscalizaciones1(NUM_ORD_FI);
 
+-- ⚡ CRÍTICO: Índice para NUM_DOCSEL (usado en JOINs con detracciones y mypes)
+-- Este índice es MUY IMPORTANTE para el dashboard de Control Saldo Detracciones
+CREATE INDEX IF NOT EXISTS idx_num_docsel ON fiscalizaciones1(NUM_DOCSEL);
+
+-- Índice para des_cod (usado en filtros de detracciones)
+CREATE INDEX IF NOT EXISTS idx_des_cod ON fiscalizaciones1(des_cod);
+
 -- ============================================================================
 -- TABLA: fiscalizaciones2 (OFR - Recaudación)
 -- ============================================================================
@@ -54,10 +61,18 @@ CREATE INDEX IF NOT EXISTS idx_f3_sip ON fiscalizaciones3(SIP_DESCRIPCION);
 
 -- ============================================================================
 -- TABLA: fiscalizaciones4 (DTR - Detracciones)
+-- ⚡ CRÍTICO para Control Saldo Detracciones
 -- ============================================================================
 
 -- Índices para fiscalizaciones4
 CREATE INDEX IF NOT EXISTS idx_f4_estado ON fiscalizaciones4(Estado);
+
+-- ⚡ CRÍTICO: Índice para num_ruc (usado en JOINs con fiscalizaciones1)
+-- Este índice es FUNDAMENTAL para el dashboard de Control Saldo Detracciones
+CREATE INDEX IF NOT EXISTS idx_f4_num_ruc ON fiscalizaciones4(num_ruc);
+
+-- Índice para mto_saldo (usado en agregaciones SUM)
+CREATE INDEX IF NOT EXISTS idx_f4_mto_saldo ON fiscalizaciones4(mto_saldo);
 
 -- ============================================================================
 -- TABLA: fiscalizaciones5 (AIR - Recaudación)
@@ -69,10 +84,12 @@ CREATE INDEX IF NOT EXISTS idx_f5_sip ON fiscalizaciones5(SIP_DESCRIPCION);
 
 -- ============================================================================
 -- TABLA: mypes
+-- ⚡ CRÍTICO para Control Saldo Detracciones (cruce con padrón MYPE)
 -- ============================================================================
 
--- Índices para mypes (si tiene columnas relevantes)
--- Ajustar según estructura real de la tabla
+-- ⚡ CRÍTICO: Índice para ruc (usado en JOINs con fiscalizaciones1)
+-- Este índice es FUNDAMENTAL para el cruce con padrón MYPE
+CREATE INDEX IF NOT EXISTS idx_mypes_ruc ON mypes(ruc);
 
 -- ============================================================================
 -- ANÁLISIS Y OPTIMIZACIÓN DE TABLAS

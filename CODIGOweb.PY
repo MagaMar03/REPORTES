@@ -10031,6 +10031,7 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
     """
     Genera tabla de control de saldo cuenta detracciones con drill-down al hacer clic
     INCLUYE COLUMNA DE PADRÓN MYPE
+    ⚡ VERSIÓN OPTIMIZADA - Carga asíncrona con cache
     """
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
     tabla_frame.pack(fill="both", expand=True, padx=15, pady=12)
@@ -10041,48 +10042,70 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                  font=("Segoe UI", 14, "bold"),
                  text_color="#a51c30").pack(anchor="w", padx=12, pady=6)
 
+    # ⚡ MOSTRAR LOADING INDICATOR MIENTRAS CARGA
+    loading_label = ctk.CTkLabel(
+        tabla_frame,
+        text="⏳ Cargando datos...",
+        font=("Segoe UI", 12, "bold"),
+        text_color="#002e6d"
+    )
+    loading_label.pack(pady=20)
+    tabla_frame.update()
+
     # Construir condiciones WHERE dinámicas
     condiciones_extra = []
     if filtros_des_cod and len(filtros_des_cod) > 0:
         placeholders = ', '.join([f"'{val}'" for val in filtros_des_cod])
         condiciones_extra.append(f"f1.des_cod IN ({placeholders})")
-    
+
     if filtros_anio and len(filtros_anio) > 0:
         placeholders = ', '.join([f"'{val}'" for val in filtros_anio])
         condiciones_extra.append(f"f1.Anio_Emis IN ({placeholders})")
-    
+
     where_adicional = ""
     if condiciones_extra:
         where_adicional = " AND " + " AND ".join(condiciones_extra)
 
-    # Query principal con JOIN y filtros - INCLUYE CRUCE CON MYPES
-    query = f"""
-        SELECT 
-            f1.NUM_ORD_FI,
-            f1.NUM_DOCSEL,
-            f1.DDP_NOMBRE,
-            f4.mto_saldo,
-            CASE 
-                WHEN m.ruc IS NOT NULL THEN 'SI'
-                ELSE 'NO'
-            END as PADRON_MYPE
-        FROM fiscalizaciones1 f1
-        INNER JOIN fiscalizaciones4 f4 
-            ON TRIM(f1.NUM_DOCSEL) = TRIM(f4.num_ruc)
-        LEFT JOIN mypes m
-            ON TRIM(f1.NUM_DOCSEL) = TRIM(m.ruc)
-        WHERE LOWER(TRIM(IFNULL(f1.Estado, ''))) = 'pendiente'
-        {where_adicional}
-        ORDER BY f1.NUM_ORD_FI;
-    """
+    # ⚡ CACHE KEY basado en filtros
+    cache_key = f"detracciones_of_{hash(str(filtros_des_cod))}_{hash(str(filtros_anio))}"
+    cached_df = data_cache.get(cache_key, max_age=300)  # 5 min cache
 
-    try:
-        conn_temp = mysql.connector.connect(**DB_CONFIG)
-        df = pd.read_sql(query, DB_ENGINE)
-        conn_temp.close()
-    except Exception as e:
-        ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
-        return
+    if cached_df is not None:
+        df = cached_df
+    else:
+        # ⚡ QUERY OPTIMIZADA - Evitar TRIM en JOIN usando subconsultas
+        query = f"""
+            SELECT
+                f1.NUM_ORD_FI,
+                f1.NUM_DOCSEL,
+                f1.DDP_NOMBRE,
+                f4.mto_saldo,
+                CASE
+                    WHEN m.ruc IS NOT NULL THEN 'SI'
+                    ELSE 'NO'
+                END as PADRON_MYPE
+            FROM fiscalizaciones1 f1
+            INNER JOIN fiscalizaciones4 f4
+                ON f1.NUM_DOCSEL = f4.num_ruc
+            LEFT JOIN mypes m
+                ON f1.NUM_DOCSEL = m.ruc
+            WHERE LOWER(f1.Estado) = 'pendiente'
+            {where_adicional}
+            ORDER BY f1.NUM_ORD_FI
+            LIMIT 5000;
+        """
+
+        try:
+            df = pd.read_sql(query, DB_ENGINE)
+            # Guardar en cache
+            data_cache.set(cache_key, df)
+        except Exception as e:
+            loading_label.destroy()
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            return
+
+    # ⚡ REMOVER LOADING INDICATOR
+    loading_label.destroy()
 
     if df.empty:
         ctk.CTkLabel(tabla_frame, text="⚠ No hay datos disponibles con los filtros seleccionados", text_color="red").pack(pady=15)
@@ -11278,33 +11301,54 @@ def dashboard_control_detracciones():
     # CONTENIDO PARA OF
     # ====================
     contenido_of_frame = ctk.CTkFrame(inner_frame, fg_color="transparent")
-    
-    # ===== OBTENER VALORES ÚNICOS PARA FILTROS OF =====
-    try:
-        conn_filtros = mysql.connector.connect(**DB_CONFIG)
-        
-        query_des_cod = """
-            SELECT DISTINCT des_cod 
-            FROM fiscalizaciones1 
-            WHERE des_cod IS NOT NULL AND des_cod != ''
-            ORDER BY des_cod;
-        """
-        df_des_cod = pd.read_sql(query_des_cod, DB_ENGINE)
-        available_des_cod = df_des_cod['des_cod'].tolist()
-        
-        query_anio = """
-            SELECT DISTINCT Anio_Emis 
-            FROM fiscalizaciones1 
-            WHERE Anio_Emis IS NOT NULL AND Anio_Emis != ''
-            ORDER BY Anio_Emis DESC;
-        """
-        df_anio = pd.read_sql(query_anio, DB_ENGINE)
-        available_anios = df_anio['Anio_Emis'].tolist()
-        
-        conn_filtros.close()
-    except Exception as e:
-        available_des_cod = []
-        available_anios = []
+
+    # ===== OBTENER VALORES ÚNICOS PARA FILTROS OF (OPTIMIZADO CON CACHE) =====
+    # ⚡ Usar cache para filtros - se actualizan cada 10 minutos
+    filtros_cache_key = "detracciones_filtros_of"
+    filtros_cached = data_cache.get(filtros_cache_key, max_age=600)
+
+    if filtros_cached is not None:
+        available_des_cod = filtros_cached['des_cod']
+        available_anios = filtros_cached['anios']
+    else:
+        try:
+            # ⚡ EJECUTAR CONSULTAS EN PARALELO
+            queries_filtros = {
+                'des_cod': {
+                    'query': """
+                        SELECT DISTINCT des_cod
+                        FROM fiscalizaciones1
+                        WHERE des_cod IS NOT NULL AND des_cod != ''
+                        ORDER BY des_cod
+                        LIMIT 100;
+                    """,
+                    'cache_key': 'filtro_des_cod_detr'
+                },
+                'anios': {
+                    'query': """
+                        SELECT DISTINCT Anio_Emis
+                        FROM fiscalizaciones1
+                        WHERE Anio_Emis IS NOT NULL AND Anio_Emis != ''
+                        ORDER BY Anio_Emis DESC
+                        LIMIT 20;
+                    """,
+                    'cache_key': 'filtro_anios_detr'
+                }
+            }
+
+            resultados_filtros = ejecutar_queries_paralelo(queries_filtros)
+
+            available_des_cod = resultados_filtros['des_cod']['des_cod'].tolist() if not resultados_filtros['des_cod'].empty else []
+            available_anios = resultados_filtros['anios']['Anio_Emis'].tolist() if not resultados_filtros['anios'].empty else []
+
+            # Guardar en cache
+            data_cache.set(filtros_cache_key, {
+                'des_cod': available_des_cod,
+                'anios': available_anios
+            })
+        except Exception as e:
+            available_des_cod = []
+            available_anios = []
 
     # ===== MÉTRICAS OF =====
     metrics_of_container = ctk.CTkFrame(contenido_of_frame, fg_color=COLOR_WHITE)
