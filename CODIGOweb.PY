@@ -11890,18 +11890,21 @@ def generar_tabla_of_recaudacion_auditoria(parent_frame, df_filtrado):
     canvas.configure(yscrollcommand=scrollbar_y.set)
 
     # ENCABEZADOS
-    header_frame = ctk.CTkFrame(tabla_frame, fg_color=COLOR_PRIMARY, corner_radius=5, 
+    header_frame = ctk.CTkFrame(tabla_frame, fg_color=COLOR_PRIMARY, corner_radius=5,
                                 border_width=1, border_color="#002e6d")
     header_frame.grid(row=0, column=0, columnspan=14, sticky="ew", padx=1, pady=1)
 
     # Configurar pesos de columnas para expansión uniforme
     for i in range(14):
-        header_frame.grid_columnconfigure(i, weight=1, minsize=70)
+        if i == 0:  # Columna de auditores más ancha
+            header_frame.grid_columnconfigure(i, weight=1, minsize=280)
+        else:
+            header_frame.grid_columnconfigure(i, weight=1, minsize=70)
 
     # Encabezado "Auditores"
-    lbl_header_auditor = ctk.CTkLabel(header_frame, text="AUDITORES", 
-                                       font=("Segoe UI", 9, "bold"),
-                                       text_color="white", width=180, anchor="w")
+    lbl_header_auditor = ctk.CTkLabel(header_frame, text="AUDITORES",
+                                       font=("Segoe UI", 10, "bold"),
+                                       text_color="white", width=280, anchor="w")
     lbl_header_auditor.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
     # Encabezados de meses
@@ -11939,12 +11942,15 @@ def generar_tabla_of_recaudacion_auditoria(parent_frame, df_filtrado):
 
         # Configurar pesos de columnas
         for i in range(14):
-            row_frame.grid_columnconfigure(i, weight=1, minsize=70)
+            if i == 0:  # Columna de auditores más ancha
+                row_frame.grid_columnconfigure(i, weight=1, minsize=280)
+            else:
+                row_frame.grid_columnconfigure(i, weight=1, minsize=70)
 
         # Nombre del auditor
-        lbl_auditor = ctk.CTkLabel(row_frame, text=str(auditor), 
+        lbl_auditor = ctk.CTkLabel(row_frame, text=str(auditor),
                                    font=font_style,
-                                   text_color=COLOR_TEXT, width=180, anchor="w")
+                                   text_color=COLOR_TEXT, width=280, anchor="w")
         lbl_auditor.grid(row=0, column=0, padx=5, pady=3, sticky="ew")
 
         # Valores de cada mes
@@ -11981,6 +11987,20 @@ def generar_tabla_of_recaudacion_auditoria(parent_frame, df_filtrado):
     canvas.bind("<Configure>", _configure_scroll)
     tabla_frame.update_idletasks()
     canvas.configure(scrollregion=canvas.bbox("all"))
+
+    # Permitir scroll con rueda del mouse
+    def _on_mousewheel(event):
+        if event.delta:  # Windows / MacOS
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        else:  # Linux (event.num)
+            if event.num == 5:
+                canvas.yview_scroll(1, "units")
+            elif event.num == 4:
+                canvas.yview_scroll(-1, "units")
+
+    canvas.bind_all("<MouseWheel>", _on_mousewheel)
+    canvas.bind_all("<Button-4>", _on_mousewheel)
+    canvas.bind_all("<Button-5>", _on_mousewheel)
 
     # Empaquetar scrollbar vertical solamente
     scrollbar_y.pack(side="right", fill="y")
@@ -12050,18 +12070,21 @@ def generar_tabla_ai_recaudacion_auditoria(parent_frame, df_filtrado):
 
     # Configurar pesos de columnas para expansión uniforme
     for i in range(14):
-        header_frame.grid_columnconfigure(i, weight=1, minsize=70)
+        if i == 0:  # Columna de auditores más ancha
+            header_frame.grid_columnconfigure(i, weight=1, minsize=280)
+        else:
+            header_frame.grid_columnconfigure(i, weight=1, minsize=70)
 
     # Encabezado "Auditores"
-    lbl_header_auditor = ctk.CTkLabel(header_frame, text="AUDITORES", 
-                                       font=("Segoe UI", 9, "bold"),
-                                       text_color="white", width=180, anchor="w")
+    lbl_header_auditor = ctk.CTkLabel(header_frame, text="AUDITORES",
+                                       font=("Segoe UI", 10, "bold"),
+                                       text_color="white", width=280, anchor="w")
     lbl_header_auditor.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
     # Encabezados de meses
     for idx, mes_num in enumerate(sorted([c for c in df_pivot.columns if c != 'TOTAL']), start=1):
         mes_nombre = meses_map.get(mes_num, str(mes_num))
-        lbl_mes = ctk.CTkLabel(header_frame, text=mes_nombre, 
+        lbl_mes = ctk.CTkLabel(header_frame, text=mes_nombre,
                                font=("Segoe UI", 9, "bold"),
                                text_color="white", width=70, anchor="center")
         lbl_mes.grid(row=0, column=idx, padx=1, pady=5, sticky="ew")
@@ -12093,12 +12116,15 @@ def generar_tabla_ai_recaudacion_auditoria(parent_frame, df_filtrado):
 
         # Configurar pesos de columnas
         for i in range(14):
-            row_frame.grid_columnconfigure(i, weight=1, minsize=70)
+            if i == 0:  # Columna de auditores más ancha
+                row_frame.grid_columnconfigure(i, weight=1, minsize=280)
+            else:
+                row_frame.grid_columnconfigure(i, weight=1, minsize=70)
 
         # Nombre del auditor
-        lbl_auditor = ctk.CTkLabel(row_frame, text=str(auditor), 
+        lbl_auditor = ctk.CTkLabel(row_frame, text=str(auditor),
                                    font=font_style,
-                                   text_color=COLOR_TEXT, width=180, anchor="w")
+                                   text_color=COLOR_TEXT, width=280, anchor="w")
         lbl_auditor.grid(row=0, column=0, padx=5, pady=3, sticky="ew")
 
         # Valores de cada mes
@@ -12135,6 +12161,20 @@ def generar_tabla_ai_recaudacion_auditoria(parent_frame, df_filtrado):
     canvas.bind("<Configure>", _configure_scroll)
     tabla_frame.update_idletasks()
     canvas.configure(scrollregion=canvas.bbox("all"))
+
+    # Permitir scroll con rueda del mouse
+    def _on_mousewheel(event):
+        if event.delta:  # Windows / MacOS
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        else:  # Linux (event.num)
+            if event.num == 5:
+                canvas.yview_scroll(1, "units")
+            elif event.num == 4:
+                canvas.yview_scroll(-1, "units")
+
+    canvas.bind_all("<MouseWheel>", _on_mousewheel)
+    canvas.bind_all("<Button-4>", _on_mousewheel)
+    canvas.bind_all("<Button-5>", _on_mousewheel)
 
     # Empaquetar scrollbar vertical solamente
     scrollbar_y.pack(side="right", fill="y")
@@ -12684,6 +12724,20 @@ def mostrar_dashboard_metas():
         main_frame.bind("<Configure>", _on_frame_configure)
         canvas.bind("<Configure>", _on_frame_configure)
 
+        # Permitir scroll con rueda del mouse en canvas principal
+        def _on_mousewheel_main(event):
+            if event.delta:  # Windows / MacOS
+                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            else:  # Linux (event.num)
+                if event.num == 5:
+                    canvas.yview_scroll(1, "units")
+                elif event.num == 4:
+                    canvas.yview_scroll(-1, "units")
+
+        canvas.bind_all("<MouseWheel>", _on_mousewheel_main)
+        canvas.bind_all("<Button-4>", _on_mousewheel_main)
+        canvas.bind_all("<Button-5>", _on_mousewheel_main)
+
         canvas.pack(side="left", fill="both", expand=True, padx=10, pady=10)
         scrollbar.pack(side="right", fill="y")
         
@@ -12829,7 +12883,21 @@ def mostrar_dashboard_metas():
         
         frame_auditores.bind("<Configure>", on_frame_configure_aud)
         canvas_auditores.bind("<Configure>", on_frame_configure_aud)
-        
+
+        # Permitir scroll con rueda del mouse en canvas de auditores
+        def _on_mousewheel_aud(event):
+            if event.delta:  # Windows / MacOS
+                canvas_auditores.yview_scroll(int(-1*(event.delta/120)), "units")
+            else:  # Linux (event.num)
+                if event.num == 5:
+                    canvas_auditores.yview_scroll(1, "units")
+                elif event.num == 4:
+                    canvas_auditores.yview_scroll(-1, "units")
+
+        canvas_auditores.bind_all("<MouseWheel>", _on_mousewheel_aud)
+        canvas_auditores.bind_all("<Button-4>", _on_mousewheel_aud)
+        canvas_auditores.bind_all("<Button-5>", _on_mousewheel_aud)
+
         canvas_auditores.pack(side="left", fill="both", expand=True, padx=(15, 5), pady=(0, 15))
         scrollbar_auditores.pack(side="right", fill="y", padx=(0, 15), pady=(0, 15))
         
@@ -12879,39 +12947,41 @@ def mostrar_dashboard_metas():
                 # Crear campos para cada auditor
                 for idx, row in df_auditores.iterrows():
                     nombre_auditor = row['des_func']
-                    
-                    # Frame para cada auditor
-                    auditor_frame = ctk.CTkFrame(frame_auditores, fg_color=COLOR_BOX, corner_radius=8)
-                    auditor_frame.pack(fill="x", padx=5, pady=3)
-                    
+
+                    # Frame para cada auditor con estilo mejorado
+                    auditor_frame = ctk.CTkFrame(frame_auditores, fg_color="#FFFFFF", corner_radius=10,
+                                                 border_width=2, border_color="#E5E7EB")
+                    auditor_frame.pack(fill="x", padx=8, pady=5)
+
                     inner_frame = ctk.CTkFrame(auditor_frame, fg_color="transparent")
-                    inner_frame.pack(fill="x", padx=10, pady=8)
-                    
-                    # Nombre del auditor
-                    ctk.CTkLabel(inner_frame, text=f"👤 {nombre_auditor}", 
-                                font=("Segoe UI", 11), text_color=COLOR_TEXT, 
-                                width=300, anchor="w").pack(side="left", padx=(0, 10))
-                    
+                    inner_frame.pack(fill="x", padx=15, pady=12)
+
+                    # Nombre del auditor con mayor ancho
+                    ctk.CTkLabel(inner_frame, text=f"👤 {nombre_auditor}",
+                                font=("Segoe UI", 12, "bold"), text_color=COLOR_PRIMARY,
+                                width=450, anchor="w").pack(side="left", padx=(0, 15))
+
+                    # Label "S/" antes del entry
+                    ctk.CTkLabel(inner_frame, text="S/",
+                                font=("Segoe UI", 12, "bold"), text_color=COLOR_SECONDARY).pack(side="left", padx=(0, 5))
+
                     # Entry para monto
                     monto_var = tk.StringVar(value="0.00")
-                    
+
                     # Si hay datos guardados, cargar el monto
                     if nombre_auditor in montos_guardados:
                         monto_var.set(f"{montos_guardados[nombre_auditor]:,.2f}")
-                    
+
                     def on_monto_change(*args, var=monto_var):
                         calcular_suma_total()
-                    
+
                     monto_var.trace_add("write", on_monto_change)
-                    
+
                     entry_monto = ctk.CTkEntry(inner_frame, textvariable=monto_var,
-                                            font=("Segoe UI", 11), width=180, height=32,
-                                            border_color="#D1D5DB", border_width=1,
-                                            placeholder_text="0.00")
-                    entry_monto.pack(side="left", padx=(0, 5))
-                    
-                    ctk.CTkLabel(inner_frame, text="S/", 
-                                font=("Segoe UI", 11, "bold"), text_color=COLOR_SECONDARY).pack(side="left")
+                                            font=("Segoe UI", 12), width=200, height=38,
+                                            border_color=COLOR_SECONDARY, border_width=2,
+                                            placeholder_text="0.00", corner_radius=8)
+                    entry_monto.pack(side="left")
                     
                     # Guardar referencia
                     auditores_data[nombre_auditor] = {
@@ -13048,6 +13118,11 @@ def mostrar_dashboard_metas():
     ctk.CTkButton(botones_container, text="🎯 Metas", command=mostrar_metas_of,
                   fg_color="#10B981", hover_color="#059669", font=("Segoe UI", 11, "bold"),
                   width=120, height=32).pack(side="left", padx=5)
+
+    # Botón AVANCE DE METAS OF (llama al dashboard de supervisores)
+    ctk.CTkButton(botones_container, text="📊 Avance de Metas", command=dashboard_supervisores,
+                  fg_color="#6366F1", hover_color="#4F46E5", font=("Segoe UI", 11, "bold"),
+                  width=150, height=32).pack(side="left", padx=5)
 
     # Generar tabla OF inicial
     aplicar_filtros_of_auto()
