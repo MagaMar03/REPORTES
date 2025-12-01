@@ -12298,6 +12298,26 @@ def dashboard_avance_metas_of():
     supervisor_seleccionado = tk.StringVar(value="(Todos)")
     auditor_seleccionado = tk.StringVar(value="(Todos)")
 
+    # Filtro Supervisor
+    ctk.CTkLabel(filtros_inner, text="👤 Supervisor:", font=("Segoe UI", 12, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(20, 10))
+
+    combo_supervisor = ctk.CTkComboBox(filtros_inner, values=["(Todos)"],
+                                        variable=supervisor_seleccionado,
+                                        width=200, height=35,
+                                        font=("Segoe UI", 11), state="readonly")
+    combo_supervisor.pack(side="left", padx=(0, 20))
+
+    # Filtro Auditor
+    ctk.CTkLabel(filtros_inner, text="👨‍💼 Auditor:", font=("Segoe UI", 12, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(20, 10))
+
+    combo_auditor = ctk.CTkComboBox(filtros_inner, values=["(Todos)"],
+                                     variable=auditor_seleccionado,
+                                     width=250, height=35,
+                                     font=("Segoe UI", 11), state="readonly")
+    combo_auditor.pack(side="left", padx=(0, 10))
+
     # Frame para gráfico
     grafico_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_WHITE, corner_radius=10)
     grafico_frame.pack(fill="both", expand=True, padx=10, pady=(10, 5))
@@ -12306,6 +12326,51 @@ def dashboard_avance_metas_of():
     tabla_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_WHITE, corner_radius=10)
     tabla_frame.pack(fill="x", padx=10, pady=(5, 10))
 
+    def cargar_supervisores_auditores():
+        """Carga opciones de supervisores y auditores para los filtros"""
+        try:
+            anio = int(combo_anio.get())
+        except:
+            anio = anio_actual
+
+        try:
+            # Obtener supervisores desde fiscalizaciones1
+            # Primero encontrar el año y mes más reciente
+            query_max_fecha = """
+                SELECT MAX(Anio_Emis) as max_anio, MAX(Mes_Emis) as max_mes
+                FROM fiscalizaciones1
+                WHERE Anio_Emis = (SELECT MAX(Anio_Emis) FROM fiscalizaciones1)
+            """
+            df_max = pd.read_sql(query_max_fecha, DB_ENGINE)
+            max_anio = df_max['max_anio'].iloc[0] if not df_max.empty else anio
+            max_mes = df_max['max_mes'].iloc[0] if not df_max.empty else 12
+
+            # Obtener supervisores para esa fecha
+            query_supervisores = """
+                SELECT DISTINCT NOMBRE_SUPERVISOR
+                FROM fiscalizaciones1
+                WHERE Anio_Emis = %s AND Mes_Emis = %s
+                  AND NOMBRE_SUPERVISOR IS NOT NULL
+                ORDER BY NOMBRE_SUPERVISOR
+            """
+            df_supervisores = pd.read_sql(query_supervisores, DB_ENGINE, params=(max_anio, max_mes))
+            lista_supervisores = ["(Todos)"] + df_supervisores['NOMBRE_SUPERVISOR'].tolist()
+            combo_supervisor.configure(values=lista_supervisores)
+
+            # Obtener auditores desde tabla distribucion
+            query_auditores = """
+                SELECT DISTINCT nombre_auditor
+                FROM distribucion
+                WHERE tipo = 'OF' AND YEAR(fecha) = %s
+                ORDER BY nombre_auditor
+            """
+            df_auditores = pd.read_sql(query_auditores, DB_ENGINE, params=(anio,))
+            lista_auditores = ["(Todos)"] + df_auditores['nombre_auditor'].tolist()
+            combo_auditor.configure(values=lista_auditores)
+
+        except Exception as e:
+            print(f"Error cargando filtros: {e}")
+
     def cargar_datos_y_actualizar():
         """Carga datos y actualiza gráfico y tabla según filtros"""
         try:
@@ -12313,8 +12378,32 @@ def dashboard_avance_metas_of():
         except:
             anio = anio_actual
 
+        supervisor_filtro = supervisor_seleccionado.get()
+        auditor_filtro = auditor_seleccionado.get()
+
         try:
-            # 1. Obtener metas de la tabla distribucion
+            # 1. Obtener mapeo supervisor → auditor desde fiscalizaciones1 y fiscalizaciones2
+            query_max_fecha = """
+                SELECT MAX(Anio_Emis) as max_anio, MAX(Mes_Emis) as max_mes
+                FROM fiscalizaciones1
+                WHERE Anio_Emis = (SELECT MAX(Anio_Emis) FROM fiscalizaciones1)
+            """
+            df_max = pd.read_sql(query_max_fecha, DB_ENGINE)
+            max_anio = df_max['max_anio'].iloc[0] if not df_max.empty else anio
+            max_mes = df_max['max_mes'].iloc[0] if not df_max.empty else 12
+
+            # Obtener relación supervisor → REG_AUDITOR desde fiscalizaciones1
+            query_sup_aud = """
+                SELECT DISTINCT f1.NOMBRE_SUPERVISOR, f1.REG_AUDITOR, f2.des_func
+                FROM fiscalizaciones1 f1
+                LEFT JOIN fiscalizaciones2 f2 ON f1.REG_AUDITOR = f2.COD_REG_AC
+                WHERE f1.Anio_Emis = %s AND f1.Mes_Emis = %s
+                  AND f1.NOMBRE_SUPERVISOR IS NOT NULL
+                  AND f2.des_func IS NOT NULL
+            """
+            df_sup_aud = pd.read_sql(query_sup_aud, DB_ENGINE, params=(max_anio, max_mes))
+
+            # 2. Obtener metas de la tabla distribucion
             query_metas = """
                 SELECT nombre_auditor, monto_asignado, monto_anual
                 FROM distribucion
@@ -12326,26 +12415,50 @@ def dashboard_avance_metas_of():
                 messagebox.showwarning("Sin datos", f"No hay metas registradas para el año {anio}")
                 return
 
-            # 2. Obtener datos de recaudación (tabla OF)
+            # 3. Aplicar filtro de supervisor
+            if supervisor_filtro != "(Todos)":
+                # Obtener auditores del supervisor seleccionado
+                auditores_filtrados = df_sup_aud[
+                    df_sup_aud['NOMBRE_SUPERVISOR'] == supervisor_filtro
+                ]['des_func'].unique().tolist()
+                df_metas = df_metas[df_metas['nombre_auditor'].isin(auditores_filtrados)]
+
+            # 4. Aplicar filtro de auditor
+            if auditor_filtro != "(Todos)":
+                df_metas = df_metas[df_metas['nombre_auditor'] == auditor_filtro]
+
+            if df_metas.empty:
+                messagebox.showwarning("Sin datos", "No hay datos para los filtros seleccionados")
+                actualizar_grafico([], grafico_frame)
+                actualizar_tabla([], tabla_frame)
+                return
+
+            # 5. Obtener datos de recaudación (tabla OF)
+            lista_auditores_filtrados = df_metas['nombre_auditor'].tolist()
             query_of = """
                 SELECT des_func, MES, SUM(MTO_PAG) as monto
                 FROM fiscalizaciones2
+                WHERE des_func IN ({})
                 GROUP BY des_func, MES
-            """
-            df_of = pd.read_sql(query_of, DB_ENGINE)
+            """.format(','.join(['%s'] * len(lista_auditores_filtrados)))
+            df_of = pd.read_sql(query_of, DB_ENGINE, params=lista_auditores_filtrados)
 
-            # 3. Encontrar último mes con datos != 0
-            pivot_of = df_of.pivot_table(index='des_func', columns='MES', values='monto',
-                                          aggfunc='sum', fill_value=0)
+            # 6. Encontrar último mes con datos != 0
+            if df_of.empty:
+                mes_actual = 1
+                pivot_of = pd.DataFrame()
+            else:
+                pivot_of = df_of.pivot_table(index='des_func', columns='MES', values='monto',
+                                              aggfunc='sum', fill_value=0)
 
-            # Buscar última columna (mes) con algún valor != 0
-            mes_actual = 1
-            for mes in range(12, 0, -1):
-                if mes in pivot_of.columns and pivot_of[mes].sum() > 0:
-                    mes_actual = mes
-                    break
+                # Buscar última columna (mes) con algún valor != 0
+                mes_actual = 1
+                for mes in range(12, 0, -1):
+                    if mes in pivot_of.columns and pivot_of[mes].sum() > 0:
+                        mes_actual = mes
+                        break
 
-            # 4. Calcular avance por auditor
+            # 7. Calcular avance por auditor
             datos_grafico = []
 
             for idx, row in df_metas.iterrows():
@@ -12354,8 +12467,11 @@ def dashboard_avance_metas_of():
                 meta_mensual_acumulada = (meta_anual / 12) * mes_actual
 
                 # Obtener recaudado hasta el mes actual
-                if auditor in pivot_of.index:
-                    recaudado = pivot_of.loc[auditor, :mes_actual].sum() if mes_actual in pivot_of.columns else 0
+                if not pivot_of.empty and auditor in pivot_of.index:
+                    recaudado = 0
+                    for m in range(1, mes_actual + 1):
+                        if m in pivot_of.columns:
+                            recaudado += pivot_of.loc[auditor, m]
                 else:
                     recaudado = 0
 
@@ -12366,21 +12482,27 @@ def dashboard_avance_metas_of():
                     'meta_anual': meta_anual
                 })
 
-            # 5. Generar tabla mensual
+            # 8. Generar tabla mensual
             datos_tabla = []
-            for mes in range(1, mes_actual + 1):
-                ejecutado_mes = 0
-                for auditor in df_metas['nombre_auditor']:
-                    if auditor in pivot_of.index and mes in pivot_of.columns:
-                        ejecutado_mes += pivot_of.loc[auditor, :mes].sum()
+            meta_global = df_metas['monto_anual'].sum()
 
-                meta_mes = (df_metas['monto_anual'].sum() / 12) * mes
-                cumplimiento = (ejecutado_mes / meta_mes * 100) if meta_mes > 0 else 0
-                avance_anual = (ejecutado_mes / df_metas['monto_anual'].sum() * 100) if df_metas['monto_anual'].sum() > 0 else 0
+            for mes in range(1, mes_actual + 1):
+                ejecutado_acumulado = 0
+
+                # Para cada auditor, sumar lo recaudado hasta este mes
+                for auditor in df_metas['nombre_auditor']:
+                    if not pivot_of.empty and auditor in pivot_of.index:
+                        for m in range(1, mes + 1):
+                            if m in pivot_of.columns:
+                                ejecutado_acumulado += pivot_of.loc[auditor, m]
+
+                meta_mes = (meta_global / 12) * mes
+                cumplimiento = (ejecutado_acumulado / meta_mes * 100) if meta_mes > 0 else 0
+                avance_anual = (ejecutado_acumulado / meta_global * 100) if meta_global > 0 else 0
 
                 datos_tabla.append({
                     'mes': mes,
-                    'ejecutado': ejecutado_mes,
+                    'ejecutado': ejecutado_acumulado,
                     'meta': meta_mes,
                     'cumplimiento': cumplimiento,
                     'avance_anual': avance_anual
@@ -12477,11 +12599,14 @@ def dashboard_avance_metas_of():
                 ctk.CTkLabel(row_frame, text=valor, font=("Segoe UI", 9),
                             text_color=COLOR_TEXT, width=150).grid(row=0, column=i, padx=2, pady=3)
 
-    # Cargar datos inicial
+    # Cargar opciones de filtros y datos iniciales
+    cargar_supervisores_auditores()
     cargar_datos_y_actualizar()
 
-    # Vincular cambio de año
-    combo_anio.configure(command=lambda x: cargar_datos_y_actualizar())
+    # Vincular cambios de filtros
+    combo_anio.configure(command=lambda x: (cargar_supervisores_auditores(), cargar_datos_y_actualizar()))
+    combo_supervisor.configure(command=lambda x: cargar_datos_y_actualizar())
+    combo_auditor.configure(command=lambda x: cargar_datos_y_actualizar())
 
 def mostrar_dashboard_metas():
     """
