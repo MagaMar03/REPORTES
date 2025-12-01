@@ -12179,6 +12179,310 @@ def generar_tabla_ai_recaudacion_auditoria(parent_frame, df_filtrado):
     # Empaquetar scrollbar vertical solamente
     scrollbar_y.pack(side="right", fill="y")
     canvas.pack(side="left", fill="both", expand=True)
+
+# ==========================
+# DASHBOARD AVANCE DE METAS OF
+# ==========================
+def dashboard_avance_metas_of():
+    """
+    Dashboard para mostrar el avance de metas OF con:
+    - Selector de año (automático desde tabla distribucion)
+    - Filtros: Supervisor y Auditor
+    - Gráfico de barras horizontal con avance de metas
+    - Tabla de avance mensual y anual
+    """
+    try:
+        preview_frame.pack_forget()
+    except Exception:
+        pass
+
+    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=(5, 10))
+
+    for widget in dashboard_frame.winfo_children():
+        widget.destroy()
+
+    # Canvas principal con scroll
+    canvas_main = tk.Canvas(dashboard_frame, bg=COLOR_WHITE, highlightthickness=0)
+    scrollbar_main = ctk.CTkScrollbar(dashboard_frame, orientation="vertical", command=canvas_main.yview)
+    canvas_main.configure(yscrollcommand=scrollbar_main.set)
+
+    inner_frame = ctk.CTkFrame(canvas_main, fg_color=COLOR_WHITE)
+    canvas_window = canvas_main.create_window((0, 0), window=inner_frame, anchor="nw")
+
+    def _on_frame_configure(event=None):
+        canvas_main.configure(scrollregion=canvas_main.bbox("all"))
+        if canvas_main.winfo_width() > 1:
+            canvas_main.itemconfig(canvas_window, width=canvas_main.winfo_width())
+
+    inner_frame.bind("<Configure>", _on_frame_configure)
+    canvas_main.bind("<Configure>", _on_frame_configure)
+
+    # Scroll con rueda del mouse
+    def _on_mousewheel(event):
+        if event.delta:
+            canvas_main.yview_scroll(int(-1*(event.delta/120)), "units")
+        else:
+            if event.num == 5:
+                canvas_main.yview_scroll(1, "units")
+            elif event.num == 4:
+                canvas_main.yview_scroll(-1, "units")
+
+    canvas_main.bind_all("<MouseWheel>", _on_mousewheel)
+    canvas_main.bind_all("<Button-4>", _on_mousewheel)
+    canvas_main.bind_all("<Button-5>", _on_mousewheel)
+
+    canvas_main.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+    scrollbar_main.pack(side="right", fill="y")
+
+    # ====================
+    # TÍTULO
+    # ====================
+    titulo_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_PRIMARY, corner_radius=10)
+    titulo_frame.pack(fill="x", padx=10, pady=(10, 5))
+
+    ctk.CTkLabel(titulo_frame, text="📊 AVANCE DE METAS - OF",
+                 font=("Segoe UI", 18, "bold"), text_color="white").pack(pady=12)
+
+    # Obtener año más reciente de tabla distribucion
+    try:
+        query_anio = """
+            SELECT DISTINCT YEAR(fecha) as anio
+            FROM distribucion
+            WHERE tipo = 'OF'
+            ORDER BY fecha DESC
+            LIMIT 1
+        """
+        df_anio = pd.read_sql(query_anio, DB_ENGINE)
+        if not df_anio.empty:
+            anio_actual = df_anio['anio'].iloc[0]
+        else:
+            anio_actual = datetime.now().year
+    except Exception:
+        anio_actual = datetime.now().year
+
+    # Variable para el año seleccionado
+    anio_seleccionado = tk.IntVar(value=anio_actual)
+
+    # ====================
+    # SELECTOR DE AÑO Y FILTROS
+    # ====================
+    filtros_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_BOX, corner_radius=10)
+    filtros_frame.pack(fill="x", padx=10, pady=(10, 5))
+
+    filtros_inner = ctk.CTkFrame(filtros_frame, fg_color="transparent")
+    filtros_inner.pack(fill="x", padx=15, pady=15)
+
+    # Selector de Año
+    ctk.CTkLabel(filtros_inner, text="📅 Año:", font=("Segoe UI", 12, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(0, 10))
+
+    try:
+        query_anios = """
+            SELECT DISTINCT YEAR(fecha) as anio
+            FROM distribucion
+            WHERE tipo = 'OF'
+            ORDER BY anio DESC
+        """
+        df_anios = pd.read_sql(query_anios, DB_ENGINE)
+        lista_anios = df_anios['anio'].tolist() if not df_anios.empty else [anio_actual]
+    except Exception:
+        lista_anios = [anio_actual]
+
+    combo_anio = ctk.CTkComboBox(filtros_inner, values=[str(a) for a in lista_anios],
+                                  width=120, height=35,
+                                  font=("Segoe UI", 12), state="readonly")
+    combo_anio.pack(side="left", padx=(0, 20))
+    combo_anio.set(str(anio_actual))
+
+    # Variables de filtros
+    supervisor_seleccionado = tk.StringVar(value="(Todos)")
+    auditor_seleccionado = tk.StringVar(value="(Todos)")
+
+    # Frame para gráfico
+    grafico_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_WHITE, corner_radius=10)
+    grafico_frame.pack(fill="both", expand=True, padx=10, pady=(10, 5))
+
+    # Frame para tabla
+    tabla_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_WHITE, corner_radius=10)
+    tabla_frame.pack(fill="x", padx=10, pady=(5, 10))
+
+    def cargar_datos_y_actualizar():
+        """Carga datos y actualiza gráfico y tabla según filtros"""
+        try:
+            anio = int(combo_anio.get())
+        except:
+            anio = anio_actual
+
+        try:
+            # 1. Obtener metas de la tabla distribucion
+            query_metas = """
+                SELECT nombre_auditor, monto_asignado, monto_anual
+                FROM distribucion
+                WHERE tipo = 'OF' AND YEAR(fecha) = %s
+            """
+            df_metas = pd.read_sql(query_metas, DB_ENGINE, params=(anio,))
+
+            if df_metas.empty:
+                messagebox.showwarning("Sin datos", f"No hay metas registradas para el año {anio}")
+                return
+
+            # 2. Obtener datos de recaudación (tabla OF)
+            query_of = """
+                SELECT des_func, MES, SUM(MTO_PAG) as monto
+                FROM fiscalizaciones2
+                GROUP BY des_func, MES
+            """
+            df_of = pd.read_sql(query_of, DB_ENGINE)
+
+            # 3. Encontrar último mes con datos != 0
+            pivot_of = df_of.pivot_table(index='des_func', columns='MES', values='monto',
+                                          aggfunc='sum', fill_value=0)
+
+            # Buscar última columna (mes) con algún valor != 0
+            mes_actual = 1
+            for mes in range(12, 0, -1):
+                if mes in pivot_of.columns and pivot_of[mes].sum() > 0:
+                    mes_actual = mes
+                    break
+
+            # 4. Calcular avance por auditor
+            datos_grafico = []
+
+            for idx, row in df_metas.iterrows():
+                auditor = row['nombre_auditor']
+                meta_anual = row['monto_anual']
+                meta_mensual_acumulada = (meta_anual / 12) * mes_actual
+
+                # Obtener recaudado hasta el mes actual
+                if auditor in pivot_of.index:
+                    recaudado = pivot_of.loc[auditor, :mes_actual].sum() if mes_actual in pivot_of.columns else 0
+                else:
+                    recaudado = 0
+
+                datos_grafico.append({
+                    'auditor': auditor,
+                    'recaudado': recaudado,
+                    'meta_acumulada': meta_mensual_acumulada,
+                    'meta_anual': meta_anual
+                })
+
+            # 5. Generar tabla mensual
+            datos_tabla = []
+            for mes in range(1, mes_actual + 1):
+                ejecutado_mes = 0
+                for auditor in df_metas['nombre_auditor']:
+                    if auditor in pivot_of.index and mes in pivot_of.columns:
+                        ejecutado_mes += pivot_of.loc[auditor, :mes].sum()
+
+                meta_mes = (df_metas['monto_anual'].sum() / 12) * mes
+                cumplimiento = (ejecutado_mes / meta_mes * 100) if meta_mes > 0 else 0
+                avance_anual = (ejecutado_mes / df_metas['monto_anual'].sum() * 100) if df_metas['monto_anual'].sum() > 0 else 0
+
+                datos_tabla.append({
+                    'mes': mes,
+                    'ejecutado': ejecutado_mes,
+                    'meta': meta_mes,
+                    'cumplimiento': cumplimiento,
+                    'avance_anual': avance_anual
+                })
+
+            # Actualizar gráfico
+            actualizar_grafico(datos_grafico, grafico_frame)
+
+            # Actualizar tabla
+            actualizar_tabla(datos_tabla, tabla_frame)
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al cargar datos:\n{e}")
+
+    def actualizar_grafico(datos, parent):
+        """Genera gráfico de barras horizontal"""
+        for widget in parent.winfo_children():
+            widget.destroy()
+
+        if not datos:
+            ctk.CTkLabel(parent, text="No hay datos para mostrar",
+                        font=("Segoe UI", 14), text_color=COLOR_TEXT).pack(pady=20)
+            return
+
+        # Crear figura
+        fig, ax = plt.subplots(figsize=(12, len(datos) * 0.6))
+
+        auditores = [d['auditor'] for d in datos]
+        recaudado = [d['recaudado'] for d in datos]
+        meta = [d['meta_acumulada'] for d in datos]
+
+        y_pos = range(len(auditores))
+
+        # Barras horizontales
+        ax.barh(y_pos, meta, color='#E5E7EB', label='Meta Acumulada', height=0.4, alpha=0.7)
+        ax.barh(y_pos, recaudado, color=COLOR_SECONDARY, label='Recaudado', height=0.4)
+
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(auditores, fontsize=9)
+        ax.set_xlabel('Monto (S/)', fontsize=10, fontweight='bold')
+        ax.set_title('Avance de Metas por Auditor', fontsize=12, fontweight='bold')
+        ax.legend(loc='lower right')
+        ax.grid(axis='x', alpha=0.3)
+
+        plt.tight_layout()
+
+        # Mostrar en tkinter
+        canvas_grafico = FigureCanvasTkAgg(fig, parent)
+        canvas_grafico.draw()
+        canvas_grafico.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+    def actualizar_tabla(datos, parent):
+        """Genera tabla de avance mensual y anual"""
+        for widget in parent.winfo_children():
+            widget.destroy()
+
+        if not datos:
+            return
+
+        ctk.CTkLabel(parent, text="📈 AVANCE MENSUAL Y ANUAL",
+                    font=("Segoe UI", 14, "bold"), text_color=COLOR_PRIMARY).pack(pady=10)
+
+        # Crear tabla
+        tabla_container = ctk.CTkFrame(parent, fg_color=COLOR_WHITE)
+        tabla_container.pack(fill="x", padx=10, pady=(0, 10))
+
+        # Encabezados
+        headers = ["Mes", "Ejecutado", "Meta", "Cumplimiento Mes", "Avance Anual"]
+        header_frame = ctk.CTkFrame(tabla_container, fg_color=COLOR_PRIMARY, corner_radius=5)
+        header_frame.pack(fill="x", padx=2, pady=2)
+
+        for i, header in enumerate(headers):
+            ctk.CTkLabel(header_frame, text=header, font=("Segoe UI", 10, "bold"),
+                        text_color="white", width=150).grid(row=0, column=i, padx=2, pady=5)
+
+        meses_nombres = ["", "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
+                        "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+
+        # Filas de datos
+        for idx, dato in enumerate(datos):
+            bg = "#F9FAFB" if idx % 2 == 0 else COLOR_WHITE
+            row_frame = ctk.CTkFrame(tabla_container, fg_color=bg, corner_radius=3)
+            row_frame.pack(fill="x", padx=2, pady=1)
+
+            valores = [
+                meses_nombres[dato['mes']],
+                f"S/ {dato['ejecutado']:,.2f}",
+                f"S/ {dato['meta']:,.2f}",
+                f"{dato['cumplimiento']:.1f}%",
+                f"{dato['avance_anual']:.1f}%"
+            ]
+
+            for i, valor in enumerate(valores):
+                ctk.CTkLabel(row_frame, text=valor, font=("Segoe UI", 9),
+                            text_color=COLOR_TEXT, width=150).grid(row=0, column=i, padx=2, pady=3)
+
+    # Cargar datos inicial
+    cargar_datos_y_actualizar()
+
+    # Vincular cambio de año
+    combo_anio.configure(command=lambda x: cargar_datos_y_actualizar())
+
 def mostrar_dashboard_metas():
     """
     Dashboard principal para mostrar las tablas de recaudación auditoria
@@ -13119,14 +13423,14 @@ def mostrar_dashboard_metas():
                   fg_color="#10B981", hover_color="#059669", font=("Segoe UI", 11, "bold"),
                   width=120, height=32).pack(side="left", padx=5)
 
-    # Botón AVANCE DE METAS OF (llama al dashboard de supervisores)
+    # Botón AVANCE DE METAS OF (llama al dashboard de avance de metas)
     def ir_a_avance_metas():
-        """Función para ir al dashboard de supervisores desde las pestañas"""
+        """Función para ir al dashboard de avance de metas OF"""
         # Limpiar el dashboard actual
         for widget in dashboard_frame.winfo_children():
             widget.destroy()
-        # Llamar al dashboard de supervisores
-        dashboard_supervisores()
+        # Llamar al dashboard de avance de metas
+        dashboard_avance_metas_of()
 
     ctk.CTkButton(botones_container, text="📊 Avance de Metas", command=ir_a_avance_metas,
                   fg_color="#6366F1", hover_color="#4F46E5", font=("Segoe UI", 11, "bold"),
