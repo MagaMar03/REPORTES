@@ -12417,6 +12417,7 @@ def mostrar_dashboard_metas():
 
     tab_of = tabview.add("OF - Recaudación Auditoria")
     tab_ai = tabview.add("AI - Recaudación Auditoria")
+    tab_avance_metas_of = tabview.add("📊 Avance de Metas OF")
 
     # ====================
     # TAB 1: OF - RECAUDACIÓN AUDITORIA
@@ -13639,6 +13640,393 @@ def mostrar_dashboard_metas():
 
     # Generar tabla AI inicial
     aplicar_filtros_ai_auto()
+
+    # ====================
+    # TAB 3: AVANCE DE METAS OF
+    # ====================
+
+    # ⚡ OBTENER AÑO MÁS RECIENTE DE LA TABLA DISTRIBUCION
+    try:
+        query_anio_reciente = """
+            SELECT DISTINCT YEAR(fecha) as anio
+            FROM distribucion
+            WHERE tipo = 'OF' AND fecha IS NOT NULL
+            ORDER BY fecha DESC
+            LIMIT 1
+        """
+        df_anio_reciente = pd.read_sql(query_anio_reciente, DB_ENGINE)
+        anio_actual = int(df_anio_reciente['anio'].iloc[0]) if not df_anio_reciente.empty else datetime.now().year
+    except Exception:
+        anio_actual = datetime.now().year
+
+    # Frame superior con filtros
+    filtros_avance_frame = ctk.CTkFrame(tab_avance_metas_of, fg_color=COLOR_BOX, corner_radius=10)
+    filtros_avance_frame.pack(fill="x", padx=10, pady=(10, 5))
+
+    ctk.CTkLabel(filtros_avance_frame, text="Filtros:", font=("Segoe UI", 13, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(10, 15), pady=10)
+
+    # FILTRO 1: AÑO (automático año más reciente)
+    filtro_anio_container = ctk.CTkFrame(filtros_avance_frame, fg_color="transparent")
+    filtro_anio_container.pack(side="left", padx=(0, 12))
+
+    ctk.CTkLabel(filtro_anio_container, text="📅 Año:",
+                 font=("Segoe UI", 10), text_color=COLOR_TEXT).pack(anchor="w")
+
+    # Obtener años disponibles de distribucion
+    try:
+        query_anios_disp = """
+            SELECT DISTINCT YEAR(fecha) as anio
+            FROM distribucion
+            WHERE tipo = 'OF'
+            ORDER BY anio DESC
+        """
+        df_anios_disp = pd.read_sql(query_anios_disp, DB_ENGINE)
+        anios_disponibles = [int(a) for a in df_anios_disp['anio'].tolist()]
+        if not anios_disponibles:
+            anios_disponibles = [anio_actual]
+    except Exception:
+        anios_disponibles = [anio_actual]
+
+    anio_seleccionado_var = tk.IntVar(value=anio_actual)
+    combo_anio = ctk.CTkComboBox(filtro_anio_container,
+                                  values=[str(a) for a in anios_disponibles],
+                                  width=100, height=32,
+                                  command=lambda x: actualizar_avance_metas())
+    combo_anio.set(str(anio_actual))
+    combo_anio.pack()
+
+    # FILTRO 2: SUPERVISOR
+    filtro_supervisor_container = ctk.CTkFrame(filtros_avance_frame, fg_color="transparent")
+    filtro_supervisor_container.pack(side="left", padx=(0, 12))
+
+    ctk.CTkLabel(filtro_supervisor_container, text="👤 Supervisor:",
+                 font=("Segoe UI", 10), text_color=COLOR_TEXT).pack(anchor="w")
+
+    supervisor_seleccionado_var = tk.StringVar(value="(Todos)")
+    combo_supervisor = ctk.CTkComboBox(filtro_supervisor_container,
+                                        values=["(Todos)"],
+                                        width=200, height=32,
+                                        variable=supervisor_seleccionado_var,
+                                        command=lambda x: actualizar_combo_auditores())
+    combo_supervisor.pack()
+
+    # FILTRO 3: AUDITOR
+    filtro_auditor_container = ctk.CTkFrame(filtros_avance_frame, fg_color="transparent")
+    filtro_auditor_container.pack(side="left", padx=(0, 12))
+
+    ctk.CTkLabel(filtro_auditor_container, text="🎯 Auditor:",
+                 font=("Segoe UI", 10), text_color=COLOR_TEXT).pack(anchor="w")
+
+    auditor_seleccionado_var = tk.StringVar(value="(Todos)")
+    combo_auditor = ctk.CTkComboBox(filtro_auditor_container,
+                                     values=["(Todos)"],
+                                     width=200, height=32,
+                                     variable=auditor_seleccionado_var,
+                                     command=lambda x: actualizar_avance_metas())
+    combo_auditor.pack()
+
+    # Contenedor para gráfico y tabla
+    contenido_avance_frame = ctk.CTkFrame(tab_avance_metas_of, fg_color=COLOR_WHITE)
+    contenido_avance_frame.pack(fill="both", expand=True, padx=10, pady=5)
+
+    # ⚡ FUNCIÓN PARA OBTENER VINCULACIÓN SUPERVISOR-AUDITOR
+    def obtener_vinculacion_supervisor_auditor(anio):
+        """
+        Vincula supervisores con auditores basado en la lógica descrita:
+        - fiscalizaciones1: NOMBRE_SUPERVISOR y REG_AUDITOR (por año y mes más reciente)
+        - fiscalizaciones2: COD_REG_AC (=REG_AUDITOR) y des_func (=auditor)
+        """
+        try:
+            # Paso 1: Obtener año y mes más reciente de fiscalizaciones1 para el año seleccionado
+            query_fecha_reciente = f"""
+                SELECT Anio_Emis, Mes_Emis
+                FROM fiscalizaciones1
+                WHERE Anio_Emis = {anio}
+                ORDER BY Anio_Emis DESC, Mes_Emis DESC
+                LIMIT 1
+            """
+            df_fecha = pd.read_sql(query_fecha_reciente, DB_ENGINE)
+
+            if df_fecha.empty:
+                return pd.DataFrame()
+
+            anio_reciente = int(df_fecha['Anio_Emis'].iloc[0])
+            mes_reciente = int(df_fecha['Mes_Emis'].iloc[0])
+
+            # Paso 2: Obtener supervisores y sus REG_AUDITOR para esa fecha
+            query_supervisores = f"""
+                SELECT DISTINCT
+                    NOMBRE_SUPERVISOR,
+                    REG_AUDITOR
+                FROM fiscalizaciones1
+                WHERE Anio_Emis = {anio_reciente}
+                  AND Mes_Emis = {mes_reciente}
+                  AND NOMBRE_SUPERVISOR IS NOT NULL
+                  AND REG_AUDITOR IS NOT NULL
+            """
+            df_supervisores = pd.read_sql(query_supervisores, DB_ENGINE)
+
+            # Paso 3: Cruzar con fiscalizaciones2 para obtener des_func (auditores)
+            query_auditores = """
+                SELECT DISTINCT
+                    COD_REG_AC,
+                    des_func
+                FROM fiscalizaciones2
+                WHERE COD_REG_AC IS NOT NULL
+                  AND des_func IS NOT NULL
+            """
+            df_auditores = pd.read_sql(query_auditores, DB_ENGINE)
+
+            # Paso 4: Merge para vincular
+            df_vinculacion = df_supervisores.merge(
+                df_auditores,
+                left_on='REG_AUDITOR',
+                right_on='COD_REG_AC',
+                how='inner'
+            )
+
+            return df_vinculacion[['NOMBRE_SUPERVISOR', 'des_func', 'REG_AUDITOR']]
+
+        except Exception as e:
+            print(f"Error en vinculación supervisor-auditor: {e}")
+            return pd.DataFrame()
+
+    # ⚡ FUNCIÓN PARA ACTUALIZAR COMBO DE AUDITORES SEGÚN SUPERVISOR
+    def actualizar_combo_auditores():
+        supervisor = supervisor_seleccionado_var.get()
+        anio = int(combo_anio.get())
+
+        df_vinculacion = obtener_vinculacion_supervisor_auditor(anio)
+
+        if supervisor == "(Todos)":
+            auditores = sorted(df_vinculacion['des_func'].unique().tolist())
+        else:
+            df_filtrado = df_vinculacion[df_vinculacion['NOMBRE_SUPERVISOR'] == supervisor]
+            auditores = sorted(df_filtrado['des_func'].unique().tolist())
+
+        combo_auditor.configure(values=["(Todos)"] + auditores)
+        combo_auditor.set("(Todos)")
+        actualizar_avance_metas()
+
+    # ⚡ FUNCIÓN PRINCIPAL PARA ACTUALIZAR GRÁFICO Y TABLA
+    def actualizar_avance_metas():
+        # Limpiar contenido anterior
+        for widget in contenido_avance_frame.winfo_children():
+            widget.destroy()
+
+        anio = int(combo_anio.get())
+        supervisor = supervisor_seleccionado_var.get()
+        auditor = auditor_seleccionado_var.get()
+
+        # Obtener vinculación
+        df_vinculacion = obtener_vinculacion_supervisor_auditor(anio)
+
+        if df_vinculacion.empty:
+            ctk.CTkLabel(contenido_avance_frame, text="⚠ No hay datos disponibles para el año seleccionado",
+                        font=("Segoe UI", 12), text_color="red").pack(pady=20)
+            return
+
+        # Filtrar por supervisor y auditor
+        if supervisor != "(Todos)":
+            df_vinculacion = df_vinculacion[df_vinculacion['NOMBRE_SUPERVISOR'] == supervisor]
+
+        if auditor != "(Todos)":
+            df_vinculacion = df_vinculacion[df_vinculacion['des_func'] == auditor]
+
+        if df_vinculacion.empty:
+            ctk.CTkLabel(contenido_avance_frame, text="⚠ No hay datos para los filtros seleccionados",
+                        font=("Segoe UI", 12), text_color="red").pack(pady=20)
+            return
+
+        # Obtener lista de auditores filtrados
+        auditores_filtrados = df_vinculacion['des_func'].unique().tolist()
+
+        # Obtener datos de recaudación de fiscalizaciones2
+        placeholders_auditores = ','.join([f"'{a}'" for a in auditores_filtrados])
+        query_recaudacion = f"""
+            SELECT des_func, MES, SUM(MTO_PAG) as monto_recaudado
+            FROM fiscalizaciones2
+            WHERE des_func IN ({placeholders_auditores})
+            GROUP BY des_func, MES
+        """
+        df_recaudacion = pd.read_sql(query_recaudacion, DB_ENGINE)
+
+        # Obtener metas de distribución
+        placeholders_auditores = ','.join([f"'{a}'" for a in auditores_filtrados])
+        query_metas = f"""
+            SELECT nombre_auditor, monto_asignado, monto_anual
+            FROM distribucion
+            WHERE tipo = 'OF'
+              AND YEAR(fecha) = {anio}
+              AND nombre_auditor IN ({placeholders_auditores})
+        """
+        df_metas = pd.read_sql(query_metas, DB_ENGINE)
+
+        # ========== GRÁFICO DE BARRAS HORIZONTAL ==========
+        grafico_frame = ctk.CTkFrame(contenido_avance_frame, fg_color="white", corner_radius=12)
+        grafico_frame.pack(fill="both", expand=True, padx=10, pady=(5, 10))
+
+        ctk.CTkLabel(grafico_frame, text="📊 AVANCE DE METAS POR AUDITOR",
+                    font=("Segoe UI", 14, "bold"), text_color=COLOR_PRIMARY).pack(pady=10)
+
+        # Calcular avances por auditor
+        datos_grafico = []
+
+        for auditor_nombre in auditores_filtrados:
+            # Recaudado hasta el momento
+            df_aud = df_recaudacion[df_recaudacion['des_func'] == auditor_nombre]
+
+            if df_aud.empty:
+                recaudado_total = 0
+                mes_max = 0
+            else:
+                recaudado_total = df_aud['monto_recaudado'].sum()
+                # Encontrar el mes máximo con datos != 0
+                mes_max = df_aud[df_aud['monto_recaudado'] > 0]['MES'].max()
+                if pd.isna(mes_max):
+                    mes_max = 0
+
+            # Meta del auditor
+            df_meta_aud = df_metas[df_metas['nombre_auditor'] == auditor_nombre]
+
+            if not df_meta_aud.empty:
+                meta_anual = float(df_meta_aud['monto_anual'].iloc[0])
+                meta_mensual = meta_anual / 12
+                meta_acumulada = meta_mensual * mes_max if mes_max > 0 else meta_mensual
+            else:
+                meta_anual = 0
+                meta_acumulada = 0
+
+            porcentaje = (recaudado_total / meta_acumulada * 100) if meta_acumulada > 0 else 0
+
+            datos_grafico.append({
+                'auditor': auditor_nombre,
+                'recaudado': recaudado_total,
+                'meta': meta_acumulada,
+                'porcentaje': porcentaje,
+                'mes_max': mes_max
+            })
+
+        # Crear gráfico matplotlib
+        fig, ax = plt.subplots(figsize=(10, max(4, len(datos_grafico) * 0.5)), facecolor='white')
+
+        auditores_nombres = [d['auditor'] for d in datos_grafico]
+        recaudados = [d['recaudado'] for d in datos_grafico]
+        metas = [d['meta'] for d in datos_grafico]
+
+        y_pos = range(len(auditores_nombres))
+
+        # Barras horizontales
+        bars_meta = ax.barh(y_pos, metas, height=0.4, label='Meta Acumulada', color='#FED7AA', alpha=0.7)
+        bars_recaudado = ax.barh(y_pos, recaudados, height=0.4, label='Recaudado', color='#10B981')
+
+        # Etiquetas
+        for i, (rec, met, datos) in enumerate(zip(recaudados, metas, datos_grafico)):
+            ax.text(rec, i, f' S/ {rec:,.0f} ({datos["porcentaje"]:.1f}%)',
+                   va='center', fontsize=9, fontweight='bold')
+
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(auditores_nombres, fontsize=10)
+        ax.set_xlabel('Monto (S/)', fontsize=11, fontweight='bold')
+        ax.set_title('Avance de Metas por Auditor', fontsize=12, fontweight='bold', pad=15)
+        ax.legend(loc='upper right')
+        ax.grid(axis='x', alpha=0.3, linestyle='--')
+        plt.tight_layout()
+
+        # Insertar gráfico en tkinter
+        canvas_grafico = FigureCanvasTkAgg(fig, master=grafico_frame)
+        canvas_grafico.draw()
+        canvas_grafico.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+        # ========== TABLA DE AVANCE MENSUAL Y ANUAL ==========
+        tabla_frame = ctk.CTkFrame(contenido_avance_frame, fg_color="white", corner_radius=12)
+        tabla_frame.pack(fill="both", expand=True, padx=10, pady=(5, 10))
+
+        ctk.CTkLabel(tabla_frame, text="📈 AVANCE MENSUAL Y ANUAL",
+                    font=("Segoe UI", 14, "bold"), text_color=COLOR_PRIMARY).pack(pady=10)
+
+        # Crear tabla con Treeview
+        cols = ["Mes", "Ejecutado (S/)", "Meta (S/)", "Cumplimiento Mes (%)", "Avance Anual (%)"]
+        tree_avance = ttk.Treeview(tabla_frame, columns=cols, show="headings", height=12)
+
+        for col in cols:
+            tree_avance.heading(col, text=col)
+            tree_avance.column(col, width=150, anchor="center")
+
+        vsb = ttk.Scrollbar(tabla_frame, orient="vertical", command=tree_avance.yview)
+        tree_avance.configure(yscrollcommand=vsb.set)
+
+        tree_avance.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        vsb.pack(side="right", fill="y")
+
+        # Calcular datos por mes
+        meses_map = {1: "ENE", 2: "FEB", 3: "MAR", 4: "ABR", 5: "MAY", 6: "JUN",
+                     7: "JUL", 8: "AGO", 9: "SEP", 10: "OCT", 11: "NOV", 12: "DIC"}
+
+        # Obtener mes máximo con datos
+        mes_max_general = df_recaudacion['MES'].max() if not df_recaudacion.empty else 1
+
+        # Calcular meta global de todos los auditores filtrados
+        meta_global = df_metas['monto_anual'].sum() if not df_metas.empty else 0
+        meta_mensual_global = meta_global / 12
+
+        # Insertar datos por mes
+        for mes in range(1, int(mes_max_general) + 1):
+            # Ejecutado del mes
+            df_mes = df_recaudacion[df_recaudacion['MES'] == mes]
+            ejecutado_mes = df_mes['monto_recaudado'].sum() if not df_mes.empty else 0
+
+            # Meta hasta ese mes
+            meta_hasta_mes = meta_mensual_global * mes
+
+            # Cumplimiento del mes
+            cumplimiento_mes = (ejecutado_mes / meta_mensual_global * 100) if meta_mensual_global > 0 else 0
+
+            # Avance anual (ejecutado total hasta ese mes vs meta global)
+            df_hasta_mes = df_recaudacion[df_recaudacion['MES'] <= mes]
+            ejecutado_acum = df_hasta_mes['monto_recaudado'].sum() if not df_hasta_mes.empty else 0
+            avance_anual = (ejecutado_acum / meta_global * 100) if meta_global > 0 else 0
+
+            valores = [
+                meses_map[mes],
+                f"S/ {ejecutado_mes:,.2f}",
+                f"S/ {meta_mensual_global:,.2f}",
+                f"{cumplimiento_mes:.1f}%",
+                f"{avance_anual:.1f}%"
+            ]
+
+            # Color según cumplimiento
+            tag = "verde" if cumplimiento_mes >= 100 else "amarillo" if cumplimiento_mes >= 80 else "rojo"
+            tree_avance.insert("", "end", values=valores, tags=(tag,))
+
+        # Estilos
+        style = ttk.Style()
+        style.configure("Treeview", rowheight=28, font=("Segoe UI", 10))
+        style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"), background=COLOR_PRIMARY, foreground="white")
+
+        tree_avance.tag_configure("verde", background="#D1FAE5", foreground="#065F46")
+        tree_avance.tag_configure("amarillo", background="#FEF3C7", foreground="#92400E")
+        tree_avance.tag_configure("rojo", background="#FEE2E2", foreground="#991B1B")
+
+    # Inicializar supervisores en combo
+    try:
+        anio_inicial = anio_actual
+        df_vinc_inicial = obtener_vinculacion_supervisor_auditor(anio_inicial)
+
+        if not df_vinc_inicial.empty:
+            supervisores_unicos = sorted(df_vinc_inicial['NOMBRE_SUPERVISOR'].unique().tolist())
+            combo_supervisor.configure(values=["(Todos)"] + supervisores_unicos)
+            combo_supervisor.set("(Todos)")
+
+            auditores_unicos = sorted(df_vinc_inicial['des_func'].unique().tolist())
+            combo_auditor.configure(values=["(Todos)"] + auditores_unicos)
+            combo_auditor.set("(Todos)")
+    except Exception as e:
+        print(f"Error inicializando filtros: {e}")
+
+    # Cargar datos iniciales
+    actualizar_avance_metas()
 
     # Forzar redraw
     def _force_redraw():
