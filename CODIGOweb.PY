@@ -13120,7 +13120,15 @@ def mostrar_dashboard_metas():
                   width=120, height=32).pack(side="left", padx=5)
 
     # Botón AVANCE DE METAS OF (llama al dashboard de supervisores)
-    ctk.CTkButton(botones_container, text="📊 Avance de Metas", command=dashboard_supervisores,
+    def ir_a_avance_metas():
+        """Función para ir al dashboard de supervisores desde las pestañas"""
+        # Limpiar el dashboard actual
+        for widget in dashboard_frame.winfo_children():
+            widget.destroy()
+        # Llamar al dashboard de supervisores
+        dashboard_supervisores()
+
+    ctk.CTkButton(botones_container, text="📊 Avance de Metas", command=ir_a_avance_metas,
                   fg_color="#6366F1", hover_color="#4F46E5", font=("Segoe UI", 11, "bold"),
                   width=150, height=32).pack(side="left", padx=5)
 
