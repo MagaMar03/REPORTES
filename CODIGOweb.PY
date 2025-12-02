@@ -12444,7 +12444,8 @@ def dashboard_avance_metas_of():
                       AND MES BETWEEN 1 AND 12
                     GROUP BY des_func, MES
                 """
-                df_of = pd.read_sql(query_of, DB_ENGINE, params=lista_auditores_filtrados)
+                # Convertir lista a tupla para pandas
+                df_of = pd.read_sql(query_of, DB_ENGINE, params=tuple(lista_auditores_filtrados))
 
             # 6. Encontrar último mes con datos != 0
             if df_of.empty:
