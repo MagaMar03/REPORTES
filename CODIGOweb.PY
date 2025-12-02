@@ -12522,7 +12522,7 @@ def dashboard_avance_metas_of():
             messagebox.showerror("Error", f"Error al cargar datos:\n{e}")
 
     def actualizar_grafico(datos, parent):
-        """Genera gráfico de barras horizontal"""
+        """Genera gráfico de barras horizontal con cifras visibles"""
         for widget in parent.winfo_children():
             widget.destroy()
 
@@ -12531,8 +12531,21 @@ def dashboard_avance_metas_of():
                         font=("Segoe UI", 14), text_color=COLOR_TEXT).pack(pady=20)
             return
 
-        # Crear figura con DPI reducido para carga rápida
-        fig, ax = plt.subplots(figsize=(10, max(4, len(datos) * 0.5)), dpi=80)
+        # Crear contenedor con dos columnas
+        main_container = ctk.CTkFrame(parent, fg_color="transparent")
+        main_container.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Columna izquierda: Gráfico
+        grafico_container = ctk.CTkFrame(main_container, fg_color=COLOR_WHITE)
+        grafico_container.pack(side="left", fill="both", expand=True, padx=(0, 10))
+
+        # Columna derecha: Tabla de auditores
+        tabla_auditores_container = ctk.CTkFrame(main_container, fg_color=COLOR_WHITE, width=450)
+        tabla_auditores_container.pack(side="right", fill="y", padx=(10, 0))
+        tabla_auditores_container.pack_propagate(False)
+
+        # === GRÁFICO ===
+        fig, ax = plt.subplots(figsize=(8, max(4, len(datos) * 0.5)), dpi=80)
 
         auditores = [d['auditor'] for d in datos]
         recaudado = [d['recaudado'] for d in datos]
@@ -12541,8 +12554,22 @@ def dashboard_avance_metas_of():
         y_pos = range(len(auditores))
 
         # Barras horizontales
-        ax.barh(y_pos, meta, color='#E5E7EB', label='Meta Acumulada', height=0.4, alpha=0.7)
-        ax.barh(y_pos, recaudado, color=COLOR_SECONDARY, label='Recaudado', height=0.4)
+        bars_meta = ax.barh(y_pos, meta, color='#E5E7EB', label='Meta Acumulada', height=0.4, alpha=0.7)
+        bars_recaudado = ax.barh(y_pos, recaudado, color=COLOR_SECONDARY, label='Recaudado', height=0.4)
+
+        # Añadir cifras en las barras
+        for i, (bar_meta, bar_rec) in enumerate(zip(bars_meta, bars_recaudado)):
+            # Cifra de meta (al final de la barra gris)
+            if meta[i] > 0:
+                ax.text(meta[i], bar_meta.get_y() + bar_meta.get_height()/2,
+                       f'S/ {meta[i]:,.0f}',
+                       ha='left', va='center', fontsize=7, color='#6B7280', fontweight='bold')
+
+            # Cifra de recaudado (al final de la barra azul)
+            if recaudado[i] > 0:
+                ax.text(recaudado[i], bar_rec.get_y() + bar_rec.get_height()/2,
+                       f'S/ {recaudado[i]:,.0f}',
+                       ha='left', va='center', fontsize=7, color='#1E3A8A', fontweight='bold')
 
         ax.set_yticks(y_pos)
         ax.set_yticklabels(auditores, fontsize=8)
@@ -12553,13 +12580,73 @@ def dashboard_avance_metas_of():
 
         plt.tight_layout(pad=0.5)
 
-        # Mostrar en tkinter
-        canvas_grafico = FigureCanvasTkAgg(fig, parent)
+        # Mostrar gráfico en tkinter
+        canvas_grafico = FigureCanvasTkAgg(fig, grafico_container)
         canvas_grafico.draw()
-        canvas_grafico.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
-
-        # Cerrar figura para liberar memoria
+        canvas_grafico.get_tk_widget().pack(fill="both", expand=True, padx=5, pady=5)
         plt.close(fig)
+
+        # === TABLA DE AUDITORES ===
+        ctk.CTkLabel(tabla_auditores_container, text="📊 AVANCE POR AUDITOR",
+                    font=("Segoe UI", 12, "bold"), text_color=COLOR_PRIMARY).pack(pady=10)
+
+        # Canvas con scroll para la tabla
+        canvas_tabla = tk.Canvas(tabla_auditores_container, bg=COLOR_WHITE, highlightthickness=0)
+        scrollbar_tabla = ctk.CTkScrollbar(tabla_auditores_container, orientation="vertical",
+                                           command=canvas_tabla.yview)
+        canvas_tabla.configure(yscrollcommand=scrollbar_tabla.set)
+
+        tabla_frame = ctk.CTkFrame(canvas_tabla, fg_color=COLOR_WHITE)
+        canvas_window_tabla = canvas_tabla.create_window((0, 0), window=tabla_frame, anchor="nw")
+
+        def _on_tabla_configure(event=None):
+            canvas_tabla.configure(scrollregion=canvas_tabla.bbox("all"))
+            if canvas_tabla.winfo_width() > 1:
+                canvas_tabla.itemconfig(canvas_window_tabla, width=canvas_tabla.winfo_width())
+
+        tabla_frame.bind("<Configure>", _on_tabla_configure)
+
+        # Encabezados de tabla
+        headers = ["Auditor", "Meta", "Recaudado", "Cumplimiento"]
+        header_frame = ctk.CTkFrame(tabla_frame, fg_color=COLOR_PRIMARY, corner_radius=5)
+        header_frame.pack(fill="x", padx=2, pady=2)
+
+        widths = [180, 80, 80, 80]
+        for i, (header, width) in enumerate(zip(headers, widths)):
+            ctk.CTkLabel(header_frame, text=header, font=("Segoe UI", 9, "bold"),
+                        text_color="white", width=width).grid(row=0, column=i, padx=1, pady=5)
+
+        # Filas de datos
+        for idx, dato in enumerate(datos):
+            bg = "#F9FAFB" if idx % 2 == 0 else COLOR_WHITE
+            row_frame = ctk.CTkFrame(tabla_frame, fg_color=bg, corner_radius=3)
+            row_frame.pack(fill="x", padx=2, pady=1)
+
+            cumplimiento = (dato['recaudado'] / dato['meta_acumulada'] * 100) if dato['meta_acumulada'] > 0 else 0
+
+            # Color del cumplimiento
+            if cumplimiento >= 100:
+                color_cumplimiento = "#059669"  # Verde
+            elif cumplimiento >= 75:
+                color_cumplimiento = "#F59E0B"  # Amarillo
+            else:
+                color_cumplimiento = "#DC2626"  # Rojo
+
+            valores = [
+                dato['auditor'][:25] + "..." if len(dato['auditor']) > 25 else dato['auditor'],
+                f"S/ {dato['meta_acumulada']:,.0f}",
+                f"S/ {dato['recaudado']:,.0f}",
+                f"{cumplimiento:.1f}%"
+            ]
+
+            for i, (valor, width) in enumerate(zip(valores, widths)):
+                color_texto = color_cumplimiento if i == 3 else COLOR_TEXT
+                ctk.CTkLabel(row_frame, text=valor, font=("Segoe UI", 8),
+                            text_color=color_texto, width=width,
+                            anchor="w" if i == 0 else "center").grid(row=0, column=i, padx=1, pady=3)
+
+        scrollbar_tabla.pack(side="right", fill="y")
+        canvas_tabla.pack(side="left", fill="both", expand=True, padx=5, pady=5)
 
     def actualizar_tabla(datos, parent):
         """Genera tabla de avance mensual y anual"""
