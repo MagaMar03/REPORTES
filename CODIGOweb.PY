@@ -12327,42 +12327,38 @@ def dashboard_avance_metas_of():
     tabla_frame.pack(fill="x", padx=10, pady=(5, 10))
 
     def cargar_supervisores_auditores():
-        """Carga opciones de supervisores y auditores para los filtros"""
+        """Carga opciones de supervisores y auditores para los filtros - OPTIMIZADO"""
         try:
             anio = int(combo_anio.get())
         except:
             anio = anio_actual
 
         try:
-            # Obtener supervisores desde fiscalizaciones1
-            # Primero encontrar el año y mes más reciente
-            query_max_fecha = """
-                SELECT MAX(Anio_Emis) as max_anio, MAX(Mes_Emis) as max_mes
-                FROM fiscalizaciones1
-                WHERE Anio_Emis = (SELECT MAX(Anio_Emis) FROM fiscalizaciones1)
-            """
-            df_max = pd.read_sql(query_max_fecha, DB_ENGINE)
-            max_anio = df_max['max_anio'].iloc[0] if not df_max.empty else anio
-            max_mes = df_max['max_mes'].iloc[0] if not df_max.empty else 12
-
-            # Obtener supervisores para esa fecha
+            # Obtener supervisores desde fiscalizaciones1 (query optimizada)
             query_supervisores = """
                 SELECT DISTINCT NOMBRE_SUPERVISOR
                 FROM fiscalizaciones1
-                WHERE Anio_Emis = %s AND Mes_Emis = %s
+                WHERE Anio_Emis = (SELECT MAX(Anio_Emis) FROM fiscalizaciones1)
+                  AND Mes_Emis = (
+                      SELECT MAX(Mes_Emis)
+                      FROM fiscalizaciones1
+                      WHERE Anio_Emis = (SELECT MAX(Anio_Emis) FROM fiscalizaciones1)
+                  )
                   AND NOMBRE_SUPERVISOR IS NOT NULL
                 ORDER BY NOMBRE_SUPERVISOR
+                LIMIT 100
             """
-            df_supervisores = pd.read_sql(query_supervisores, DB_ENGINE, params=(max_anio, max_mes))
+            df_supervisores = pd.read_sql(query_supervisores, DB_ENGINE)
             lista_supervisores = ["(Todos)"] + df_supervisores['NOMBRE_SUPERVISOR'].tolist()
             combo_supervisor.configure(values=lista_supervisores)
 
-            # Obtener auditores desde tabla distribucion
+            # Obtener auditores desde tabla distribucion (query optimizada)
             query_auditores = """
                 SELECT DISTINCT nombre_auditor
                 FROM distribucion
                 WHERE tipo = 'OF' AND YEAR(fecha) = %s
                 ORDER BY nombre_auditor
+                LIMIT 100
             """
             df_auditores = pd.read_sql(query_auditores, DB_ENGINE, params=(anio,))
             lista_auditores = ["(Todos)"] + df_auditores['nombre_auditor'].tolist()
@@ -12433,15 +12429,22 @@ def dashboard_avance_metas_of():
                 actualizar_tabla([], tabla_frame)
                 return
 
-            # 5. Obtener datos de recaudación (tabla OF)
+            # 5. Obtener datos de recaudación (tabla OF) - OPTIMIZADO
             lista_auditores_filtrados = df_metas['nombre_auditor'].tolist()
-            query_of = """
-                SELECT des_func, MES, SUM(MTO_PAG) as monto
-                FROM fiscalizaciones2
-                WHERE des_func IN ({})
-                GROUP BY des_func, MES
-            """.format(','.join(['%s'] * len(lista_auditores_filtrados)))
-            df_of = pd.read_sql(query_of, DB_ENGINE, params=lista_auditores_filtrados)
+
+            if len(lista_auditores_filtrados) == 0:
+                df_of = pd.DataFrame()
+            else:
+                # Query optimizada con solo columnas necesarias
+                placeholders = ','.join(['%s'] * len(lista_auditores_filtrados))
+                query_of = f"""
+                    SELECT des_func, MES, SUM(MTO_PAG) as monto
+                    FROM fiscalizaciones2
+                    WHERE des_func IN ({placeholders})
+                      AND MES BETWEEN 1 AND 12
+                    GROUP BY des_func, MES
+                """
+                df_of = pd.read_sql(query_of, DB_ENGINE, params=lista_auditores_filtrados)
 
             # 6. Encontrar último mes con datos != 0
             if df_of.empty:
@@ -12527,8 +12530,8 @@ def dashboard_avance_metas_of():
                         font=("Segoe UI", 14), text_color=COLOR_TEXT).pack(pady=20)
             return
 
-        # Crear figura
-        fig, ax = plt.subplots(figsize=(12, len(datos) * 0.6))
+        # Crear figura con DPI reducido para carga rápida
+        fig, ax = plt.subplots(figsize=(10, max(4, len(datos) * 0.5)), dpi=80)
 
         auditores = [d['auditor'] for d in datos]
         recaudado = [d['recaudado'] for d in datos]
@@ -12541,18 +12544,21 @@ def dashboard_avance_metas_of():
         ax.barh(y_pos, recaudado, color=COLOR_SECONDARY, label='Recaudado', height=0.4)
 
         ax.set_yticks(y_pos)
-        ax.set_yticklabels(auditores, fontsize=9)
-        ax.set_xlabel('Monto (S/)', fontsize=10, fontweight='bold')
-        ax.set_title('Avance de Metas por Auditor', fontsize=12, fontweight='bold')
-        ax.legend(loc='lower right')
-        ax.grid(axis='x', alpha=0.3)
+        ax.set_yticklabels(auditores, fontsize=8)
+        ax.set_xlabel('Monto (S/)', fontsize=9, fontweight='bold')
+        ax.set_title('Avance de Metas por Auditor', fontsize=11, fontweight='bold')
+        ax.legend(loc='lower right', fontsize=8)
+        ax.grid(axis='x', alpha=0.3, linewidth=0.5)
 
-        plt.tight_layout()
+        plt.tight_layout(pad=0.5)
 
         # Mostrar en tkinter
         canvas_grafico = FigureCanvasTkAgg(fig, parent)
         canvas_grafico.draw()
         canvas_grafico.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Cerrar figura para liberar memoria
+        plt.close(fig)
 
     def actualizar_tabla(datos, parent):
         """Genera tabla de avance mensual y anual"""
@@ -12599,9 +12605,11 @@ def dashboard_avance_metas_of():
                 ctk.CTkLabel(row_frame, text=valor, font=("Segoe UI", 9),
                             text_color=COLOR_TEXT, width=150).grid(row=0, column=i, padx=2, pady=3)
 
-    # Cargar opciones de filtros y datos iniciales
-    cargar_supervisores_auditores()
+    # Cargar datos iniciales inmediatamente (sin esperar filtros)
     cargar_datos_y_actualizar()
+
+    # Cargar filtros de forma asíncrona después de 100ms (lazy loading)
+    dashboard_frame.after(100, cargar_supervisores_auditores)
 
     # Vincular cambios de filtros
     combo_anio.configure(command=lambda x: (cargar_supervisores_auditores(), cargar_datos_y_actualizar()))
