@@ -12557,19 +12557,24 @@ def dashboard_avance_metas_of():
         bars_meta = ax.barh(y_pos, meta, color='#E5E7EB', label='Meta Acumulada', height=0.4, alpha=0.7)
         bars_recaudado = ax.barh(y_pos, recaudado, color=COLOR_SECONDARY, label='Recaudado', height=0.4)
 
-        # Añadir cifras en las barras
+        # Añadir cifras en las barras con fondo
         for i, (bar_meta, bar_rec) in enumerate(zip(bars_meta, bars_recaudado)):
-            # Cifra de meta (al final de la barra gris)
+            cumplimiento = (recaudado[i] / meta[i] * 100) if meta[i] > 0 else 0
+
+            # Cifra de meta (al final de la barra gris) con fondo blanco
             if meta[i] > 0:
                 ax.text(meta[i], bar_meta.get_y() + bar_meta.get_height()/2,
-                       f'S/ {meta[i]:,.0f}',
-                       ha='left', va='center', fontsize=7, color='#6B7280', fontweight='bold')
+                       f' S/ {meta[i]:,.0f} ',
+                       ha='left', va='center', fontsize=8, color='#374151', fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor='#D1D5DB', linewidth=1))
 
-            # Cifra de recaudado (al final de la barra azul)
+            # Cifra de recaudado (al final de la barra azul) con fondo y % cumplimiento
             if recaudado[i] > 0:
+                texto_recaudado = f' S/ {recaudado[i]:,.0f} ({cumplimiento:.1f}%) '
                 ax.text(recaudado[i], bar_rec.get_y() + bar_rec.get_height()/2,
-                       f'S/ {recaudado[i]:,.0f}',
-                       ha='left', va='center', fontsize=7, color='#1E3A8A', fontweight='bold')
+                       texto_recaudado,
+                       ha='left', va='center', fontsize=8, color='#1E3A8A', fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.4', facecolor='#EFF6FF', edgecolor='#3B82F6', linewidth=1.5))
 
         ax.set_yticks(y_pos)
         ax.set_yticklabels(auditores, fontsize=8)
@@ -12584,6 +12589,39 @@ def dashboard_avance_metas_of():
         canvas_grafico = FigureCanvasTkAgg(fig, grafico_container)
         canvas_grafico.draw()
         canvas_grafico.get_tk_widget().pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Añadir tooltip interactivo con hover
+        annot = ax.annotate("", xy=(0,0), xytext=(20,20), textcoords="offset points",
+                           bbox=dict(boxstyle="round,pad=0.8", fc="#1E3A8A", ec="#1E40AF", lw=2, alpha=0.95),
+                           arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0", color="#1E40AF", lw=2),
+                           fontsize=10, color='white', fontweight='bold', visible=False)
+
+        def hover(event):
+            vis = annot.get_visible()
+            if event.inaxes == ax:
+                for i, (bar_r, bar_m) in enumerate(zip(bars_recaudado, bars_meta)):
+                    cont_r, _ = bar_r.contains(event)
+                    cont_m, _ = bar_m.contains(event)
+
+                    if cont_r or cont_m:
+                        cumplimiento = (recaudado[i] / meta[i] * 100) if meta[i] > 0 else 0
+                        texto = f"{auditores[i]}\n\n"
+                        texto += f"Meta: S/ {meta[i]:,.2f}\n"
+                        texto += f"Recaudado: S/ {recaudado[i]:,.2f}\n"
+                        texto += f"Cumplimiento: {cumplimiento:.1f}%"
+
+                        annot.xy = (event.xdata, event.ydata)
+                        annot.set_text(texto)
+                        annot.set_visible(True)
+                        fig.canvas.draw_idle()
+                        return
+
+            if vis:
+                annot.set_visible(False)
+                fig.canvas.draw_idle()
+
+        fig.canvas.mpl_connect("motion_notify_event", hover)
+
         plt.close(fig)
 
         # === TABLA DE AUDITORES ===
