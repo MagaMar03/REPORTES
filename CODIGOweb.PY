@@ -12638,8 +12638,10 @@ def dashboard_avance_metas_of():
                     'meta_mensual': meta_mensual
                 })
 
-            # 9. Generar tabla mensual solo para meses seleccionados
-            # NUEVA LÓGICA según especificaciones:
+            # 9. Generar tabla mensual hasta el mes con datos reales
+            # La tabla muestra TODOS los meses desde enero hasta mes_real_con_datos
+            # (independiente del filtro de mes, que solo afecta al gráfico)
+            # LÓGICA:
             # - Meta: meta_global_anual / 12 (igual para cada mes)
             # - Ejecutado: suma de columna del mes en tabla OF
             # - Cumplimiento Mes: ejecutado_mes / meta_mes * 100
@@ -12651,7 +12653,8 @@ def dashboard_avance_metas_of():
 
             ejecutado_acumulado_total = 0  # Para calcular avance anual
 
-            for mes in sorted(meses_seleccionados):
+            # Iterar desde enero hasta el mes con datos reales (no usar filtro de mes)
+            for mes in range(1, mes_real_con_datos + 1):
                 # Ejecutado del mes: suma de la columna del mes en la tabla OF
                 ejecutado_mes = 0
 
