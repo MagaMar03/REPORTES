@@ -12253,9 +12253,14 @@ def dashboard_avance_metas_of():
     ctk.CTkLabel(titulo_container, text="📊 AVANCE DE METAS - OF",
                  font=("Segoe UI", 18, "bold"), text_color="white").pack(side="left", expand=True)
 
+    # Botón Volver
+    ctk.CTkButton(titulo_container, text="← Volver", command=mostrar_dashboard_metas,
+                  fg_color="#4B5563", hover_color="#374151", font=("Segoe UI", 11, "bold"),
+                  width=100, height=32).pack(side="right", padx=5)
+
     # Variables para almacenar objetos del gráfico (para exportar)
     grafico_fig = {"fig": None}
-    datos_exportar = {"grafico": [], "tabla": [], "filtros": {}}
+    datos_exportar = {"grafico": [], "tabla": [], "tabla_auditores": [], "filtros": {}}
 
     # Funciones de exportación
     def exportar_grafico_imagen():
@@ -12273,99 +12278,97 @@ def dashboard_avance_metas_of():
             )
             if archivo:
                 grafico_fig["fig"].savefig(archivo, dpi=150, bbox_inches='tight', facecolor='white')
-                messagebox.showinfo("Éxito", f"Gráfico exportado exitosamente a:\n{archivo}")
+                messagebox.showinfo("Éxito", "Gráfico exportado exitosamente")
         except Exception as e:
-            messagebox.showerror("Error", f"Error al exportar gráfico:\n{e}")
+            messagebox.showerror("Error", f"Error al exportar:\n{e}")
 
-    def exportar_excel():
-        """Exporta datos a Excel con información de filtros"""
+    def exportar_tabla_auditores():
+        """Exporta tabla de auditores a Excel"""
         try:
-            if not datos_exportar["grafico"] and not datos_exportar["tabla"]:
+            if not datos_exportar["tabla_auditores"]:
                 messagebox.showwarning("Sin datos", "No hay datos para exportar")
                 return
 
             from tkinter import filedialog
             import openpyxl
-            from openpyxl.styles import Font, Alignment, PatternFill
+            from openpyxl.styles import Font, PatternFill
 
             archivo = filedialog.asksaveasfilename(
                 defaultextension=".xlsx",
                 filetypes=[("Excel", "*.xlsx"), ("Todos los archivos", "*.*")],
-                title="Guardar datos como Excel"
+                title="Exportar Avance por Auditor"
             )
             if not archivo:
                 return
 
             wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Avance por Auditor"
 
-            # Hoja 1: Filtros Aplicados
-            ws_filtros = wb.active
-            ws_filtros.title = "Filtros"
-            ws_filtros['A1'] = "FILTROS APLICADOS"
-            ws_filtros['A1'].font = Font(bold=True, size=14)
+            # Encabezados
+            headers = ["Auditor", "Meta Acumulada", "Recaudado", "Cumplimiento (%)"]
+            for col, header in enumerate(headers, 1):
+                cell = ws.cell(1, col, header)
+                cell.font = Font(bold=True, color="FFFFFF")
+                cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
 
-            row = 3
-            for key, value in datos_exportar["filtros"].items():
-                ws_filtros[f'A{row}'] = key
-                ws_filtros[f'B{row}'] = value
-                ws_filtros[f'A{row}'].font = Font(bold=True)
-                row += 1
-
-            # Hoja 2: Avance por Auditor
-            if datos_exportar["grafico"]:
-                ws_grafico = wb.create_sheet("Avance por Auditor")
-                headers = ["Auditor", "Meta Acumulada", "Recaudado", "Cumplimiento (%)"]
-                for col, header in enumerate(headers, 1):
-                    cell = ws_grafico.cell(1, col, header)
-                    cell.font = Font(bold=True)
-                    cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-                    cell.font = Font(bold=True, color="FFFFFF")
-
-                for row, dato in enumerate(datos_exportar["grafico"], 2):
-                    ws_grafico.cell(row, 1, dato['auditor'])
-                    ws_grafico.cell(row, 2, dato['meta_acumulada'])
-                    ws_grafico.cell(row, 3, dato['recaudado'])
-                    cumplimiento = (dato['recaudado'] / dato['meta_acumulada'] * 100) if dato['meta_acumulada'] > 0 else 0
-                    ws_grafico.cell(row, 4, cumplimiento)
-
-            # Hoja 3: Avance Mensual y Anual
-            if datos_exportar["tabla"]:
-                ws_tabla = wb.create_sheet("Avance Mensual y Anual")
-                headers = ["Mes", "Ejecutado", "Meta", "Cumplimiento Mes (%)", "Avance Anual (%)"]
-                for col, header in enumerate(headers, 1):
-                    cell = ws_tabla.cell(1, col, header)
-                    cell.font = Font(bold=True)
-                    cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-                    cell.font = Font(bold=True, color="FFFFFF")
-
-                meses_nombres = ["", "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
-                                "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
-                for row, dato in enumerate(datos_exportar["tabla"], 2):
-                    ws_tabla.cell(row, 1, meses_nombres[dato['mes']])
-                    ws_tabla.cell(row, 2, dato['ejecutado'])
-                    ws_tabla.cell(row, 3, dato['meta'])
-                    ws_tabla.cell(row, 4, dato['cumplimiento'])
-                    ws_tabla.cell(row, 5, dato['avance_anual'])
+            # Datos
+            for row, dato in enumerate(datos_exportar["tabla_auditores"], 2):
+                ws.cell(row, 1, dato['auditor'])
+                ws.cell(row, 2, dato['meta_acumulada'])
+                ws.cell(row, 3, dato['recaudado'])
+                cumplimiento = (dato['recaudado'] / dato['meta_acumulada'] * 100) if dato['meta_acumulada'] > 0 else 0
+                ws.cell(row, 4, cumplimiento)
 
             wb.save(archivo)
-            messagebox.showinfo("Éxito", f"Datos exportados exitosamente a:\n{archivo}")
+            messagebox.showinfo("Éxito", "Datos exportados exitosamente")
         except Exception as e:
-            messagebox.showerror("Error", f"Error al exportar a Excel:\n{e}")
+            messagebox.showerror("Error", f"Error al exportar:\n{e}")
 
-    # Botón Exportar Gráfico
-    ctk.CTkButton(titulo_container, text="📷 Exportar Gráfico", command=exportar_grafico_imagen,
-                  fg_color="#059669", hover_color="#047857", font=("Segoe UI", 10, "bold"),
-                  width=140, height=32).pack(side="right", padx=5)
+    def exportar_tabla_mensual():
+        """Exporta tabla mensual a Excel"""
+        try:
+            if not datos_exportar["tabla"]:
+                messagebox.showwarning("Sin datos", "No hay datos para exportar")
+                return
 
-    # Botón Exportar Excel
-    ctk.CTkButton(titulo_container, text="📊 Exportar Excel", command=exportar_excel,
-                  fg_color="#10B981", hover_color="#059669", font=("Segoe UI", 10, "bold"),
-                  width=130, height=32).pack(side="right", padx=5)
+            from tkinter import filedialog
+            import openpyxl
+            from openpyxl.styles import Font, PatternFill
 
-    # Botón Volver
-    ctk.CTkButton(titulo_container, text="← Volver", command=mostrar_dashboard_metas,
-                  fg_color="#4B5563", hover_color="#374151", font=("Segoe UI", 11, "bold"),
-                  width=100, height=32).pack(side="right", padx=5)
+            archivo = filedialog.asksaveasfilename(
+                defaultextension=".xlsx",
+                filetypes=[("Excel", "*.xlsx"), ("Todos los archivos", "*.*")],
+                title="Exportar Avance Mensual"
+            )
+            if not archivo:
+                return
+
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Avance Mensual y Anual"
+
+            # Encabezados
+            headers = ["Mes", "Ejecutado", "Meta", "Cumplimiento Mes (%)", "Avance Anual (%)"]
+            for col, header in enumerate(headers, 1):
+                cell = ws.cell(1, col, header)
+                cell.font = Font(bold=True, color="FFFFFF")
+                cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+
+            # Datos
+            meses_nombres = ["", "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
+                            "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+            for row, dato in enumerate(datos_exportar["tabla"], 2):
+                ws.cell(row, 1, meses_nombres[dato['mes']])
+                ws.cell(row, 2, dato['ejecutado'])
+                ws.cell(row, 3, dato['meta'])
+                ws.cell(row, 4, dato['cumplimiento'])
+                ws.cell(row, 5, dato['avance_anual'])
+
+            wb.save(archivo)
+            messagebox.showinfo("Éxito", "Datos exportados exitosamente")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al exportar:\n{e}")
 
     # Obtener año más reciente de tabla distribucion
     try:
@@ -12835,6 +12838,20 @@ def dashboard_avance_metas_of():
         grafico_container = ctk.CTkFrame(main_container, fg_color=COLOR_WHITE)
         grafico_container.pack(side="left", fill="both", expand=True, padx=(0, 10))
 
+        # Header del gráfico con botón de exportación
+        grafico_header = ctk.CTkFrame(grafico_container, fg_color="transparent")
+        grafico_header.pack(fill="x", padx=10, pady=(10, 0))
+
+        ctk.CTkLabel(grafico_header, text="", font=("Segoe UI", 10)).pack(side="left", expand=True)
+
+        # Botón pequeño y sutil para exportar gráfico
+        btn_export_graf = ctk.CTkButton(grafico_header, text="📷",
+                                        command=exportar_grafico_imagen,
+                                        fg_color="#059669", hover_color="#047857",
+                                        width=30, height=24, corner_radius=5,
+                                        font=("Segoe UI", 12))
+        btn_export_graf.pack(side="right")
+
         # Columna derecha: Tabla de auditores
         tabla_auditores_container = ctk.CTkFrame(main_container, fg_color=COLOR_WHITE, width=450)
         tabla_auditores_container.pack(side="right", fill="y", padx=(10, 0))
@@ -12932,14 +12949,27 @@ def dashboard_avance_metas_of():
         # Guardar figura para exportación (NO cerrarla)
         grafico_fig["fig"] = fig
         datos_exportar["grafico"] = datos
+        datos_exportar["tabla_auditores"] = datos  # Guardar también para exportar tabla
 
         # === TABLA DE AUDITORES ===
+        # Header con título y botón de exportación
+        tabla_aud_header = ctk.CTkFrame(tabla_auditores_container, fg_color="transparent")
+        tabla_aud_header.pack(fill="x", padx=10, pady=(10, 5))
+
         # Título dinámico con el mes
         mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
         titulo_tabla = f"📊 AVANCE POR AUDITOR\n(hasta {mes_nombre})"
-        ctk.CTkLabel(tabla_auditores_container, text=titulo_tabla,
+        ctk.CTkLabel(tabla_aud_header, text=titulo_tabla,
                     font=("Segoe UI", 11, "bold"), text_color=COLOR_PRIMARY,
-                    justify="center").pack(pady=10)
+                    justify="center").pack(side="top", expand=True)
+
+        # Botón pequeño para exportar tabla de auditores
+        btn_export_aud = ctk.CTkButton(tabla_aud_header, text="📊",
+                                       command=exportar_tabla_auditores,
+                                       fg_color="#10B981", hover_color="#059669",
+                                       width=30, height=24, corner_radius=5,
+                                       font=("Segoe UI", 12))
+        btn_export_aud.pack(side="top", pady=(5, 0))
 
         # Canvas con scroll para la tabla
         canvas_tabla = tk.Canvas(tabla_auditores_container, bg=COLOR_WHITE, highlightthickness=0)
@@ -13007,8 +13037,21 @@ def dashboard_avance_metas_of():
         if not datos:
             return
 
-        ctk.CTkLabel(parent, text="📈 AVANCE MENSUAL Y ANUAL",
-                    font=("Segoe UI", 14, "bold"), text_color=COLOR_PRIMARY).pack(pady=10)
+        # Header con título y botón de exportación
+        tabla_mens_header = ctk.CTkFrame(parent, fg_color="transparent")
+        tabla_mens_header.pack(fill="x", padx=10, pady=(10, 0))
+
+        # Título
+        ctk.CTkLabel(tabla_mens_header, text="📈 AVANCE MENSUAL Y ANUAL",
+                    font=("Segoe UI", 14, "bold"), text_color=COLOR_PRIMARY).pack(side="left")
+
+        # Botón pequeño para exportar tabla mensual
+        btn_export_mens = ctk.CTkButton(tabla_mens_header, text="📊",
+                                       command=exportar_tabla_mensual,
+                                       fg_color="#10B981", hover_color="#059669",
+                                       width=30, height=24, corner_radius=5,
+                                       font=("Segoe UI", 12))
+        btn_export_mens.pack(side="right")
 
         # Contenedor centrado para la tabla
         tabla_outer = ctk.CTkFrame(parent, fg_color="transparent")
