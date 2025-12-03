@@ -12235,13 +12235,21 @@ def dashboard_avance_metas_of():
     scrollbar_main.pack(side="right", fill="y")
 
     # ====================
-    # TÍTULO
+    # TÍTULO Y BOTÓN VOLVER
     # ====================
     titulo_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_PRIMARY, corner_radius=10)
     titulo_frame.pack(fill="x", padx=10, pady=(10, 5))
 
-    ctk.CTkLabel(titulo_frame, text="📊 AVANCE DE METAS - OF",
-                 font=("Segoe UI", 18, "bold"), text_color="white").pack(pady=12)
+    titulo_container = ctk.CTkFrame(titulo_frame, fg_color="transparent")
+    titulo_container.pack(fill="x", padx=15, pady=12)
+
+    ctk.CTkLabel(titulo_container, text="📊 AVANCE DE METAS - OF",
+                 font=("Segoe UI", 18, "bold"), text_color="white").pack(side="left", expand=True)
+
+    # Botón Volver
+    ctk.CTkButton(titulo_container, text="← Volver", command=mostrar_dashboard_metas,
+                  fg_color="#4B5563", hover_color="#374151", font=("Segoe UI", 11, "bold"),
+                  width=100, height=32).pack(side="right", padx=5)
 
     # Obtener año más reciente de tabla distribucion
     try:
@@ -12269,11 +12277,12 @@ def dashboard_avance_metas_of():
     filtros_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_BOX, corner_radius=10)
     filtros_frame.pack(fill="x", padx=10, pady=(10, 5))
 
-    filtros_inner = ctk.CTkFrame(filtros_frame, fg_color="transparent")
-    filtros_inner.pack(fill="x", padx=15, pady=15)
+    # Primera fila de filtros: Año y Mes
+    filtros_fila1 = ctk.CTkFrame(filtros_frame, fg_color="transparent")
+    filtros_fila1.pack(fill="x", padx=15, pady=(15, 5))
 
     # Selector de Año
-    ctk.CTkLabel(filtros_inner, text="📅 Año:", font=("Segoe UI", 12, "bold"),
+    ctk.CTkLabel(filtros_fila1, text="📅 Año:", font=("Segoe UI", 12, "bold"),
                  text_color=COLOR_TEXT).pack(side="left", padx=(0, 10))
 
     try:
@@ -12288,31 +12297,139 @@ def dashboard_avance_metas_of():
     except Exception:
         lista_anios = [anio_actual]
 
-    combo_anio = ctk.CTkComboBox(filtros_inner, values=[str(a) for a in lista_anios],
+    combo_anio = ctk.CTkComboBox(filtros_fila1, values=[str(a) for a in lista_anios],
                                   width=120, height=35,
                                   font=("Segoe UI", 12), state="readonly")
     combo_anio.pack(side="left", padx=(0, 20))
     combo_anio.set(str(anio_actual))
+
+    # Filtro de Mes con checkboxes
+    ctk.CTkLabel(filtros_fila1, text="📆 Mes:", font=("Segoe UI", 12, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(20, 10))
+
+    # Variables para checkboxes de meses
+    meses_nombres = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+    check_mes_vars = {}
+    for i in range(1, 13):
+        check_mes_vars[i] = tk.IntVar(value=1)  # Todos seleccionados por defecto
+
+    mes_button_text = tk.StringVar(value="(Todos)")
+    dropdown_mes_win = {"win": None}
+
+    btn_mes = ctk.CTkButton(filtros_fila1, textvariable=mes_button_text,
+                            fg_color="#ffffff", text_color=COLOR_TEXT, border_width=2,
+                            border_color=COLOR_PRIMARY, hover_color=COLOR_PANEL,
+                            font=("Segoe UI", 11), width=180, height=35, anchor="w",
+                            command=lambda: toggle_dropdown_mes())
+    btn_mes.pack(side="left", padx=(0, 20))
+
+    def toggle_dropdown_mes():
+        """Abre/cierra dropdown de selección múltiple de meses"""
+        if dropdown_mes_win["win"] is not None:
+            try:
+                dropdown_mes_win["win"].destroy()
+            except:
+                pass
+            dropdown_mes_win["win"] = None
+            return
+
+        top = tk.Toplevel(filtros_fila1)
+        top.withdraw()
+        top.overrideredirect(True)
+        top.configure(bg="#ffffff", relief="solid", borderwidth=1)
+        dropdown_mes_win["win"] = top
+
+        frame_inner = ctk.CTkScrollableFrame(top, width=220, height=300, fg_color="#ffffff")
+        frame_inner.pack(fill="both", expand=True, padx=2, pady=2)
+
+        def on_check_change_mes():
+            """Actualiza el texto del botón según selección"""
+            selected = [m for m, v in check_mes_vars.items() if v.get() == 1]
+
+            if len(selected) == 0:
+                mes_button_text.set("(Ninguno)")
+            elif len(selected) == 12:
+                mes_button_text.set("(Todos)")
+            elif len(selected) == 1:
+                mes_button_text.set(meses_nombres[selected[0] - 1])
+            else:
+                mes_button_text.set(f"({len(selected)} meses)")
+
+            cargar_datos_y_actualizar()
+
+        # Botón "Todos"
+        def select_all_mes():
+            for var in check_mes_vars.values():
+                var.set(1)
+            on_check_change_mes()
+
+        btn_todos = ctk.CTkButton(frame_inner, text="✓ Seleccionar Todos",
+                                  command=select_all_mes,
+                                  fg_color=COLOR_SECONDARY, hover_color=COLOR_PRIMARY,
+                                  font=("Segoe UI", 10, "bold"), height=28)
+        btn_todos.pack(fill="x", padx=8, pady=(5, 2))
+
+        # Botón "Ninguno"
+        def deselect_all_mes():
+            for var in check_mes_vars.values():
+                var.set(0)
+            on_check_change_mes()
+
+        btn_ninguno = ctk.CTkButton(frame_inner, text="✗ Deseleccionar Todos",
+                                    command=deselect_all_mes,
+                                    fg_color="#6B7280", hover_color="#4B5563",
+                                    font=("Segoe UI", 10, "bold"), height=28)
+        btn_ninguno.pack(fill="x", padx=8, pady=(2, 5))
+
+        ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=5)
+
+        # Checkboxes para cada mes
+        for i in range(1, 13):
+            cb = ctk.CTkCheckBox(frame_inner, text=meses_nombres[i-1],
+                                variable=check_mes_vars[i],
+                                command=on_check_change_mes,
+                                font=("Segoe UI", 10))
+            cb.pack(anchor="w", padx=8, pady=2)
+
+        top.update_idletasks()
+        x = btn_mes.winfo_rootx()
+        y = btn_mes.winfo_rooty() + btn_mes.winfo_height()
+        top.geometry(f"+{x}+{y}")
+        top.deiconify()
+
+        def close_dropdown(event=None):
+            try:
+                top.destroy()
+            except:
+                pass
+            dropdown_mes_win["win"] = None
+
+        top.bind("<FocusOut>", close_dropdown)
+        top.bind("<Escape>", close_dropdown)
+
+    # Segunda fila de filtros: Supervisor y Auditor
+    filtros_fila2 = ctk.CTkFrame(filtros_frame, fg_color="transparent")
+    filtros_fila2.pack(fill="x", padx=15, pady=(5, 15))
 
     # Variables de filtros
     supervisor_seleccionado = tk.StringVar(value="(Todos)")
     auditor_seleccionado = tk.StringVar(value="(Todos)")
 
     # Filtro Supervisor
-    ctk.CTkLabel(filtros_inner, text="👤 Supervisor:", font=("Segoe UI", 12, "bold"),
-                 text_color=COLOR_TEXT).pack(side="left", padx=(20, 10))
+    ctk.CTkLabel(filtros_fila2, text="👤 Supervisor:", font=("Segoe UI", 12, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(0, 10))
 
-    combo_supervisor = ctk.CTkComboBox(filtros_inner, values=["(Todos)"],
+    combo_supervisor = ctk.CTkComboBox(filtros_fila2, values=["(Todos)"],
                                         variable=supervisor_seleccionado,
                                         width=200, height=35,
                                         font=("Segoe UI", 11), state="readonly")
     combo_supervisor.pack(side="left", padx=(0, 20))
 
     # Filtro Auditor
-    ctk.CTkLabel(filtros_inner, text="👨‍💼 Auditor:", font=("Segoe UI", 12, "bold"),
+    ctk.CTkLabel(filtros_fila2, text="👨‍💼 Auditor:", font=("Segoe UI", 12, "bold"),
                  text_color=COLOR_TEXT).pack(side="left", padx=(20, 10))
 
-    combo_auditor = ctk.CTkComboBox(filtros_inner, values=["(Todos)"],
+    combo_auditor = ctk.CTkComboBox(filtros_fila2, values=["(Todos)"],
                                      variable=auditor_seleccionado,
                                      width=250, height=35,
                                      font=("Segoe UI", 11), state="readonly")
@@ -12377,6 +12494,15 @@ def dashboard_avance_metas_of():
         supervisor_filtro = supervisor_seleccionado.get()
         auditor_filtro = auditor_seleccionado.get()
 
+        # Obtener meses seleccionados del filtro
+        meses_seleccionados = [m for m, v in check_mes_vars.items() if v.get() == 1]
+        if not meses_seleccionados:
+            messagebox.showwarning("Sin filtro", "Debe seleccionar al menos un mes")
+            return
+
+        # Mes más alto seleccionado (para calcular meta acumulada)
+        mes_maximo = max(meses_seleccionados)
+
         try:
             # 1. Obtener mapeo supervisor → auditor desde fiscalizaciones1 y fiscalizaciones2
             query_max_fecha = """
@@ -12399,9 +12525,9 @@ def dashboard_avance_metas_of():
             """
             df_sup_aud = pd.read_sql(query_sup_aud, DB_ENGINE, params=(max_anio, max_mes))
 
-            # 2. Obtener metas de la tabla distribucion
+            # 2. Obtener metas de la tabla distribucion (usar monto_asignado)
             query_metas = """
-                SELECT nombre_auditor, monto_asignado, monto_anual
+                SELECT nombre_auditor, monto_asignado
                 FROM distribucion
                 WHERE tipo = 'OF' AND YEAR(fecha) = %s
             """
@@ -12425,55 +12551,54 @@ def dashboard_avance_metas_of():
 
             if df_metas.empty:
                 messagebox.showwarning("Sin datos", "No hay datos para los filtros seleccionados")
-                actualizar_grafico([], grafico_frame)
+                actualizar_grafico([], grafico_frame, mes_maximo)
                 actualizar_tabla([], tabla_frame)
                 return
 
-            # 5. Obtener datos de recaudación (tabla OF) - OPTIMIZADO
+            # 5. Obtener datos de recaudación (tabla OF) aplicando filtro de meses
             lista_auditores_filtrados = df_metas['nombre_auditor'].tolist()
 
             if len(lista_auditores_filtrados) == 0:
                 df_of = pd.DataFrame()
             else:
-                # Query optimizada con solo columnas necesarias
-                placeholders = ','.join(['%s'] * len(lista_auditores_filtrados))
+                # Query con filtro de meses seleccionados
+                placeholders_auditores = ','.join(['%s'] * len(lista_auditores_filtrados))
+                placeholders_meses = ','.join(['%s'] * len(meses_seleccionados))
                 query_of = f"""
                     SELECT des_func, MES, SUM(MTO_PAG) as monto
                     FROM fiscalizaciones2
-                    WHERE des_func IN ({placeholders})
-                      AND MES BETWEEN 1 AND 12
+                    WHERE des_func IN ({placeholders_auditores})
+                      AND MES IN ({placeholders_meses})
                     GROUP BY des_func, MES
                 """
-                # Convertir lista a tupla para pandas
-                df_of = pd.read_sql(query_of, DB_ENGINE, params=tuple(lista_auditores_filtrados))
+                # Convertir listas a tupla para pandas
+                params = tuple(lista_auditores_filtrados) + tuple(meses_seleccionados)
+                df_of = pd.read_sql(query_of, DB_ENGINE, params=params)
 
-            # 6. Encontrar último mes con datos != 0
+            # 6. Crear pivot con datos de recaudación
             if df_of.empty:
-                mes_actual = 1
                 pivot_of = pd.DataFrame()
             else:
                 pivot_of = df_of.pivot_table(index='des_func', columns='MES', values='monto',
                                               aggfunc='sum', fill_value=0)
 
-                # Buscar última columna (mes) con algún valor != 0
-                mes_actual = 1
-                for mes in range(12, 0, -1):
-                    if mes in pivot_of.columns and pivot_of[mes].sum() > 0:
-                        mes_actual = mes
-                        break
-
-            # 7. Calcular avance por auditor
+            # 7. Calcular avance por auditor usando monto_asignado
             datos_grafico = []
 
             for idx, row in df_metas.iterrows():
                 auditor = row['nombre_auditor']
-                meta_anual = row['monto_anual']
-                meta_mensual_acumulada = (meta_anual / 12) * mes_actual
+                monto_asignado = row['monto_asignado']
 
-                # Obtener recaudado hasta el mes actual
+                # Meta mensual: monto_asignado / 12
+                meta_mensual = monto_asignado / 12
+
+                # Meta acumulada hasta el mes máximo seleccionado
+                meta_acumulada = meta_mensual * mes_maximo
+
+                # Obtener recaudado de los meses seleccionados
                 if not pivot_of.empty and auditor in pivot_of.index:
                     recaudado = 0
-                    for m in range(1, mes_actual + 1):
+                    for m in meses_seleccionados:
                         if m in pivot_of.columns:
                             recaudado += pivot_of.loc[auditor, m]
                 else:
@@ -12482,38 +12607,45 @@ def dashboard_avance_metas_of():
                 datos_grafico.append({
                     'auditor': auditor,
                     'recaudado': recaudado,
-                    'meta_acumulada': meta_mensual_acumulada,
-                    'meta_anual': meta_anual
+                    'meta_acumulada': meta_acumulada,
+                    'meta_mensual': meta_mensual
                 })
 
-            # 8. Generar tabla mensual
+            # 8. Generar tabla mensual solo para meses seleccionados
             datos_tabla = []
-            meta_global = df_metas['monto_anual'].sum()
+            meta_global_anual = df_metas['monto_asignado'].sum()
+            meta_mensual_global = meta_global_anual / 12
 
-            for mes in range(1, mes_actual + 1):
+            for mes in sorted(meses_seleccionados):
+                ejecutado_mes = 0
                 ejecutado_acumulado = 0
 
-                # Para cada auditor, sumar lo recaudado hasta este mes
+                # Para cada auditor, sumar lo recaudado
                 for auditor in df_metas['nombre_auditor']:
                     if not pivot_of.empty and auditor in pivot_of.index:
-                        for m in range(1, mes + 1):
-                            if m in pivot_of.columns:
+                        # Solo del mes actual para ejecutado_mes
+                        if mes in pivot_of.columns:
+                            ejecutado_mes += pivot_of.loc[auditor, mes]
+
+                        # Acumulado hasta este mes (de todos los meses <= mes actual)
+                        for m in meses_seleccionados:
+                            if m <= mes and m in pivot_of.columns:
                                 ejecutado_acumulado += pivot_of.loc[auditor, m]
 
-                meta_mes = (meta_global / 12) * mes
-                cumplimiento = (ejecutado_acumulado / meta_mes * 100) if meta_mes > 0 else 0
-                avance_anual = (ejecutado_acumulado / meta_global * 100) if meta_global > 0 else 0
+                meta_acumulada_mes = meta_mensual_global * mes
+                cumplimiento = (ejecutado_acumulado / meta_acumulada_mes * 100) if meta_acumulada_mes > 0 else 0
+                avance_anual = (ejecutado_acumulado / meta_global_anual * 100) if meta_global_anual > 0 else 0
 
                 datos_tabla.append({
                     'mes': mes,
                     'ejecutado': ejecutado_acumulado,
-                    'meta': meta_mes,
+                    'meta': meta_acumulada_mes,
                     'cumplimiento': cumplimiento,
                     'avance_anual': avance_anual
                 })
 
-            # Actualizar gráfico
-            actualizar_grafico(datos_grafico, grafico_frame)
+            # Actualizar gráfico pasando el mes máximo para el título dinámico
+            actualizar_grafico(datos_grafico, grafico_frame, mes_maximo)
 
             # Actualizar tabla
             actualizar_tabla(datos_tabla, tabla_frame)
@@ -12521,7 +12653,7 @@ def dashboard_avance_metas_of():
         except Exception as e:
             messagebox.showerror("Error", f"Error al cargar datos:\n{e}")
 
-    def actualizar_grafico(datos, parent):
+    def actualizar_grafico(datos, parent, mes_hasta=12):
         """Genera gráfico de barras horizontal con cifras visibles"""
         for widget in parent.winfo_children():
             widget.destroy()
@@ -12579,7 +12711,11 @@ def dashboard_avance_metas_of():
         ax.set_yticks(y_pos)
         ax.set_yticklabels(auditores, fontsize=8)
         ax.set_xlabel('Monto (S/)', fontsize=9, fontweight='bold')
-        ax.set_title('Avance de Metas por Auditor', fontsize=11, fontweight='bold')
+
+        # Título dinámico con el mes
+        mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
+        ax.set_title(f'Avance de Metas por Auditor (hasta {mes_nombre})', fontsize=11, fontweight='bold')
+
         ax.legend(loc='lower right', fontsize=8)
         ax.grid(axis='x', alpha=0.3, linewidth=0.5)
 
@@ -12625,8 +12761,12 @@ def dashboard_avance_metas_of():
         plt.close(fig)
 
         # === TABLA DE AUDITORES ===
-        ctk.CTkLabel(tabla_auditores_container, text="📊 AVANCE POR AUDITOR",
-                    font=("Segoe UI", 12, "bold"), text_color=COLOR_PRIMARY).pack(pady=10)
+        # Título dinámico con el mes
+        mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
+        titulo_tabla = f"📊 AVANCE POR AUDITOR\n(hasta {mes_nombre})"
+        ctk.CTkLabel(tabla_auditores_container, text=titulo_tabla,
+                    font=("Segoe UI", 11, "bold"), text_color=COLOR_PRIMARY,
+                    justify="center").pack(pady=10)
 
         # Canvas con scroll para la tabla
         canvas_tabla = tk.Canvas(tabla_auditores_container, bg=COLOR_WHITE, highlightthickness=0)
