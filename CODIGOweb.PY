@@ -12555,13 +12555,44 @@ def dashboard_avance_metas_of():
                 actualizar_tabla([], tabla_frame)
                 return
 
-            # 5. Obtener datos de recaudación (tabla OF) aplicando filtro de meses
+            # 5. Obtener datos de recaudación (tabla OF) - PRIMERO SIN FILTRO para encontrar último mes con datos
             lista_auditores_filtrados = df_metas['nombre_auditor'].tolist()
 
             if len(lista_auditores_filtrados) == 0:
+                df_of_completo = pd.DataFrame()
+                mes_real_con_datos = 1
+            else:
+                # Query SIN filtro de meses para encontrar el último mes con datos
+                placeholders_auditores = ','.join(['%s'] * len(lista_auditores_filtrados))
+                query_of_completo = f"""
+                    SELECT des_func, MES, SUM(MTO_PAG) as monto
+                    FROM fiscalizaciones2
+                    WHERE des_func IN ({placeholders_auditores})
+                      AND MES BETWEEN 1 AND 12
+                    GROUP BY des_func, MES
+                """
+                df_of_completo = pd.read_sql(query_of_completo, DB_ENGINE, params=tuple(lista_auditores_filtrados))
+
+                # Buscar el último mes que tenga al menos un valor diferente a 0
+                # ESTA ES LA CONDICIÓN PRIORITARIA para determinar la meta
+                if df_of_completo.empty:
+                    mes_real_con_datos = 1
+                else:
+                    pivot_of_completo = df_of_completo.pivot_table(index='des_func', columns='MES', values='monto',
+                                                                     aggfunc='sum', fill_value=0)
+
+                    # Buscar última columna (mes) con algún valor != 0
+                    mes_real_con_datos = 1
+                    for mes in range(12, 0, -1):
+                        if mes in pivot_of_completo.columns and pivot_of_completo[mes].sum() > 0:
+                            mes_real_con_datos = mes
+                            break
+
+            # 6. Ahora obtener datos filtrados por meses seleccionados (solo para visualización)
+            if len(lista_auditores_filtrados) == 0:
                 df_of = pd.DataFrame()
             else:
-                # Query con filtro de meses seleccionados
+                # Query con filtro de meses seleccionados para visualización
                 placeholders_auditores = ','.join(['%s'] * len(lista_auditores_filtrados))
                 placeholders_meses = ','.join(['%s'] * len(meses_seleccionados))
                 query_of = f"""
@@ -12571,18 +12602,17 @@ def dashboard_avance_metas_of():
                       AND MES IN ({placeholders_meses})
                     GROUP BY des_func, MES
                 """
-                # Convertir listas a tupla para pandas
                 params = tuple(lista_auditores_filtrados) + tuple(meses_seleccionados)
                 df_of = pd.read_sql(query_of, DB_ENGINE, params=params)
 
-            # 6. Crear pivot con datos de recaudación
+            # 7. Crear pivot con datos filtrados para visualización
             if df_of.empty:
                 pivot_of = pd.DataFrame()
             else:
                 pivot_of = df_of.pivot_table(index='des_func', columns='MES', values='monto',
                                               aggfunc='sum', fill_value=0)
 
-            # 7. Calcular avance por auditor usando monto_asignado
+            # 8. Calcular avance por auditor usando monto_asignado
             datos_grafico = []
 
             for idx, row in df_metas.iterrows():
@@ -12592,10 +12622,11 @@ def dashboard_avance_metas_of():
                 # Meta mensual: monto_asignado / 12
                 meta_mensual = monto_asignado / 12
 
-                # Meta acumulada hasta el mes máximo seleccionado
-                meta_acumulada = meta_mensual * mes_maximo
+                # Meta acumulada hasta el MES REAL CON DATOS (no el filtro)
+                # Esta es la meta calculada según el último mes con valores != 0 en la tabla OF
+                meta_acumulada = meta_mensual * mes_real_con_datos
 
-                # Obtener recaudado de los meses seleccionados
+                # Obtener recaudado de los meses seleccionados (para visualización)
                 if not pivot_of.empty and auditor in pivot_of.index:
                     recaudado = 0
                     for m in meses_seleccionados:
@@ -12611,7 +12642,7 @@ def dashboard_avance_metas_of():
                     'meta_mensual': meta_mensual
                 })
 
-            # 8. Generar tabla mensual solo para meses seleccionados
+            # 9. Generar tabla mensual solo para meses seleccionados
             datos_tabla = []
             meta_global_anual = df_metas['monto_asignado'].sum()
             meta_mensual_global = meta_global_anual / 12
@@ -12632,7 +12663,8 @@ def dashboard_avance_metas_of():
                             if m <= mes and m in pivot_of.columns:
                                 ejecutado_acumulado += pivot_of.loc[auditor, m]
 
-                meta_acumulada_mes = meta_mensual_global * mes
+                # Meta basada en el mes real con datos (no en el mes del loop)
+                meta_acumulada_mes = meta_mensual_global * mes_real_con_datos
                 cumplimiento = (ejecutado_acumulado / meta_acumulada_mes * 100) if meta_acumulada_mes > 0 else 0
                 avance_anual = (ejecutado_acumulado / meta_global_anual * 100) if meta_global_anual > 0 else 0
 
@@ -12644,8 +12676,8 @@ def dashboard_avance_metas_of():
                     'avance_anual': avance_anual
                 })
 
-            # Actualizar gráfico pasando el mes máximo para el título dinámico
-            actualizar_grafico(datos_grafico, grafico_frame, mes_maximo)
+            # Actualizar gráfico pasando el MES REAL CON DATOS para el título dinámico
+            actualizar_grafico(datos_grafico, grafico_frame, mes_real_con_datos)
 
             # Actualizar tabla
             actualizar_tabla(datos_tabla, tabla_frame)
