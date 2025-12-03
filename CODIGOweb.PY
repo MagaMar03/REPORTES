@@ -12272,18 +12272,18 @@ def dashboard_avance_metas_of():
     anio_seleccionado = tk.IntVar(value=anio_actual)
 
     # ====================
-    # SELECTOR DE AÑO Y FILTROS
+    # SELECTOR DE AÑO Y FILTROS (TODO EN UNA FILA)
     # ====================
     filtros_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_BOX, corner_radius=10)
     filtros_frame.pack(fill="x", padx=10, pady=(10, 5))
 
-    # Primera fila de filtros: Año y Mes
+    # Una sola fila con todos los filtros
     filtros_fila1 = ctk.CTkFrame(filtros_frame, fg_color="transparent")
-    filtros_fila1.pack(fill="x", padx=15, pady=(15, 5))
+    filtros_fila1.pack(fill="x", padx=15, pady=15)
 
     # Selector de Año
-    ctk.CTkLabel(filtros_fila1, text="📅 Año:", font=("Segoe UI", 12, "bold"),
-                 text_color=COLOR_TEXT).pack(side="left", padx=(0, 10))
+    ctk.CTkLabel(filtros_fila1, text="📅 Año:", font=("Segoe UI", 11, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
 
     try:
         query_anios = """
@@ -12298,14 +12298,14 @@ def dashboard_avance_metas_of():
         lista_anios = [anio_actual]
 
     combo_anio = ctk.CTkComboBox(filtros_fila1, values=[str(a) for a in lista_anios],
-                                  width=120, height=35,
-                                  font=("Segoe UI", 12), state="readonly")
-    combo_anio.pack(side="left", padx=(0, 20))
+                                  width=100, height=32,
+                                  font=("Segoe UI", 11), state="readonly")
+    combo_anio.pack(side="left", padx=(0, 15))
     combo_anio.set(str(anio_actual))
 
     # Filtro de Mes con checkboxes
-    ctk.CTkLabel(filtros_fila1, text="📆 Mes:", font=("Segoe UI", 12, "bold"),
-                 text_color=COLOR_TEXT).pack(side="left", padx=(20, 10))
+    ctk.CTkLabel(filtros_fila1, text="📆 Mes:", font=("Segoe UI", 11, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
 
     # Variables para checkboxes de meses
     meses_nombres = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
@@ -12319,9 +12319,9 @@ def dashboard_avance_metas_of():
     btn_mes = ctk.CTkButton(filtros_fila1, textvariable=mes_button_text,
                             fg_color="#ffffff", text_color=COLOR_TEXT, border_width=2,
                             border_color=COLOR_PRIMARY, hover_color=COLOR_PANEL,
-                            font=("Segoe UI", 11), width=180, height=35, anchor="w",
+                            font=("Segoe UI", 10), width=130, height=32, anchor="w",
                             command=lambda: toggle_dropdown_mes())
-    btn_mes.pack(side="left", padx=(0, 20))
+    btn_mes.pack(side="left", padx=(0, 15))
 
     def toggle_dropdown_mes():
         """Abre/cierra dropdown de selección múltiple de meses"""
@@ -12407,32 +12407,28 @@ def dashboard_avance_metas_of():
         top.bind("<FocusOut>", close_dropdown)
         top.bind("<Escape>", close_dropdown)
 
-    # Segunda fila de filtros: Supervisor y Auditor
-    filtros_fila2 = ctk.CTkFrame(filtros_frame, fg_color="transparent")
-    filtros_fila2.pack(fill="x", padx=15, pady=(5, 15))
-
     # Variables de filtros
     supervisor_seleccionado = tk.StringVar(value="(Todos)")
     auditor_seleccionado = tk.StringVar(value="(Todos)")
 
-    # Filtro Supervisor
-    ctk.CTkLabel(filtros_fila2, text="👤 Supervisor:", font=("Segoe UI", 12, "bold"),
-                 text_color=COLOR_TEXT).pack(side="left", padx=(0, 10))
+    # Filtro Supervisor (en la misma fila)
+    ctk.CTkLabel(filtros_fila1, text="👤 Supervisor:", font=("Segoe UI", 11, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
 
-    combo_supervisor = ctk.CTkComboBox(filtros_fila2, values=["(Todos)"],
+    combo_supervisor = ctk.CTkComboBox(filtros_fila1, values=["(Todos)"],
                                         variable=supervisor_seleccionado,
-                                        width=200, height=35,
-                                        font=("Segoe UI", 11), state="readonly")
-    combo_supervisor.pack(side="left", padx=(0, 20))
+                                        width=160, height=32,
+                                        font=("Segoe UI", 10), state="readonly")
+    combo_supervisor.pack(side="left", padx=(0, 15))
 
-    # Filtro Auditor
-    ctk.CTkLabel(filtros_fila2, text="👨‍💼 Auditor:", font=("Segoe UI", 12, "bold"),
-                 text_color=COLOR_TEXT).pack(side="left", padx=(20, 10))
+    # Filtro Auditor (en la misma fila)
+    ctk.CTkLabel(filtros_fila1, text="👨‍💼 Auditor:", font=("Segoe UI", 11, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
 
-    combo_auditor = ctk.CTkComboBox(filtros_fila2, values=["(Todos)"],
+    combo_auditor = ctk.CTkComboBox(filtros_fila1, values=["(Todos)"],
                                      variable=auditor_seleccionado,
-                                     width=250, height=35,
-                                     font=("Segoe UI", 11), state="readonly")
+                                     width=180, height=32,
+                                     font=("Segoe UI", 10), state="readonly")
     combo_auditor.pack(side="left", padx=(0, 10))
 
     # Frame para gráfico
@@ -12643,36 +12639,41 @@ def dashboard_avance_metas_of():
                 })
 
             # 9. Generar tabla mensual solo para meses seleccionados
+            # NUEVA LÓGICA según especificaciones:
+            # - Meta: meta_global_anual / 12 (igual para cada mes)
+            # - Ejecutado: suma de columna del mes en tabla OF
+            # - Cumplimiento Mes: ejecutado_mes / meta_mes * 100
+            # - Avance Anual: ejecutado_acumulado / meta_anual * 100
+
             datos_tabla = []
             meta_global_anual = df_metas['monto_asignado'].sum()
-            meta_mensual_global = meta_global_anual / 12
+            meta_mensual_global = meta_global_anual / 12  # Meta por mes (sin acumular)
+
+            ejecutado_acumulado_total = 0  # Para calcular avance anual
 
             for mes in sorted(meses_seleccionados):
+                # Ejecutado del mes: suma de la columna del mes en la tabla OF
                 ejecutado_mes = 0
-                ejecutado_acumulado = 0
 
-                # Para cada auditor, sumar lo recaudado
-                for auditor in df_metas['nombre_auditor']:
-                    if not pivot_of.empty and auditor in pivot_of.index:
-                        # Solo del mes actual para ejecutado_mes
-                        if mes in pivot_of.columns:
-                            ejecutado_mes += pivot_of.loc[auditor, mes]
+                if not pivot_of_completo.empty:
+                    # Usar pivot_of_completo (sin filtro de meses) para obtener datos reales
+                    if mes in pivot_of_completo.columns:
+                        ejecutado_mes = pivot_of_completo[mes].sum()
 
-                        # Acumulado hasta este mes (de todos los meses <= mes actual)
-                        for m in meses_seleccionados:
-                            if m <= mes and m in pivot_of.columns:
-                                ejecutado_acumulado += pivot_of.loc[auditor, m]
+                # Acumular para avance anual
+                ejecutado_acumulado_total += ejecutado_mes
 
-                # Meta basada en el mes real con datos (no en el mes del loop)
-                meta_acumulada_mes = meta_mensual_global * mes_real_con_datos
-                cumplimiento = (ejecutado_acumulado / meta_acumulada_mes * 100) if meta_acumulada_mes > 0 else 0
-                avance_anual = (ejecutado_acumulado / meta_global_anual * 100) if meta_global_anual > 0 else 0
+                # Cumplimiento del mes: ejecutado_mes vs meta_mensual
+                cumplimiento_mes = (ejecutado_mes / meta_mensual_global * 100) if meta_mensual_global > 0 else 0
+
+                # Avance anual: ejecutado acumulado vs meta anual
+                avance_anual = (ejecutado_acumulado_total / meta_global_anual * 100) if meta_global_anual > 0 else 0
 
                 datos_tabla.append({
                     'mes': mes,
-                    'ejecutado': ejecutado_acumulado,
-                    'meta': meta_acumulada_mes,
-                    'cumplimiento': cumplimiento,
+                    'ejecutado': ejecutado_mes,  # Solo del mes, no acumulado
+                    'meta': meta_mensual_global,  # Meta mensual (no acumulada)
+                    'cumplimiento': cumplimiento_mes,
                     'avance_anual': avance_anual
                 })
 
@@ -12747,6 +12748,13 @@ def dashboard_avance_metas_of():
         # Título dinámico con el mes
         mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
         ax.set_title(f'Avance de Metas por Auditor (hasta {mes_nombre})', fontsize=11, fontweight='bold')
+
+        # Limitar el eje X para que no se extienda demasiado cuando se excede la meta
+        max_meta = max(meta) if meta else 1
+        max_recaudado = max(recaudado) if recaudado else 1
+        # Usar el mayor valor, pero limitar a máximo 120% de la meta más alta
+        limite_x = max(max_meta * 1.2, min(max_recaudado, max_meta * 1.5))
+        ax.set_xlim(0, limite_x)
 
         ax.legend(loc='lower right', fontsize=8)
         ax.grid(axis='x', alpha=0.3, linewidth=0.5)
