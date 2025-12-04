@@ -13508,23 +13508,9 @@ def dashboard_avance_metas_ai():
             anio = anio_actual
 
         try:
-            # Obtener supervisores desde fiscalizaciones1 (query optimizada)
-            query_supervisores = """
-                SELECT DISTINCT NOMBRE_SUPERVISOR
-                FROM fiscalizaciones1
-                WHERE Anio_Emis = (SELECT MAX(Anio_Emis) FROM fiscalizaciones1)
-                  AND Mes_Emis = (
-                      SELECT MAX(Mes_Emis)
-                      FROM fiscalizaciones1
-                      WHERE Anio_Emis = (SELECT MAX(Anio_Emis) FROM fiscalizaciones1)
-                  )
-                  AND NOMBRE_SUPERVISOR IS NOT NULL
-                ORDER BY NOMBRE_SUPERVISOR
-                LIMIT 100
-            """
-            df_supervisores = pd.read_sql(query_supervisores, DB_ENGINE)
-            lista_supervisores = ["(Todos)"] + df_supervisores['NOMBRE_SUPERVISOR'].tolist()
-            combo_supervisor.configure(values=lista_supervisores)
+            # Filtro de supervisor deshabilitado para AI
+            # (fiscalizaciones5 no tiene la columna necesaria para el JOIN)
+            combo_supervisor.configure(values=["(Todos)"], state="disabled")
 
             # Obtener auditores desde tabla distribucion (query optimizada)
             query_auditores = """
@@ -13561,26 +13547,10 @@ def dashboard_avance_metas_ai():
         mes_maximo = max(meses_seleccionados)
 
         try:
-            # 1. Obtener mapeo supervisor → auditor desde fiscalizaciones1 y fiscalizaciones5
-            query_max_fecha = """
-                SELECT MAX(Anio_Emis) as max_anio, MAX(Mes_Emis) as max_mes
-                FROM fiscalizaciones1
-                WHERE Anio_Emis = (SELECT MAX(Anio_Emis) FROM fiscalizaciones1)
-            """
-            df_max = pd.read_sql(query_max_fecha, DB_ENGINE)
-            max_anio = df_max['max_anio'].iloc[0] if not df_max.empty else anio
-            max_mes = df_max['max_mes'].iloc[0] if not df_max.empty else 12
-
-            # Obtener relación supervisor → REG_AUDITOR desde fiscalizaciones1
-            query_sup_aud = """
-                SELECT DISTINCT f1.NOMBRE_SUPERVISOR, f1.REG_AUDITOR, f5.nomb_ver
-                FROM fiscalizaciones1 f1
-                LEFT JOIN fiscalizaciones5 f5 ON f1.REG_AUDITOR = f5.COD_REG_AC
-                WHERE f1.Anio_Emis = %s AND f1.Mes_Emis = %s
-                  AND f1.NOMBRE_SUPERVISOR IS NOT NULL
-                  AND f5.nomb_ver IS NOT NULL
-            """
-            df_sup_aud = pd.read_sql(query_sup_aud, DB_ENGINE, params=(max_anio, max_mes))
+            # 1. Para AI no usamos filtro de supervisor porque fiscalizaciones5
+            # no tiene la columna COD_REG_AC necesaria para el JOIN
+            # Simplemente obtenemos todos los auditores
+            df_sup_aud = pd.DataFrame()  # DataFrame vacío - no hay mapeo supervisor-auditor para AI
 
             # 2. Obtener metas de la tabla distribucion (usar monto_asignado)
             query_metas = """
@@ -13594,13 +13564,10 @@ def dashboard_avance_metas_ai():
                 messagebox.showwarning("Sin datos", f"No hay metas registradas para el año {anio}")
                 return
 
-            # 3. Aplicar filtro de supervisor
+            # 3. Filtro de supervisor deshabilitado para AI
+            # (fiscalizaciones5 no tiene la columna necesaria para el JOIN)
             if supervisor_filtro != "(Todos)":
-                # Obtener auditores del supervisor seleccionado
-                auditores_filtrados = df_sup_aud[
-                    df_sup_aud['NOMBRE_SUPERVISOR'] == supervisor_filtro
-                ]['nomb_ver'].unique().tolist()
-                df_metas = df_metas[df_metas['nombre_auditor'].isin(auditores_filtrados)]
+                messagebox.showinfo("Info", "El filtro de Supervisor no está disponible para AI")
 
             # 4. Aplicar filtro de auditor
             if auditor_filtro != "(Todos)":
