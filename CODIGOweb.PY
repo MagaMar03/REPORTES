@@ -12910,18 +12910,16 @@ def dashboard_avance_metas_of():
                        bbox=dict(boxstyle='round,pad=0.4', facecolor='#EFF6FF', edgecolor='#3B82F6', linewidth=1.5))
 
         ax.set_yticks(y_pos)
-        ax.set_yticklabels(auditores, fontsize=8)
+        ax.set_yticklabels(auditores, fontsize=6)
         ax.set_xlabel('Monto (S/)', fontsize=9, fontweight='bold')
 
         # Título dinámico con el mes
         mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
         ax.set_title(f'Avance de Metas por Auditor (hasta {mes_nombre})', fontsize=11, fontweight='bold')
 
-        # Limitar el eje X para que no se extienda demasiado cuando se excede la meta
+        # Limitar el eje X a 110% de la meta más alta (evita que se vaya al infinito)
         max_meta = max(meta) if meta else 1
-        max_recaudado = max(recaudado) if recaudado else 1
-        # Usar el mayor valor, pero limitar a máximo 120% de la meta más alta
-        limite_x = max(max_meta * 1.2, min(max_recaudado, max_meta * 1.5))
+        limite_x = max_meta * 1.1
         ax.set_xlim(0, limite_x)
 
         ax.legend(loc='lower right', fontsize=8)
@@ -13799,18 +13797,16 @@ def dashboard_avance_metas_ai():
                        bbox=dict(boxstyle='round,pad=0.4', facecolor='#EFF6FF', edgecolor='#3B82F6', linewidth=1.5))
 
         ax.set_yticks(y_pos)
-        ax.set_yticklabels(auditores, fontsize=8)
+        ax.set_yticklabels(auditores, fontsize=6)
         ax.set_xlabel('Monto (S/)', fontsize=9, fontweight='bold')
 
         # Título dinámico con el mes
         mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
         ax.set_title(f'Avance de Metas por Auditor (hasta {mes_nombre})', fontsize=11, fontweight='bold')
 
-        # Limitar el eje X para que no se extienda demasiado cuando se excede la meta
+        # Limitar el eje X a 110% de la meta más alta (evita que se vaya al infinito)
         max_meta = max(meta) if meta else 1
-        max_recaudado = max(recaudado) if recaudado else 1
-        # Usar el mayor valor, pero limitar a máximo 120% de la meta más alta
-        limite_x = max(max_meta * 1.2, min(max_recaudado, max_meta * 1.5))
+        limite_x = max_meta * 1.1
         ax.set_xlim(0, limite_x)
 
         ax.legend(loc='lower right', fontsize=8)
