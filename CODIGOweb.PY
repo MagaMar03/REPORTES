@@ -13102,6 +13102,928 @@ def dashboard_avance_metas_of():
     combo_supervisor.configure(command=lambda x: cargar_datos_y_actualizar())
     combo_auditor.configure(command=lambda x: cargar_datos_y_actualizar())
 
+# ==========================
+# DASHBOARD AVANCE DE METAS AI
+# ==========================
+def dashboard_avance_metas_ai():
+    """
+    Dashboard para mostrar el avance de metas AI con:
+    - Selector de año (automático desde tabla distribucion)
+    - Filtros: Supervisor y Auditor
+    - Gráfico de barras horizontal con avance de metas
+    - Tabla de avance mensual y anual
+    """
+    try:
+        preview_frame.pack_forget()
+    except Exception:
+        pass
+
+    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=(5, 10))
+
+    for widget in dashboard_frame.winfo_children():
+        widget.destroy()
+
+    # Canvas principal con scroll - RESPONSIVO
+    canvas_main = tk.Canvas(dashboard_frame, bg=COLOR_WHITE, highlightthickness=0)
+    scrollbar_main = ctk.CTkScrollbar(dashboard_frame, orientation="vertical", command=canvas_main.yview)
+    canvas_main.configure(yscrollcommand=scrollbar_main.set)
+
+    inner_frame = ctk.CTkFrame(canvas_main, fg_color=COLOR_WHITE)
+    canvas_window = canvas_main.create_window((0, 0), window=inner_frame, anchor="nw")
+
+    def _on_frame_configure(event=None):
+        """Configurar scroll y responsividad del canvas"""
+        canvas_main.configure(scrollregion=canvas_main.bbox("all"))
+        # Hacer que el inner_frame se expanda con la ventana
+        if canvas_main.winfo_width() > 1:
+            canvas_main.itemconfig(canvas_window, width=canvas_main.winfo_width())
+
+    def _on_canvas_configure(event=None):
+        """Ajustar tamaño del inner_frame cuando cambia el canvas"""
+        if event and event.width > 1:
+            canvas_main.itemconfig(canvas_window, width=event.width)
+
+    inner_frame.bind("<Configure>", _on_frame_configure)
+    canvas_main.bind("<Configure>", _on_canvas_configure)
+
+    # Scroll con rueda del mouse
+    def _on_mousewheel(event):
+        if event.delta:
+            canvas_main.yview_scroll(int(-1*(event.delta/120)), "units")
+        else:
+            if event.num == 5:
+                canvas_main.yview_scroll(1, "units")
+            elif event.num == 4:
+                canvas_main.yview_scroll(-1, "units")
+
+    canvas_main.bind_all("<MouseWheel>", _on_mousewheel)
+    canvas_main.bind_all("<Button-4>", _on_mousewheel)
+    canvas_main.bind_all("<Button-5>", _on_mousewheel)
+
+    canvas_main.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+    scrollbar_main.pack(side="right", fill="y")
+
+    # ====================
+    # TÍTULO Y BOTÓN VOLVER
+    # ====================
+    titulo_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_PRIMARY, corner_radius=10)
+    titulo_frame.pack(fill="x", padx=10, pady=(10, 5))
+
+    titulo_container = ctk.CTkFrame(titulo_frame, fg_color="transparent")
+    titulo_container.pack(fill="x", padx=15, pady=12)
+
+    ctk.CTkLabel(titulo_container, text="📊 AVANCE DE METAS - AI",
+                 font=("Segoe UI", 18, "bold"), text_color="white").pack(side="left", expand=True)
+
+    # Botón Volver
+    ctk.CTkButton(titulo_container, text="← Volver", command=mostrar_dashboard_metas,
+                  fg_color="#4B5563", hover_color="#374151", font=("Segoe UI", 11, "bold"),
+                  width=100, height=32).pack(side="right", padx=5)
+
+    # Variables para almacenar objetos del gráfico (para exportar)
+    grafico_fig = {"fig": None}
+    datos_exportar = {"grafico": [], "tabla": [], "tabla_auditores": [], "filtros": {}}
+
+    # Funciones de exportación
+    def exportar_grafico_imagen():
+        """Exporta el gráfico como imagen PNG"""
+        try:
+            if grafico_fig["fig"] is None:
+                messagebox.showwarning("Sin gráfico", "No hay gráfico para exportar")
+                return
+
+            from tkinter import filedialog
+            archivo = filedialog.asksaveasfilename(
+                defaultextension=".png",
+                filetypes=[("PNG", "*.png"), ("JPEG", "*.jpg"), ("Todos los archivos", "*.*")],
+                title="Guardar gráfico como imagen"
+            )
+            if archivo:
+                grafico_fig["fig"].savefig(archivo, dpi=150, bbox_inches='tight', facecolor='white')
+                messagebox.showinfo("Éxito", "Gráfico exportado exitosamente")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al exportar:\n{e}")
+
+    def exportar_tabla_auditores():
+        """Exporta tabla de auditores a Excel"""
+        try:
+            if not datos_exportar["tabla_auditores"]:
+                messagebox.showwarning("Sin datos", "No hay datos para exportar")
+                return
+
+            from tkinter import filedialog
+            import openpyxl
+            from openpyxl.styles import Font, PatternFill
+
+            archivo = filedialog.asksaveasfilename(
+                defaultextension=".xlsx",
+                filetypes=[("Excel", "*.xlsx"), ("Todos los archivos", "*.*")],
+                title="Exportar Avance por Auditor"
+            )
+            if not archivo:
+                return
+
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Avance por Auditor"
+
+            # Encabezados
+            headers = ["Auditor", "Meta Acumulada", "Recaudado", "Cumplimiento (%)"]
+            for col, header in enumerate(headers, 1):
+                cell = ws.cell(1, col, header)
+                cell.font = Font(bold=True, color="FFFFFF")
+                cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+
+            # Datos
+            for row, dato in enumerate(datos_exportar["tabla_auditores"], 2):
+                ws.cell(row, 1, dato['auditor'])
+                ws.cell(row, 2, dato['meta_acumulada'])
+                ws.cell(row, 3, dato['recaudado'])
+                cumplimiento = (dato['recaudado'] / dato['meta_acumulada'] * 100) if dato['meta_acumulada'] > 0 else 0
+                ws.cell(row, 4, cumplimiento)
+
+            wb.save(archivo)
+            messagebox.showinfo("Éxito", "Datos exportados exitosamente")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al exportar:\n{e}")
+
+    def exportar_tabla_mensual():
+        """Exporta tabla mensual a Excel"""
+        try:
+            if not datos_exportar["tabla"]:
+                messagebox.showwarning("Sin datos", "No hay datos para exportar")
+                return
+
+            from tkinter import filedialog
+            import openpyxl
+            from openpyxl.styles import Font, PatternFill
+
+            archivo = filedialog.asksaveasfilename(
+                defaultextension=".xlsx",
+                filetypes=[("Excel", "*.xlsx"), ("Todos los archivos", "*.*")],
+                title="Exportar Avance Mensual"
+            )
+            if not archivo:
+                return
+
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Avance Mensual y Anual"
+
+            # Encabezados
+            headers = ["Mes", "Ejecutado", "Meta", "Cumplimiento Mes (%)", "Avance Anual (%)"]
+            for col, header in enumerate(headers, 1):
+                cell = ws.cell(1, col, header)
+                cell.font = Font(bold=True, color="FFFFFF")
+                cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+
+            # Datos
+            meses_nombres = ["", "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
+                            "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+            for row, dato in enumerate(datos_exportar["tabla"], 2):
+                ws.cell(row, 1, meses_nombres[dato['mes']])
+                ws.cell(row, 2, dato['ejecutado'])
+                ws.cell(row, 3, dato['meta'])
+                ws.cell(row, 4, dato['cumplimiento'])
+                ws.cell(row, 5, dato['avance_anual'])
+
+            wb.save(archivo)
+            messagebox.showinfo("Éxito", "Datos exportados exitosamente")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al exportar:\n{e}")
+
+    # Obtener año más reciente de tabla distribucion
+    try:
+        query_anio = """
+            SELECT DISTINCT YEAR(fecha) as anio
+            FROM distribucion
+            WHERE tipo = 'AI'
+            ORDER BY fecha DESC
+            LIMIT 1
+        """
+        df_anio = pd.read_sql(query_anio, DB_ENGINE)
+        if not df_anio.empty:
+            anio_actual = df_anio['anio'].iloc[0]
+        else:
+            anio_actual = datetime.now().year
+    except Exception:
+        anio_actual = datetime.now().year
+
+    # Variable para el año seleccionado
+    anio_seleccionado = tk.IntVar(value=anio_actual)
+
+    # ====================
+    # SELECTOR DE AÑO Y FILTROS (TODO EN UNA FILA)
+    # ====================
+    filtros_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_BOX, corner_radius=10)
+    filtros_frame.pack(fill="x", padx=10, pady=(10, 5))
+
+    # Una sola fila con todos los filtros
+    filtros_fila1 = ctk.CTkFrame(filtros_frame, fg_color="transparent")
+    filtros_fila1.pack(fill="x", padx=15, pady=15)
+
+    # Selector de Año
+    ctk.CTkLabel(filtros_fila1, text="📅 Año:", font=("Segoe UI", 11, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
+
+    try:
+        query_anios = """
+            SELECT DISTINCT YEAR(fecha) as anio
+            FROM distribucion
+            WHERE tipo = 'AI'
+            ORDER BY anio DESC
+        """
+        df_anios = pd.read_sql(query_anios, DB_ENGINE)
+        lista_anios = df_anios['anio'].tolist() if not df_anios.empty else [anio_actual]
+    except Exception:
+        lista_anios = [anio_actual]
+
+    combo_anio = ctk.CTkComboBox(filtros_fila1, values=[str(a) for a in lista_anios],
+                                  width=100, height=32,
+                                  font=("Segoe UI", 11), state="readonly")
+    combo_anio.pack(side="left", padx=(0, 15))
+    combo_anio.set(str(anio_actual))
+
+    # Filtro de Mes con checkboxes
+    ctk.CTkLabel(filtros_fila1, text="📆 Mes:", font=("Segoe UI", 11, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
+
+    # Variables para checkboxes de meses
+    meses_nombres = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+    check_mes_vars = {}
+    for i in range(1, 13):
+        check_mes_vars[i] = tk.IntVar(value=1)  # Todos seleccionados por defecto
+
+    mes_button_text = tk.StringVar(value="(Todos)")
+    dropdown_mes_win = {"win": None}
+
+    btn_mes = ctk.CTkButton(filtros_fila1, textvariable=mes_button_text,
+                            fg_color="#ffffff", text_color=COLOR_TEXT, border_width=2,
+                            border_color=COLOR_PRIMARY, hover_color=COLOR_PANEL,
+                            font=("Segoe UI", 10), width=130, height=32, anchor="w",
+                            command=lambda: toggle_dropdown_mes())
+    btn_mes.pack(side="left", padx=(0, 15))
+
+    def toggle_dropdown_mes():
+        """Abre/cierra dropdown de selección múltiple de meses"""
+        if dropdown_mes_win["win"] is not None:
+            try:
+                dropdown_mes_win["win"].destroy()
+            except:
+                pass
+            dropdown_mes_win["win"] = None
+            return
+
+        top = tk.Toplevel(filtros_fila1)
+        top.withdraw()
+        top.overrideredirect(True)
+        top.configure(bg="#ffffff", relief="solid", borderwidth=1)
+        dropdown_mes_win["win"] = top
+
+        frame_inner = ctk.CTkScrollableFrame(top, width=220, height=300, fg_color="#ffffff")
+        frame_inner.pack(fill="both", expand=True, padx=2, pady=2)
+
+        def on_check_change_mes():
+            """Actualiza el texto del botón según selección"""
+            selected = [m for m, v in check_mes_vars.items() if v.get() == 1]
+
+            if len(selected) == 0:
+                mes_button_text.set("(Ninguno)")
+            elif len(selected) == 12:
+                mes_button_text.set("(Todos)")
+            elif len(selected) == 1:
+                mes_button_text.set(meses_nombres[selected[0] - 1])
+            else:
+                mes_button_text.set(f"({len(selected)} meses)")
+
+            cargar_datos_y_actualizar()
+
+        # Botón "Todos"
+        def select_all_mes():
+            for var in check_mes_vars.values():
+                var.set(1)
+            on_check_change_mes()
+
+        btn_todos = ctk.CTkButton(frame_inner, text="✓ Seleccionar Todos",
+                                  command=select_all_mes,
+                                  fg_color=COLOR_SECONDARY, hover_color=COLOR_PRIMARY,
+                                  font=("Segoe UI", 10, "bold"), height=28)
+        btn_todos.pack(fill="x", padx=8, pady=(5, 2))
+
+        # Botón "Ninguno"
+        def deselect_all_mes():
+            for var in check_mes_vars.values():
+                var.set(0)
+            on_check_change_mes()
+
+        btn_ninguno = ctk.CTkButton(frame_inner, text="✗ Deseleccionar Todos",
+                                    command=deselect_all_mes,
+                                    fg_color="#6B7280", hover_color="#4B5563",
+                                    font=("Segoe UI", 10, "bold"), height=28)
+        btn_ninguno.pack(fill="x", padx=8, pady=(2, 5))
+
+        ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=5)
+
+        # Checkboxes para cada mes
+        for i in range(1, 13):
+            cb = ctk.CTkCheckBox(frame_inner, text=meses_nombres[i-1],
+                                variable=check_mes_vars[i],
+                                command=on_check_change_mes,
+                                font=("Segoe UI", 10))
+            cb.pack(anchor="w", padx=8, pady=2)
+
+        top.update_idletasks()
+        x = btn_mes.winfo_rootx()
+        y = btn_mes.winfo_rooty() + btn_mes.winfo_height()
+        top.geometry(f"+{x}+{y}")
+        top.deiconify()
+
+        def close_dropdown(event=None):
+            try:
+                top.destroy()
+            except:
+                pass
+            dropdown_mes_win["win"] = None
+
+        top.bind("<FocusOut>", close_dropdown)
+        top.bind("<Escape>", close_dropdown)
+
+    # Variables de filtros
+    supervisor_seleccionado = tk.StringVar(value="(Todos)")
+    auditor_seleccionado = tk.StringVar(value="(Todos)")
+
+    # Filtro Supervisor (en la misma fila)
+    ctk.CTkLabel(filtros_fila1, text="👤 Supervisor:", font=("Segoe UI", 11, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
+
+    combo_supervisor = ctk.CTkComboBox(filtros_fila1, values=["(Todos)"],
+                                        variable=supervisor_seleccionado,
+                                        width=160, height=32,
+                                        font=("Segoe UI", 10), state="readonly")
+    combo_supervisor.pack(side="left", padx=(0, 15))
+
+    # Filtro Auditor (en la misma fila)
+    ctk.CTkLabel(filtros_fila1, text="👨‍💼 Auditor:", font=("Segoe UI", 11, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
+
+    combo_auditor = ctk.CTkComboBox(filtros_fila1, values=["(Todos)"],
+                                     variable=auditor_seleccionado,
+                                     width=180, height=32,
+                                     font=("Segoe UI", 10), state="readonly")
+    combo_auditor.pack(side="left", padx=(0, 10))
+
+    # Frame para gráfico
+    grafico_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_WHITE, corner_radius=10)
+    grafico_frame.pack(fill="both", expand=True, padx=10, pady=(10, 5))
+
+    # Frame para tabla
+    tabla_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_WHITE, corner_radius=10)
+    tabla_frame.pack(fill="x", padx=10, pady=(5, 10))
+
+    def cargar_supervisores_auditores():
+        """Carga opciones de supervisores y auditores para los filtros - OPTIMIZADO"""
+        try:
+            anio = int(combo_anio.get())
+        except:
+            anio = anio_actual
+
+        try:
+            # Obtener supervisores desde fiscalizaciones1 (query optimizada)
+            query_supervisores = """
+                SELECT DISTINCT NOMBRE_SUPERVISOR
+                FROM fiscalizaciones1
+                WHERE Anio_Emis = (SELECT MAX(Anio_Emis) FROM fiscalizaciones1)
+                  AND Mes_Emis = (
+                      SELECT MAX(Mes_Emis)
+                      FROM fiscalizaciones1
+                      WHERE Anio_Emis = (SELECT MAX(Anio_Emis) FROM fiscalizaciones1)
+                  )
+                  AND NOMBRE_SUPERVISOR IS NOT NULL
+                ORDER BY NOMBRE_SUPERVISOR
+                LIMIT 100
+            """
+            df_supervisores = pd.read_sql(query_supervisores, DB_ENGINE)
+            lista_supervisores = ["(Todos)"] + df_supervisores['NOMBRE_SUPERVISOR'].tolist()
+            combo_supervisor.configure(values=lista_supervisores)
+
+            # Obtener auditores desde tabla distribucion (query optimizada)
+            query_auditores = """
+                SELECT DISTINCT nombre_auditor
+                FROM distribucion
+                WHERE tipo = 'AI' AND YEAR(fecha) = %s
+                ORDER BY nombre_auditor
+                LIMIT 100
+            """
+            df_auditores = pd.read_sql(query_auditores, DB_ENGINE, params=(anio,))
+            lista_auditores = ["(Todos)"] + df_auditores['nombre_auditor'].tolist()
+            combo_auditor.configure(values=lista_auditores)
+
+        except Exception as e:
+            print(f"Error cargando filtros: {e}")
+
+    def cargar_datos_y_actualizar():
+        """Carga datos y actualiza gráfico y tabla según filtros"""
+        try:
+            anio = int(combo_anio.get())
+        except:
+            anio = anio_actual
+
+        supervisor_filtro = supervisor_seleccionado.get()
+        auditor_filtro = auditor_seleccionado.get()
+
+        # Obtener meses seleccionados del filtro
+        meses_seleccionados = [m for m, v in check_mes_vars.items() if v.get() == 1]
+        if not meses_seleccionados:
+            messagebox.showwarning("Sin filtro", "Debe seleccionar al menos un mes")
+            return
+
+        # Mes más alto seleccionado (para calcular meta acumulada)
+        mes_maximo = max(meses_seleccionados)
+
+        try:
+            # 1. Obtener mapeo supervisor → auditor desde fiscalizaciones1 y fiscalizaciones5
+            query_max_fecha = """
+                SELECT MAX(Anio_Emis) as max_anio, MAX(Mes_Emis) as max_mes
+                FROM fiscalizaciones1
+                WHERE Anio_Emis = (SELECT MAX(Anio_Emis) FROM fiscalizaciones1)
+            """
+            df_max = pd.read_sql(query_max_fecha, DB_ENGINE)
+            max_anio = df_max['max_anio'].iloc[0] if not df_max.empty else anio
+            max_mes = df_max['max_mes'].iloc[0] if not df_max.empty else 12
+
+            # Obtener relación supervisor → REG_AUDITOR desde fiscalizaciones1
+            query_sup_aud = """
+                SELECT DISTINCT f1.NOMBRE_SUPERVISOR, f1.REG_AUDITOR, f5.nomb_ver
+                FROM fiscalizaciones1 f1
+                LEFT JOIN fiscalizaciones5 f5 ON f1.REG_AUDITOR = f5.COD_REG_AC
+                WHERE f1.Anio_Emis = %s AND f1.Mes_Emis = %s
+                  AND f1.NOMBRE_SUPERVISOR IS NOT NULL
+                  AND f5.nomb_ver IS NOT NULL
+            """
+            df_sup_aud = pd.read_sql(query_sup_aud, DB_ENGINE, params=(max_anio, max_mes))
+
+            # 2. Obtener metas de la tabla distribucion (usar monto_asignado)
+            query_metas = """
+                SELECT nombre_auditor, monto_asignado
+                FROM distribucion
+                WHERE tipo = 'AI' AND YEAR(fecha) = %s
+            """
+            df_metas = pd.read_sql(query_metas, DB_ENGINE, params=(anio,))
+
+            if df_metas.empty:
+                messagebox.showwarning("Sin datos", f"No hay metas registradas para el año {anio}")
+                return
+
+            # 3. Aplicar filtro de supervisor
+            if supervisor_filtro != "(Todos)":
+                # Obtener auditores del supervisor seleccionado
+                auditores_filtrados = df_sup_aud[
+                    df_sup_aud['NOMBRE_SUPERVISOR'] == supervisor_filtro
+                ]['nomb_ver'].unique().tolist()
+                df_metas = df_metas[df_metas['nombre_auditor'].isin(auditores_filtrados)]
+
+            # 4. Aplicar filtro de auditor
+            if auditor_filtro != "(Todos)":
+                df_metas = df_metas[df_metas['nombre_auditor'] == auditor_filtro]
+
+            if df_metas.empty:
+                messagebox.showwarning("Sin datos", "No hay datos para los filtros seleccionados")
+                actualizar_grafico([], grafico_frame, mes_maximo)
+                actualizar_tabla([], tabla_frame)
+                return
+
+            # 5. Obtener datos de recaudación (tabla AI) - PRIMERO SIN FILTRO para encontrar último mes con datos
+            lista_auditores_filtrados = df_metas['nombre_auditor'].tolist()
+
+            if len(lista_auditores_filtrados) == 0:
+                df_ai_completo = pd.DataFrame()
+                mes_real_con_datos = 1
+            else:
+                # Query SIN filtro de meses para encontrar el último mes con datos
+                placeholders_auditores = ','.join(['%s'] * len(lista_auditores_filtrados))
+                query_ai_completo = f"""
+                    SELECT nomb_ver, MES, SUM(MTO_PAG_IN) as monto
+                    FROM fiscalizaciones5
+                    WHERE nomb_ver IN ({placeholders_auditores})
+                      AND MES BETWEEN 1 AND 12
+                    GROUP BY nomb_ver, MES
+                """
+                df_ai_completo = pd.read_sql(query_ai_completo, DB_ENGINE, params=tuple(lista_auditores_filtrados))
+
+                # Buscar el último mes que tenga al menos un valor diferente a 0
+                # ESTA ES LA CONDICIÓN PRIORITARIA para determinar la meta
+                if df_ai_completo.empty:
+                    mes_real_con_datos = 1
+                else:
+                    pivot_ai_completo = df_ai_completo.pivot_table(index='nomb_ver', columns='MES', values='monto',
+                                                                     aggfunc='sum', fill_value=0)
+
+                    # Buscar última columna (mes) con algún valor != 0
+                    mes_real_con_datos = 1
+                    for mes in range(12, 0, -1):
+                        if mes in pivot_ai_completo.columns and pivot_ai_completo[mes].sum() > 0:
+                            mes_real_con_datos = mes
+                            break
+
+            # 6. Ahora obtener datos filtrados por meses seleccionados (solo para visualización)
+            if len(lista_auditores_filtrados) == 0:
+                df_ai = pd.DataFrame()
+            else:
+                # Query con filtro de meses seleccionados para visualización
+                placeholders_auditores = ','.join(['%s'] * len(lista_auditores_filtrados))
+                placeholders_meses = ','.join(['%s'] * len(meses_seleccionados))
+                query_ai = f"""
+                    SELECT nomb_ver, MES, SUM(MTO_PAG_IN) as monto
+                    FROM fiscalizaciones5
+                    WHERE nomb_ver IN ({placeholders_auditores})
+                      AND MES IN ({placeholders_meses})
+                    GROUP BY nomb_ver, MES
+                """
+                params = tuple(lista_auditores_filtrados) + tuple(meses_seleccionados)
+                df_ai = pd.read_sql(query_ai, DB_ENGINE, params=params)
+
+            # 7. Crear pivot con datos filtrados para visualización
+            if df_ai.empty:
+                pivot_ai = pd.DataFrame()
+            else:
+                pivot_ai = df_ai.pivot_table(index='nomb_ver', columns='MES', values='monto',
+                                              aggfunc='sum', fill_value=0)
+
+            # 8. Calcular avance por auditor usando monto_asignado
+            datos_grafico = []
+
+            for idx, row in df_metas.iterrows():
+                auditor = row['nombre_auditor']
+                monto_asignado = row['monto_asignado']
+
+                # Meta mensual: monto_asignado / 12
+                meta_mensual = monto_asignado / 12
+
+                # Meta acumulada hasta el MES REAL CON DATOS (no el filtro)
+                # Esta es la meta calculada según el último mes con valores != 0 en la tabla AI
+                meta_acumulada = meta_mensual * mes_real_con_datos
+
+                # Obtener recaudado de los meses seleccionados (para visualización)
+                if not pivot_ai.empty and auditor in pivot_ai.index:
+                    recaudado = 0
+                    for m in meses_seleccionados:
+                        if m in pivot_ai.columns:
+                            recaudado += pivot_ai.loc[auditor, m]
+                else:
+                    recaudado = 0
+
+                datos_grafico.append({
+                    'auditor': auditor,
+                    'recaudado': recaudado,
+                    'meta_acumulada': meta_acumulada,
+                    'meta_mensual': meta_mensual
+                })
+
+            # 9. Generar tabla mensual hasta el mes con datos reales
+            # La tabla muestra TODOS los meses desde enero hasta mes_real_con_datos
+            # (independiente del filtro de mes, que solo afecta al gráfico)
+            # LÓGICA:
+            # - Meta: meta_global_anual / 12 (igual para cada mes)
+            # - Ejecutado: suma de columna del mes en tabla AI
+            # - Cumplimiento Mes: ejecutado_mes / meta_mes * 100
+            # - Avance Anual: ejecutado_acumulado / meta_anual * 100
+
+            datos_tabla = []
+            meta_global_anual = df_metas['monto_asignado'].sum()
+            meta_mensual_global = meta_global_anual / 12  # Meta por mes (sin acumular)
+
+            ejecutado_acumulado_total = 0  # Para calcular avance anual
+
+            # Iterar desde enero hasta el mes con datos reales (no usar filtro de mes)
+            for mes in range(1, mes_real_con_datos + 1):
+                # Ejecutado del mes: suma de la columna del mes en la tabla AI
+                ejecutado_mes = 0
+
+                if not pivot_ai_completo.empty:
+                    # Usar pivot_ai_completo (sin filtro de meses) para obtener datos reales
+                    if mes in pivot_ai_completo.columns:
+                        ejecutado_mes = pivot_ai_completo[mes].sum()
+
+                # Acumular para avance anual
+                ejecutado_acumulado_total += ejecutado_mes
+
+                # Cumplimiento del mes: ejecutado_mes vs meta_mensual
+                cumplimiento_mes = (ejecutado_mes / meta_mensual_global * 100) if meta_mensual_global > 0 else 0
+
+                # Avance anual: ejecutado acumulado vs meta anual
+                avance_anual = (ejecutado_acumulado_total / meta_global_anual * 100) if meta_global_anual > 0 else 0
+
+                datos_tabla.append({
+                    'mes': mes,
+                    'ejecutado': ejecutado_mes,  # Solo del mes, no acumulado
+                    'meta': meta_mensual_global,  # Meta mensual (no acumulada)
+                    'cumplimiento': cumplimiento_mes,
+                    'avance_anual': avance_anual
+                })
+
+            # Guardar información de filtros para exportación
+            datos_exportar["filtros"] = {
+                "Año": anio,
+                "Supervisor": supervisor_filtro,
+                "Auditor": auditor_filtro,
+                "Meses seleccionados": mes_button_text.get(),
+                "Mes con datos reales": meses_nombres[mes_real_con_datos - 1] if mes_real_con_datos <= 12 else "DIC"
+            }
+
+            # Guardar datos de tabla para exportación
+            datos_exportar["tabla"] = datos_tabla
+
+            # Actualizar gráfico pasando el MES REAL CON DATOS para el título dinámico
+            actualizar_grafico(datos_grafico, grafico_frame, mes_real_con_datos)
+
+            # Actualizar tabla
+            actualizar_tabla(datos_tabla, tabla_frame)
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al cargar datos:\n{e}")
+
+    def actualizar_grafico(datos, parent, mes_hasta=12):
+        """Genera gráfico de barras horizontal con cifras visibles"""
+        for widget in parent.winfo_children():
+            widget.destroy()
+
+        if not datos:
+            ctk.CTkLabel(parent, text="No hay datos para mostrar",
+                        font=("Segoe UI", 14), text_color=COLOR_TEXT).pack(pady=20)
+            return
+
+        # Crear contenedor con dos columnas
+        main_container = ctk.CTkFrame(parent, fg_color="transparent")
+        main_container.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Columna izquierda: Gráfico
+        grafico_container = ctk.CTkFrame(main_container, fg_color=COLOR_WHITE)
+        grafico_container.pack(side="left", fill="both", expand=True, padx=(0, 10))
+
+        # Header del gráfico con botón de exportación
+        grafico_header = ctk.CTkFrame(grafico_container, fg_color="transparent")
+        grafico_header.pack(fill="x", padx=10, pady=(10, 0))
+
+        ctk.CTkLabel(grafico_header, text="", font=("Segoe UI", 10)).pack(side="left", expand=True)
+
+        # Botón pequeño y sutil para exportar gráfico
+        btn_export_graf = ctk.CTkButton(grafico_header, text="📷",
+                                        command=exportar_grafico_imagen,
+                                        fg_color="#059669", hover_color="#047857",
+                                        width=30, height=24, corner_radius=5,
+                                        font=("Segoe UI", 12))
+        btn_export_graf.pack(side="right")
+
+        # Columna derecha: Tabla de auditores
+        tabla_auditores_container = ctk.CTkFrame(main_container, fg_color=COLOR_WHITE, width=450)
+        tabla_auditores_container.pack(side="right", fill="y", padx=(10, 0))
+        tabla_auditores_container.pack_propagate(False)
+
+        # === GRÁFICO ===
+        fig, ax = plt.subplots(figsize=(8, max(4, len(datos) * 0.5)), dpi=80)
+
+        auditores = [d['auditor'] for d in datos]
+        recaudado = [d['recaudado'] for d in datos]
+        meta = [d['meta_acumulada'] for d in datos]
+
+        y_pos = range(len(auditores))
+
+        # Barras horizontales
+        bars_meta = ax.barh(y_pos, meta, color='#E5E7EB', label='Meta Acumulada', height=0.4, alpha=0.7)
+        bars_recaudado = ax.barh(y_pos, recaudado, color=COLOR_SECONDARY, label='Recaudado', height=0.4)
+
+        # Añadir cifras en las barras con fondo
+        for i, (bar_meta, bar_rec) in enumerate(zip(bars_meta, bars_recaudado)):
+            cumplimiento = (recaudado[i] / meta[i] * 100) if meta[i] > 0 else 0
+
+            # Cifra de meta (al final de la barra gris) con fondo blanco
+            if meta[i] > 0:
+                ax.text(meta[i], bar_meta.get_y() + bar_meta.get_height()/2,
+                       f' S/ {meta[i]:,.0f} ',
+                       ha='left', va='center', fontsize=8, color='#374151', fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor='#D1D5DB', linewidth=1))
+
+            # Cifra de recaudado (al final de la barra azul) con fondo y % cumplimiento
+            if recaudado[i] > 0:
+                texto_recaudado = f' S/ {recaudado[i]:,.0f} ({cumplimiento:.1f}%) '
+                ax.text(recaudado[i], bar_rec.get_y() + bar_rec.get_height()/2,
+                       texto_recaudado,
+                       ha='left', va='center', fontsize=8, color='#1E3A8A', fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.4', facecolor='#EFF6FF', edgecolor='#3B82F6', linewidth=1.5))
+
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(auditores, fontsize=8)
+        ax.set_xlabel('Monto (S/)', fontsize=9, fontweight='bold')
+
+        # Título dinámico con el mes
+        mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
+        ax.set_title(f'Avance de Metas por Auditor (hasta {mes_nombre})', fontsize=11, fontweight='bold')
+
+        # Limitar el eje X para que no se extienda demasiado cuando se excede la meta
+        max_meta = max(meta) if meta else 1
+        max_recaudado = max(recaudado) if recaudado else 1
+        # Usar el mayor valor, pero limitar a máximo 120% de la meta más alta
+        limite_x = max(max_meta * 1.2, min(max_recaudado, max_meta * 1.5))
+        ax.set_xlim(0, limite_x)
+
+        ax.legend(loc='lower right', fontsize=8)
+        ax.grid(axis='x', alpha=0.3, linewidth=0.5)
+
+        plt.tight_layout(pad=0.5)
+
+        # Mostrar gráfico en tkinter
+        canvas_grafico = FigureCanvasTkAgg(fig, grafico_container)
+        canvas_grafico.draw()
+        canvas_grafico.get_tk_widget().pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Añadir tooltip interactivo con hover
+        annot = ax.annotate("", xy=(0,0), xytext=(20,20), textcoords="offset points",
+                           bbox=dict(boxstyle="round,pad=0.8", fc="#1E3A8A", ec="#1E40AF", lw=2, alpha=0.95),
+                           arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0", color="#1E40AF", lw=2),
+                           fontsize=10, color='white', fontweight='bold', visible=False)
+
+        def hover(event):
+            vis = annot.get_visible()
+            if event.inaxes == ax:
+                for i, (bar_r, bar_m) in enumerate(zip(bars_recaudado, bars_meta)):
+                    cont_r, _ = bar_r.contains(event)
+                    cont_m, _ = bar_m.contains(event)
+
+                    if cont_r or cont_m:
+                        cumplimiento = (recaudado[i] / meta[i] * 100) if meta[i] > 0 else 0
+                        texto = f"{auditores[i]}\n\n"
+                        texto += f"Meta: S/ {meta[i]:,.2f}\n"
+                        texto += f"Recaudado: S/ {recaudado[i]:,.2f}\n"
+                        texto += f"Cumplimiento: {cumplimiento:.1f}%"
+
+                        annot.xy = (event.xdata, event.ydata)
+                        annot.set_text(texto)
+                        annot.set_visible(True)
+                        fig.canvas.draw_idle()
+                        return
+
+            if vis:
+                annot.set_visible(False)
+                fig.canvas.draw_idle()
+
+        fig.canvas.mpl_connect("motion_notify_event", hover)
+
+        # Guardar figura para exportación (NO cerrarla)
+        grafico_fig["fig"] = fig
+        datos_exportar["grafico"] = datos
+        datos_exportar["tabla_auditores"] = datos  # Guardar también para exportar tabla
+
+        # === TABLA DE AUDITORES ===
+        # Header con título y botón de exportación
+        tabla_aud_header = ctk.CTkFrame(tabla_auditores_container, fg_color="transparent")
+        tabla_aud_header.pack(fill="x", padx=10, pady=(10, 5))
+
+        # Título dinámico con el mes
+        mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
+        titulo_tabla = f"📊 AVANCE POR AUDITOR\n(hasta {mes_nombre})"
+        ctk.CTkLabel(tabla_aud_header, text=titulo_tabla,
+                    font=("Segoe UI", 11, "bold"), text_color=COLOR_PRIMARY,
+                    justify="center").pack(side="top", expand=True)
+
+        # Botón pequeño para exportar tabla de auditores
+        btn_export_aud = ctk.CTkButton(tabla_aud_header, text="📊",
+                                       command=exportar_tabla_auditores,
+                                       fg_color="#10B981", hover_color="#059669",
+                                       width=30, height=24, corner_radius=5,
+                                       font=("Segoe UI", 12))
+        btn_export_aud.pack(side="top", pady=(5, 0))
+
+        # Canvas con scroll para la tabla
+        canvas_tabla = tk.Canvas(tabla_auditores_container, bg=COLOR_WHITE, highlightthickness=0)
+        scrollbar_tabla = ctk.CTkScrollbar(tabla_auditores_container, orientation="vertical",
+                                           command=canvas_tabla.yview)
+        canvas_tabla.configure(yscrollcommand=scrollbar_tabla.set)
+
+        tabla_frame = ctk.CTkFrame(canvas_tabla, fg_color=COLOR_WHITE)
+        canvas_window_tabla = canvas_tabla.create_window((0, 0), window=tabla_frame, anchor="nw")
+
+        def _on_tabla_configure(event=None):
+            canvas_tabla.configure(scrollregion=canvas_tabla.bbox("all"))
+            if canvas_tabla.winfo_width() > 1:
+                canvas_tabla.itemconfig(canvas_window_tabla, width=canvas_tabla.winfo_width())
+
+        tabla_frame.bind("<Configure>", _on_tabla_configure)
+
+        # Encabezados de tabla
+        headers = ["Auditor", "Meta", "Recaudado", "Cumplimiento"]
+        header_frame = ctk.CTkFrame(tabla_frame, fg_color=COLOR_PRIMARY, corner_radius=5)
+        header_frame.pack(fill="x", padx=2, pady=2)
+
+        widths = [180, 80, 80, 80]
+        for i, (header, width) in enumerate(zip(headers, widths)):
+            ctk.CTkLabel(header_frame, text=header, font=("Segoe UI", 9, "bold"),
+                        text_color="white", width=width).grid(row=0, column=i, padx=1, pady=5)
+
+        # Filas de datos
+        for idx, dato in enumerate(datos):
+            bg = "#F9FAFB" if idx % 2 == 0 else COLOR_WHITE
+            row_frame = ctk.CTkFrame(tabla_frame, fg_color=bg, corner_radius=3)
+            row_frame.pack(fill="x", padx=2, pady=1)
+
+            cumplimiento = (dato['recaudado'] / dato['meta_acumulada'] * 100) if dato['meta_acumulada'] > 0 else 0
+
+            # Color del cumplimiento
+            if cumplimiento >= 100:
+                color_cumplimiento = "#059669"  # Verde
+            elif cumplimiento >= 75:
+                color_cumplimiento = "#F59E0B"  # Amarillo
+            else:
+                color_cumplimiento = "#DC2626"  # Rojo
+
+            valores = [
+                dato['auditor'][:25] + "..." if len(dato['auditor']) > 25 else dato['auditor'],
+                f"S/ {dato['meta_acumulada']:,.0f}",
+                f"S/ {dato['recaudado']:,.0f}",
+                f"{cumplimiento:.1f}%"
+            ]
+
+            for i, (valor, width) in enumerate(zip(valores, widths)):
+                color_texto = color_cumplimiento if i == 3 else COLOR_TEXT
+                ctk.CTkLabel(row_frame, text=valor, font=("Segoe UI", 8),
+                            text_color=color_texto, width=width,
+                            anchor="w" if i == 0 else "center").grid(row=0, column=i, padx=1, pady=3)
+
+        scrollbar_tabla.pack(side="right", fill="y")
+        canvas_tabla.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+
+    def actualizar_tabla(datos, parent):
+        """Genera tabla de avance mensual y anual"""
+        for widget in parent.winfo_children():
+            widget.destroy()
+
+        if not datos:
+            return
+
+        # Header con título y botón de exportación
+        tabla_mens_header = ctk.CTkFrame(parent, fg_color="transparent")
+        tabla_mens_header.pack(fill="x", padx=10, pady=(10, 0))
+
+        # Título
+        ctk.CTkLabel(tabla_mens_header, text="📈 AVANCE MENSUAL Y ANUAL",
+                    font=("Segoe UI", 14, "bold"), text_color=COLOR_PRIMARY).pack(side="left")
+
+        # Botón pequeño para exportar tabla mensual
+        btn_export_mens = ctk.CTkButton(tabla_mens_header, text="📊",
+                                       command=exportar_tabla_mensual,
+                                       fg_color="#10B981", hover_color="#059669",
+                                       width=30, height=24, corner_radius=5,
+                                       font=("Segoe UI", 12))
+        btn_export_mens.pack(side="right")
+
+        # Contenedor centrado para la tabla
+        tabla_outer = ctk.CTkFrame(parent, fg_color="transparent")
+        tabla_outer.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+
+        # Crear tabla centrada con ancho máximo
+        tabla_container = ctk.CTkFrame(tabla_outer, fg_color=COLOR_WHITE)
+        tabla_container.pack(anchor="center", padx=10, pady=(0, 10))
+
+        # Encabezados
+        headers = ["Mes", "Ejecutado", "Meta", "Cumplimiento Mes", "Avance Anual"]
+        header_frame = ctk.CTkFrame(tabla_container, fg_color=COLOR_PRIMARY, corner_radius=5)
+        header_frame.pack(fill="x", padx=2, pady=2)
+
+        for i, header in enumerate(headers):
+            ctk.CTkLabel(header_frame, text=header, font=("Segoe UI", 10, "bold"),
+                        text_color="white", width=150).grid(row=0, column=i, padx=2, pady=5)
+
+        meses_nombres = ["", "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
+                        "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+
+        # Filas de datos
+        for idx, dato in enumerate(datos):
+            bg = "#F9FAFB" if idx % 2 == 0 else COLOR_WHITE
+            row_frame = ctk.CTkFrame(tabla_container, fg_color=bg, corner_radius=3)
+            row_frame.pack(fill="x", padx=2, pady=1)
+
+            valores = [
+                meses_nombres[dato['mes']],
+                f"S/ {dato['ejecutado']:,.2f}",
+                f"S/ {dato['meta']:,.2f}",
+                f"{dato['cumplimiento']:.1f}%",
+                f"{dato['avance_anual']:.1f}%"
+            ]
+
+            for i, valor in enumerate(valores):
+                ctk.CTkLabel(row_frame, text=valor, font=("Segoe UI", 9),
+                            text_color=COLOR_TEXT, width=150).grid(row=0, column=i, padx=2, pady=3)
+
+    # Cargar datos iniciales inmediatamente (sin esperar filtros)
+    cargar_datos_y_actualizar()
+
+    # Cargar filtros de forma asíncrona después de 100ms (lazy loading)
+    dashboard_frame.after(100, cargar_supervisores_auditores)
+
+    # Vincular cambios de filtros
+    combo_anio.configure(command=lambda x: (cargar_supervisores_auditores(), cargar_datos_y_actualizar()))
+    combo_supervisor.configure(command=lambda x: cargar_datos_y_actualizar())
+    combo_auditor.configure(command=lambda x: cargar_datos_y_actualizar())
+
 def mostrar_dashboard_metas():
     """
     Dashboard principal para mostrar las tablas de recaudación auditoria
@@ -14415,10 +15337,23 @@ def mostrar_dashboard_metas():
     # Botón METAS AI
     def mostrar_metas_ai():
         messagebox.showinfo("Metas AI", "Funcionalidad de Metas AI en desarrollo")
-    
+
     ctk.CTkButton(botones_ai_container, text="🎯 Metas", command=mostrar_metas_ai,
                   fg_color="#10B981", hover_color="#059669", font=("Segoe UI", 11, "bold"),
                   width=120, height=32).pack(side="left", padx=5)
+
+    # Botón AVANCE DE METAS AI (llama al dashboard de avance de metas)
+    def ir_a_avance_metas_ai():
+        """Función para ir al dashboard de avance de metas AI"""
+        # Limpiar el dashboard actual
+        for widget in dashboard_frame.winfo_children():
+            widget.destroy()
+        # Llamar al dashboard de avance de metas
+        dashboard_avance_metas_ai()
+
+    ctk.CTkButton(botones_ai_container, text="📊 Avance de Metas", command=ir_a_avance_metas_ai,
+                  fg_color="#6366F1", hover_color="#4F46E5", font=("Segoe UI", 11, "bold"),
+                  width=150, height=32).pack(side="left", padx=5)
 
     # Generar tabla AI inicial
     aplicar_filtros_ai_auto()
