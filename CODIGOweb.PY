@@ -56,6 +56,26 @@ COLOR_SUBBOX = "#F9FAFB"       # Caja más clara para fecha actualización
 COLOR_WHITE = "#FFFFFF"        # Caja blanca para datos
 
 # ==========================
+# TAMAÑOS COMPACTOS (para pantallas pequeñas)
+# ==========================
+# Fuentes reducidas ~20%
+FONT_TITULO_GRANDE = 16    # Era 18-20
+FONT_TITULO_MEDIO = 12     # Era 14
+FONT_LABEL = 9             # Era 10-11
+FONT_NORMAL = 8            # Era 9-10
+FONT_TABLA = 7             # Era 8-9
+FONT_PEQUENO = 7           # Era 8
+
+# Espaciado reducido ~20%
+PAD_GRANDE = 8             # Era 10
+PAD_MEDIO = 4              # Era 5
+PAD_PEQUENO = 2            # Era 3
+
+# Altura de componentes reducida
+HEIGHT_BOTON = 28          # Era 32
+HEIGHT_CAMPO = 28          # Era 32
+
+# ==========================
 # CONFIGURACIÓN JSON
 # ==========================
 def cargar_config():
@@ -179,12 +199,12 @@ toggle_button = ctk.CTkButton(
     fg_color=COLOR_SECONDARY, hover_color=COLOR_PRIMARY,
     command=lambda: toggle_menu()
 )
-toggle_button.pack(pady=10)
+toggle_button.pack(pady=8)
 
 menu_frame = ctk.CTkFrame(frame_modulo, fg_color=COLOR_PANEL, width=220)
 menu_frame.pack(side="left", fill="y", padx=0, pady=0)
 
-ctk.CTkLabel(menu_frame, text="Menú", font=("Segoe UI", 16, "bold"), text_color=COLOR_TEXT).pack(pady=15)
+ctk.CTkLabel(menu_frame, text="Menú", font=("Segoe UI", 16, "bold"), text_color=COLOR_TEXT).pack(pady=10)
 
 ctk.CTkButton(menu_frame, text="Resumen", width=200,
               fg_color=COLOR_SECONDARY, hover_color=COLOR_PRIMARY,
@@ -218,33 +238,33 @@ ctk.CTkButton(menu_frame, text="📂Subir Excel", command=pedir_password, width=
 
 # --- Panel derecho ---
 right_frame = ctk.CTkFrame(frame_modulo, fg_color=COLOR_BOX)
-right_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+right_frame.pack(side="left", fill="both", expand=True, padx=10, pady=8)
 
 preview_frame = ctk.CTkFrame(right_frame, fg_color=COLOR_WHITE, corner_radius=10)
-preview_frame.pack(fill="both", expand=True, padx=10, pady=(5,10))
+preview_frame.pack(fill="both", expand=True, padx=10, pady=(4,10))
 
 dashboard_frame = ctk.CTkFrame(right_frame, fg_color=COLOR_WHITE, corner_radius=10)
 dashboard_frame.pack_forget()  # inicialmente oculto
 
 # --- preview content ---
 fecha_frame = ctk.CTkFrame(preview_frame, fg_color=COLOR_SUBBOX, corner_radius=10)
-fecha_frame.pack(fill="x", pady=(10,5), padx=10)
+fecha_frame.pack(fill="x", pady=(8,5), padx=10)
 
 barra_label = ctk.CTkLabel(fecha_frame, text="Última actualización: Sin datos",
-                           font=("Segoe UI", 14), text_color=COLOR_TEXT)
-barra_label.pack(padx=10, pady=10)
+                           font=("Segoe UI", 12), text_color=COLOR_TEXT)
+barra_label.pack(padx=10, pady=8)
 
 table_frame = ctk.CTkFrame(preview_frame, fg_color=COLOR_WHITE, corner_radius=10)
-table_frame.pack(fill="both", expand=True, padx=10, pady=(5,10))
+table_frame.pack(fill="both", expand=True, padx=10, pady=(4,10))
 
 columns = ("NUM_ORD_FI", "DDP_NOMBRE", "Anio_Emis", "Estado")
 tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=15)
 
 for col in columns:
     tree.heading(col, text=col)
-    tree.column(col, anchor="center", width=150)
+    tree.column(col, anchor="center", width=130)
 
-tree.pack(fill="both", expand=True, padx=10, pady=10)
+tree.pack(fill="both", expand=True, padx=10, pady=8)
 
 # ==========================
 # FUNCIONES PRINCIPALES (sin cambios)
@@ -462,14 +482,14 @@ def generar_tabla_asignadas(parent_frame, conexion=None, anio=None):
     import os
 
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=10)
+    filtro_frame.pack(fill="x", padx=10, pady=8)
 
     ctk.CTkLabel(filtro_frame,
                  text="📅 Selecciona Año:",
-                 font=("Segoe UI", 13, "bold"),
+                 font=("Segoe UI", 7, "bold"),
                  text_color="#002e6d").pack(side="left", padx=10)
 
-    combo_anio = ttk.Combobox(filtro_frame, state="readonly", width=12, font=("Segoe UI", 11))
+    combo_anio = ttk.Combobox(filtro_frame, state="readonly", width=12, font=("Segoe UI", 7))
     combo_anio.pack(side="left", padx=5)
 
     # ----------------- BOTÓN DE EXPORTACIÓN -----------------
@@ -485,7 +505,7 @@ def generar_tabla_asignadas(parent_frame, conexion=None, anio=None):
     btn_exportar.pack(side="right", padx=10)
 
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=12)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Variable para almacenar los datos actuales
     datos_actuales = {
@@ -501,7 +521,7 @@ def generar_tabla_asignadas(parent_frame, conexion=None, anio=None):
         )
         años = [int(x) for x in años_df["Anio_Emis"].tolist()] if not años_df.empty else []
     except Exception as e:
-        ctk.CTkLabel(tabla_frame, text=f"⚠ Error cargando años: {e}", text_color="red").pack(pady=15)
+        ctk.CTkLabel(tabla_frame, text=f"⚠ Error cargando años: {e}", text_color="red").pack(pady=10)
         return
 
     default_year = anio if (anio is not None and anio in años) else (2025 if 2025 in años else (max(años) if años else 2025))
@@ -598,11 +618,11 @@ def generar_tabla_asignadas(parent_frame, conexion=None, anio=None):
             df_completo = ejecutar_read_sql(query_completo, conexion)
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df.empty:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para {anio_sel}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para {anio_sel}", text_color="red").pack(pady=10)
             return
 
         df["Mes_Emis"] = df["Mes_Emis"].astype(int)
@@ -657,8 +677,8 @@ def generar_tabla_asignadas(parent_frame, conexion=None, anio=None):
 
         ctk.CTkLabel(frame_tabla_inner,
                      text=f"📊 OF ASIGNADAS - {anio_sel}",
-                     font=("Segoe UI", 14, "bold"),
-                     text_color="#a51c30").pack(anchor="w", padx=12, pady=6)
+                     font=("Segoe UI", 12, "bold"),
+                     text_color="#a51c30").pack(anchor="w", padx=10, pady=6)
 
         container = ctk.CTkFrame(frame_tabla_inner, fg_color="white")
         container.pack(fill="both", expand=True, padx=5, pady=5)
@@ -714,18 +734,18 @@ def generar_tabla_asignadas(parent_frame, conexion=None, anio=None):
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree_local.tag_configure("tipo", background="white", font=("Segoe UI", 10))
-        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree_local.tag_configure("tipo", background="white", font=("Segoe UI", 8))
+        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
     combo_anio.bind("<<ComboboxSelected>>", lambda e: cargar_tabla(int(combo_anio.get()) if combo_anio.get() else default_year))
     cargar_tabla(int(combo_anio.get()) if combo_anio.get() else default_year)
@@ -739,20 +759,20 @@ def generar_tabla_determinadas(parent_frame, conexion=None, cod_tipact_default="
     import os
 
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=5)
+    filtro_frame.pack(fill="x", padx=10, pady=5)
 
     ctk.CTkLabel(filtro_frame,
                  text="🔎 Selecciona COD_TIPACT:",
-                 font=("Segoe UI", 13, "bold"),
+                 font=("Segoe UI", 7, "bold"),
                  text_color="#002e6d").pack(side="left", padx=10)
-    combo_tipact = ttk.Combobox(filtro_frame, state="readonly", width=10, font=("Segoe UI", 11))
+    combo_tipact = ttk.Combobox(filtro_frame, state="readonly", width=10, font=("Segoe UI", 7))
     combo_tipact.pack(side="left", padx=5)
 
     ctk.CTkLabel(filtro_frame,
                  text="📅 Selecciona Año:",
-                 font=("Segoe UI", 13, "bold"),
+                 font=("Segoe UI", 7, "bold"),
                  text_color="#002e6d").pack(side="left", padx=10)
-    combo_anio = ttk.Combobox(filtro_frame, state="readonly", width=10, font=("Segoe UI", 11))
+    combo_anio = ttk.Combobox(filtro_frame, state="readonly", width=10, font=("Segoe UI", 7))
     combo_anio.pack(side="left", padx=5)
 
     # ✅ Botón de Promedio
@@ -763,13 +783,13 @@ def generar_tabla_determinadas(parent_frame, conexion=None, cod_tipact_default="
         fg_color="#1e88e5",
         hover_color="#1565c0",
         width=160,
-        height=32,
+        height=28,
         corner_radius=8
     )
-    btn_promedio.pack(side="left", padx=15)
+    btn_promedio.pack(side="left", padx=10)
 
     # ✅ Frame para mostrar el promedio al costado
-    promedio_frame = ctk.CTkFrame(filtro_frame, corner_radius=8, fg_color="#e3f2fd", width=180, height=32)
+    promedio_frame = ctk.CTkFrame(filtro_frame, corner_radius=8, fg_color="#e3f2fd", width=160, height=28)
     promedio_frame.pack(side="left", padx=5)
     promedio_frame.pack_propagate(False)
 
@@ -794,7 +814,7 @@ def generar_tabla_determinadas(parent_frame, conexion=None, cod_tipact_default="
     btn_exportar.pack(side="right", padx=10)
 
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=10)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=8)
 
     # Variable para almacenar el tree actual y datos
     tree_actual = {"tree": None, "pivot_reset": None, "meses_cols": None}
@@ -823,7 +843,7 @@ def generar_tabla_determinadas(parent_frame, conexion=None, cod_tipact_default="
         combo_anio["values"] = años if años else [anio_default]
         combo_anio.set(anio_default if anio_default in años else (max(años) if años else anio_default))
     except Exception as e:
-        ctk.CTkLabel(tabla_frame, text=f"⚠ Error cargando filtros: {e}", text_color="red").pack(pady=15)
+        ctk.CTkLabel(tabla_frame, text=f"⚠ Error cargando filtros: {e}", text_color="red").pack(pady=10)
         return
 
     def calcular_y_colorear_promedio():
@@ -864,8 +884,8 @@ def generar_tabla_determinadas(parent_frame, conexion=None, cod_tipact_default="
                         else:
                             tree.item(child, tags=("tipo",))
         
-        tree.tag_configure("supera", background="#c8e6c9", font=("Segoe UI", 10, "bold"))
-        tree.tag_configure("no_cumple", background="#ffcdd2", font=("Segoe UI", 10))
+        tree.tag_configure("supera", background="#c8e6c9", font=("Segoe UI", 8, "bold"))
+        tree.tag_configure("no_cumple", background="#ffcdd2", font=("Segoe UI", 8))
 
     btn_promedio.configure(command=calcular_y_colorear_promedio)
 
@@ -963,11 +983,11 @@ def generar_tabla_determinadas(parent_frame, conexion=None, cod_tipact_default="
             df_completo = ejecutar_read_sql(query_completo, conexion)
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df.empty:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para {cod_tipact_sel} - {anio_sel}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para {cod_tipact_sel} - {anio_sel}", text_color="red").pack(pady=10)
             return
 
         df["Mes_termino"] = df["Mes_termino"].astype(int)
@@ -1024,8 +1044,8 @@ def generar_tabla_determinadas(parent_frame, conexion=None, cod_tipact_default="
 
         ctk.CTkLabel(frame_tabla_inner,
                      text=f"📊 OF DETERMINATIVAS - TERMINADOS ({anio_sel})",
-                     font=("Segoe UI", 14, "bold"),
-                     text_color="#a51c30").pack(anchor="w", padx=12, pady=6)
+                     font=("Segoe UI", 12, "bold"),
+                     text_color="#a51c30").pack(anchor="w", padx=10, pady=6)
 
         container = ctk.CTkFrame(frame_tabla_inner, fg_color="white")
         container.pack(fill="both", expand=True, padx=5, pady=5)
@@ -1081,18 +1101,18 @@ def generar_tabla_determinadas(parent_frame, conexion=None, cod_tipact_default="
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree_local.tag_configure("tipo", background="white", font=("Segoe UI", 10))
-        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree_local.tag_configure("tipo", background="white", font=("Segoe UI", 8))
+        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
         tree_actual["tree"] = tree_local
         tree_actual["pivot_reset"] = pivot_reset
@@ -1114,24 +1134,24 @@ def generar_tabla_no_determinativas(parent_frame, conexion=None, anio_default=20
     import os
 
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=5)
+    filtro_frame.pack(fill="x", padx=10, pady=5)
 
     # Label y ComboBox COD_TIPACT
     ctk.CTkLabel(filtro_frame,
                  text="🔎 Selecciona COD_TIPACT:",
-                 font=("Segoe UI", 13, "bold"),
+                 font=("Segoe UI", 7, "bold"),
                  text_color="#002e6d").pack(side="left", padx=10)
 
-    combo_tipact = ttk.Combobox(filtro_frame, state="readonly", width=16, font=("Segoe UI", 11))
+    combo_tipact = ttk.Combobox(filtro_frame, state="readonly", width=16, font=("Segoe UI", 7))
     combo_tipact.pack(side="left", padx=5)
 
     # Label y ComboBox Año
     ctk.CTkLabel(filtro_frame,
                  text="📅 Selecciona Año:",
-                 font=("Segoe UI", 13, "bold"),
+                 font=("Segoe UI", 7, "bold"),
                  text_color="#002e6d").pack(side="left", padx=10)
 
-    combo_anio = ttk.Combobox(filtro_frame, state="readonly", width=10, font=("Segoe UI", 11))
+    combo_anio = ttk.Combobox(filtro_frame, state="readonly", width=10, font=("Segoe UI", 7))
     combo_anio.pack(side="left", padx=5)
 
     # ✅ Botón de Promedio
@@ -1142,13 +1162,13 @@ def generar_tabla_no_determinativas(parent_frame, conexion=None, anio_default=20
         fg_color="#1e88e5",
         hover_color="#1565c0",
         width=160,
-        height=32,
+        height=28,
         corner_radius=8
     )
-    btn_promedio.pack(side="left", padx=15)
+    btn_promedio.pack(side="left", padx=10)
 
     # ✅ Frame para mostrar el promedio al costado
-    promedio_frame = ctk.CTkFrame(filtro_frame, corner_radius=8, fg_color="#e3f2fd", width=180, height=32)
+    promedio_frame = ctk.CTkFrame(filtro_frame, corner_radius=8, fg_color="#e3f2fd", width=160, height=28)
     promedio_frame.pack(side="left", padx=5)
     promedio_frame.pack_propagate(False)
 
@@ -1173,7 +1193,7 @@ def generar_tabla_no_determinativas(parent_frame, conexion=None, anio_default=20
     btn_exportar.pack(side="right", padx=10)
 
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=10)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=8)
 
     # Variable para almacenar el tree actual y datos
     tree_actual = {"tree": None, "pivot_reset": None, "meses_cols": None}
@@ -1198,7 +1218,7 @@ def generar_tabla_no_determinativas(parent_frame, conexion=None, anio_default=20
         combo_anio["values"] = años if años else [anio_default]
         combo_anio.set(anio_default if anio_default in años else (max(años) if años else anio_default))
     except Exception as e:
-        ctk.CTkLabel(tabla_frame, text=f"⚠ Error cargando filtros: {e}", text_color="red").pack(pady=15)
+        ctk.CTkLabel(tabla_frame, text=f"⚠ Error cargando filtros: {e}", text_color="red").pack(pady=10)
         return
 
     def calcular_y_colorear_promedio():
@@ -1239,8 +1259,8 @@ def generar_tabla_no_determinativas(parent_frame, conexion=None, anio_default=20
                         else:
                             tree.item(child, tags=("tipo",))
         
-        tree.tag_configure("supera", background="#c8e6c9", font=("Segoe UI", 10, "bold"))
-        tree.tag_configure("no_cumple", background="#ffcdd2", font=("Segoe UI", 10))
+        tree.tag_configure("supera", background="#c8e6c9", font=("Segoe UI", 8, "bold"))
+        tree.tag_configure("no_cumple", background="#ffcdd2", font=("Segoe UI", 8))
 
     btn_promedio.configure(command=calcular_y_colorear_promedio)
 
@@ -1351,12 +1371,12 @@ def generar_tabla_no_determinativas(parent_frame, conexion=None, anio_default=20
             df_completo = ejecutar_read_sql(query_completo, conexion)
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df.empty:
             ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para {cod_tipact_sel} - {anio_sel}",
-                         text_color="red").pack(pady=15)
+                         text_color="red").pack(pady=10)
             return
 
         df["Mes_termino"] = df["Mes_termino"].astype(int)
@@ -1413,8 +1433,8 @@ def generar_tabla_no_determinativas(parent_frame, conexion=None, anio_default=20
 
         ctk.CTkLabel(frame_tabla_inner,
                      text=f"📊 OF NO DETERMINATIVAS - TERMINADOS ({anio_sel})",
-                     font=("Segoe UI", 14, "bold"),
-                     text_color="#a51c30").pack(anchor="w", padx=12, pady=6)
+                     font=("Segoe UI", 12, "bold"),
+                     text_color="#a51c30").pack(anchor="w", padx=10, pady=6)
 
         cols = ["NOMBRE_SUPERVISOR", "NOMBRE_AUDITOR"] + meses_cols + ["Total"]
 
@@ -1469,18 +1489,18 @@ def generar_tabla_no_determinativas(parent_frame, conexion=None, anio_default=20
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree_local.tag_configure("tipo", background="white", font=("Segoe UI", 10))
-        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree_local.tag_configure("tipo", background="white", font=("Segoe UI", 8))
+        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
         tree_actual["tree"] = tree_local
         tree_actual["pivot_reset"] = pivot_reset
@@ -1501,24 +1521,24 @@ def generar_tabla_determinativas_pendientes(parent_frame, conexion=None, cod_tip
     import os
 
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=5)
+    filtro_frame.pack(fill="x", padx=10, pady=5)
 
     ctk.CTkLabel(filtro_frame,
                  text="🔎 Selecciona COD_TIPACT:",
-                 font=("Segoe UI", 13, "bold"),
+                 font=("Segoe UI", 7, "bold"),
                  text_color="#002e6d").pack(side="left", padx=10)
 
-    combo_tipact = ttk.Combobox(filtro_frame, state="readonly", width=10, font=("Segoe UI", 11))
+    combo_tipact = ttk.Combobox(filtro_frame, state="readonly", width=10, font=("Segoe UI", 7))
     combo_tipact.pack(side="left", padx=5)
     combo_tipact["values"] = ["06"]
     combo_tipact.set("06")
 
     ctk.CTkLabel(filtro_frame,
                  text="📌 Selecciona Estado:",
-                 font=("Segoe UI", 13, "bold"),
+                 font=("Segoe UI", 7, "bold"),
                  text_color="#002e6d").pack(side="left", padx=10)
 
-    combo_estado = ttk.Combobox(filtro_frame, state="readonly", width=15, font=("Segoe UI", 11))
+    combo_estado = ttk.Combobox(filtro_frame, state="readonly", width=15, font=("Segoe UI", 7))
     combo_estado.pack(side="left", padx=5)
 
     # ----------------- BOTÓN DE EXPORTACIÓN -----------------
@@ -1550,7 +1570,7 @@ def generar_tabla_determinativas_pendientes(parent_frame, conexion=None, cod_tip
         combo_estado.set("PENDIENTE")
 
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=10)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=8)
 
     datos_actuales = {
         "df_completo": None,
@@ -1643,11 +1663,11 @@ def generar_tabla_determinativas_pendientes(parent_frame, conexion=None, cod_tip
             df_completo = ejecutar_read_sql(query_completo, conexion)
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df.empty:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para {cod_tipact_sel} - {estado_sel}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para {cod_tipact_sel} - {estado_sel}", text_color="red").pack(pady=10)
             return
 
         df["Anio_Emis"] = df["Anio_Emis"].astype(int)
@@ -1705,8 +1725,8 @@ def generar_tabla_determinativas_pendientes(parent_frame, conexion=None, cod_tip
 
         ctk.CTkLabel(frame_tabla_inner,
                      text=f"📊 OF DETERMINATIVAS - PENDIENTES",
-                     font=("Segoe UI", 14, "bold"),
-                     text_color="#a51c30").pack(anchor="w", padx=12, pady=6)
+                     font=("Segoe UI", 12, "bold"),
+                     text_color="#a51c30").pack(anchor="w", padx=10, pady=6)
 
         cols = ["NOMBRE_SUPERVISOR", "NOMBRE_AUDITOR"] + [str(a) for a in años] + ["Total"]
 
@@ -1777,19 +1797,19 @@ def generar_tabla_determinativas_pendientes(parent_frame, conexion=None, cod_tip
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree_local.tag_configure("tipo", background="white", font=("Segoe UI", 10))
-        tree_local.tag_configure("detalle", background="#ffffff", font=("Segoe UI", 9, "italic"), foreground="#555")
-        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree_local.tag_configure("tipo", background="white", font=("Segoe UI", 8))
+        tree_local.tag_configure("detalle", background="#ffffff", font=("Segoe UI", 7, "italic"), foreground="#555")
+        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
     combo_estado.bind("<<ComboboxSelected>>", lambda e: cargar_tabla(combo_tipact.get(), combo_estado.get()))
     cargar_tabla(combo_tipact.get(), combo_estado.get())
@@ -1803,16 +1823,16 @@ def generar_tabla_no_determinativas_pendientes(parent_frame, conexion=None, anio
     import os
 
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=5)
+    filtro_frame.pack(fill="x", padx=10, pady=5)
 
     ctk.CTkLabel(
         filtro_frame,
         text="🔎 Selecciona COD_TIPACT:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=10)
 
-    combo_tipact = ttk.Combobox(filtro_frame, state="readonly", width=18, font=("Segoe UI", 11))
+    combo_tipact = ttk.Combobox(filtro_frame, state="readonly", width=18, font=("Segoe UI", 7))
     combo_tipact.pack(side="left", padx=5)
 
     codigos_permitidos = ["03", "07", "08"]
@@ -1822,11 +1842,11 @@ def generar_tabla_no_determinativas_pendientes(parent_frame, conexion=None, anio
     ctk.CTkLabel(
         filtro_frame,
         text="📌 Selecciona Estado:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=10)
 
-    combo_estado = ttk.Combobox(filtro_frame, state="readonly", width=18, font=("Segoe UI", 11))
+    combo_estado = ttk.Combobox(filtro_frame, state="readonly", width=18, font=("Segoe UI", 7))
     combo_estado.pack(side="left", padx=5)
 
     # ----------------- BOTÓN DE EXPORTACIÓN -----------------
@@ -1858,7 +1878,7 @@ def generar_tabla_no_determinativas_pendientes(parent_frame, conexion=None, anio
         combo_estado.set("PENDIENTE")
 
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=10)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=8)
 
     datos_actuales = {
         "df_completo": None,
@@ -1959,11 +1979,11 @@ def generar_tabla_no_determinativas_pendientes(parent_frame, conexion=None, anio
             df_completo = ejecutar_read_sql(query_completo, conexion)
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df.empty:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para COD_TIPACT={cod_tipact_sel} Estado={estado_sel}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para COD_TIPACT={cod_tipact_sel} Estado={estado_sel}", text_color="red").pack(pady=10)
             return
 
         df["Anio_Emis"] = df["Anio_Emis"].astype(int)
@@ -2023,9 +2043,9 @@ def generar_tabla_no_determinativas_pendientes(parent_frame, conexion=None, anio
         ctk.CTkLabel(
             frame_tabla_inner,
             text=f"📊 OF NO DETERMINATIVAS - PENDIENTES",
-            font=("Segoe UI", 14, "bold"),
+            font=("Segoe UI", 12, "bold"),
             text_color="#a51c30"
-        ).pack(anchor="w", padx=12, pady=6)
+        ).pack(anchor="w", padx=10, pady=6)
 
         cols = ["NOMBRE_SUPERVISOR", "NOMBRE_AUDITOR"] + year_cols + ["Total"]
 
@@ -2086,18 +2106,18 @@ def generar_tabla_no_determinativas_pendientes(parent_frame, conexion=None, anio
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree_local.tag_configure("tipo", background="white", font=("Segoe UI", 10))
-        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree_local.tag_configure("tipo", background="white", font=("Segoe UI", 8))
+        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
     combo_tipact.bind("<<ComboboxSelected>>", lambda e: cargar_tabla(combo_tipact.get(), combo_estado.get()))
     combo_estado.bind("<<ComboboxSelected>>", lambda e: cargar_tabla(combo_tipact.get(), combo_estado.get()))
@@ -2114,16 +2134,16 @@ def generar_tabla_rendimiento_terminadas(parent_frame, conexion=None, anio_defau
     import os
 
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=5)
+    filtro_frame.pack(fill="x", padx=10, pady=5)
 
     ctk.CTkLabel(
         filtro_frame,
         text="🔎 Selecciona COD_TIPACT:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=10)
 
-    combo_tipact = ttk.Combobox(filtro_frame, state="readonly", width=20, font=("Segoe UI", 11))
+    combo_tipact = ttk.Combobox(filtro_frame, state="readonly", width=20, font=("Segoe UI", 7))
     combo_tipact.pack(side="left", padx=5)
 
     try:
@@ -2138,11 +2158,11 @@ def generar_tabla_rendimiento_terminadas(parent_frame, conexion=None, anio_defau
     ctk.CTkLabel(
         filtro_frame,
         text="📅 Año de término:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=10)
 
-    combo_anio = ttk.Combobox(filtro_frame, state="readonly", width=10, font=("Segoe UI", 11))
+    combo_anio = ttk.Combobox(filtro_frame, state="readonly", width=10, font=("Segoe UI", 7))
     combo_anio.pack(side="left", padx=5)
 
     try:
@@ -2174,7 +2194,7 @@ def generar_tabla_rendimiento_terminadas(parent_frame, conexion=None, anio_defau
     btn_exportar.pack(side="right", padx=10)
 
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=10)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=8)
 
     datos_actuales = {
         "df_completo": None,
@@ -2280,11 +2300,11 @@ def generar_tabla_rendimiento_terminadas(parent_frame, conexion=None, anio_defau
             df_completo = ejecutar_read_sql(query_completo, conexion)
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df.empty:
-            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=10)
             return
 
         for col in ["MTO_PAG_IN", "MTO_PAG_RE", "MTO_VAL_DE", "Rendimiento_OF"]:
@@ -2340,9 +2360,9 @@ def generar_tabla_rendimiento_terminadas(parent_frame, conexion=None, anio_defau
         ctk.CTkLabel(
             tabla_frame,
             text=f"📊 RENDIMIENTO DE OFS TERMINADAS ({anio_sel})",
-            font=("Segoe UI", 14, "bold"),
+            font=("Segoe UI", 12, "bold"),
             text_color="#a51c30"
-        ).pack(anchor="w", padx=12, pady=6)
+        ).pack(anchor="w", padx=10, pady=6)
 
         container = ctk.CTkFrame(tabla_frame, fg_color="white")
         container.pack(fill="both", expand=True)
@@ -2427,18 +2447,18 @@ def generar_tabla_rendimiento_terminadas(parent_frame, conexion=None, anio_defau
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree_local.tag_configure("tipo", background="white", font=("Segoe UI", 10))
-        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree_local.tag_configure("tipo", background="white", font=("Segoe UI", 8))
+        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
     combo_tipact.bind("<<ComboboxSelected>>", lambda e: cargar_tabla(combo_tipact.get(), combo_anio.get()))
     combo_anio.bind("<<ComboboxSelected>>", lambda e: cargar_tabla(combo_tipact.get(), combo_anio.get()))
@@ -2454,20 +2474,20 @@ def generar_tabla_sip05(parent_frame, conexion=None, anio_default=2025):
     import os
 
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=5)
+    filtro_frame.pack(fill="x", padx=10, pady=5)
 
     ctk.CTkLabel(
         filtro_frame,
         text="🔎 SIP_05  - Seleccione filtros:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=10)
 
-    combo_sip05 = ttk.Combobox(filtro_frame, state="readonly", width=20, font=("Segoe UI", 11))
+    combo_sip05 = ttk.Combobox(filtro_frame, state="readonly", width=20, font=("Segoe UI", 7))
     combo_sip05.pack(side="left", padx=6)
 
-    ctk.CTkLabel(filtro_frame, text="Estado:", font=("Segoe UI", 13, "bold"), text_color="#002e6d").pack(side="left", padx=10)
-    combo_estado = ttk.Combobox(filtro_frame, state="readonly", width=18, font=("Segoe UI", 11))
+    ctk.CTkLabel(filtro_frame, text="Estado:", font=("Segoe UI", 7, "bold"), text_color="#002e6d").pack(side="left", padx=10)
+    combo_estado = ttk.Combobox(filtro_frame, state="readonly", width=18, font=("Segoe UI", 7))
     combo_estado.pack(side="left", padx=6)
 
     # ----------------- BOTÓN DE EXPORTACIÓN -----------------
@@ -2507,7 +2527,7 @@ def generar_tabla_sip05(parent_frame, conexion=None, anio_default=2025):
         combo_estado.set("")
 
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=10)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=8)
 
     datos_actuales = {
         "df_completo": None,
@@ -2606,11 +2626,11 @@ def generar_tabla_sip05(parent_frame, conexion=None, anio_default=2025):
             df_completo = ejecutar_read_sql(sql_completo, conexion)
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df.empty:
-            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=10)
             return
 
         df["Anio_Emis"] = df["Anio_Emis"].fillna(0).astype(int)
@@ -2691,9 +2711,9 @@ def generar_tabla_sip05(parent_frame, conexion=None, anio_default=2025):
         ctk.CTkLabel(
             tabla_frame,
             text=f"📊 SIP 05 - Nivel de cumplimiento de cobertura y monto impactado",
-            font=("Segoe UI", 14, "bold"),
+            font=("Segoe UI", 12, "bold"),
             text_color="#a51c30"
-        ).pack(anchor="w", padx=12, pady=(6, 8))
+        ).pack(anchor="w", padx=10, pady=(6, 8))
 
         container = ctk.CTkFrame(tabla_frame, fg_color="white")
         container.pack(fill="both", expand=True)
@@ -2786,18 +2806,18 @@ def generar_tabla_sip05(parent_frame, conexion=None, anio_default=2025):
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree.tag_configure("auditor", background="white", font=("Segoe UI", 10))
-        tree.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree.tag_configure("auditor", background="white", font=("Segoe UI", 8))
+        tree.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
     combo_sip05.bind("<<ComboboxSelected>>", lambda e: cargar_tabla(combo_sip05.get(), combo_estado.get()))
     combo_estado.bind("<<ComboboxSelected>>", lambda e: cargar_tabla(combo_sip05.get(), combo_estado.get()))
@@ -2813,7 +2833,7 @@ def generar_tabla_sip05_terminada(parent_frame, conexion=None):
     import os
 
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=10)
+    filtro_frame.pack(fill="x", padx=10, pady=8)
 
     icono_llave = "🔑"
     ctk.CTkLabel(
@@ -2822,7 +2842,7 @@ def generar_tabla_sip05_terminada(parent_frame, conexion=None):
         font=("Segoe UI", 12, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=(12, 4))
-    combo_sip = ttk.Combobox(filtro_frame, state="readonly", width=8, font=("Segoe UI", 11))
+    combo_sip = ttk.Combobox(filtro_frame, state="readonly", width=8, font=("Segoe UI", 7))
     combo_sip.pack(side="left", padx=6)
 
     ctk.CTkLabel(
@@ -2831,7 +2851,7 @@ def generar_tabla_sip05_terminada(parent_frame, conexion=None):
         font=("Segoe UI", 12, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=(12, 4))
-    combo_estado = ttk.Combobox(filtro_frame, state="readonly", width=14, font=("Segoe UI", 11))
+    combo_estado = ttk.Combobox(filtro_frame, state="readonly", width=14, font=("Segoe UI", 7))
     combo_estado.pack(side="left", padx=6)
 
     # ----------------- BOTÓN DE EXPORTACIÓN -----------------
@@ -2847,7 +2867,7 @@ def generar_tabla_sip05_terminada(parent_frame, conexion=None):
     btn_exportar.pack(side="right", padx=10)
 
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=12)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     datos_actuales = {
         "df_completo": None,
@@ -2960,11 +2980,11 @@ def generar_tabla_sip05_terminada(parent_frame, conexion=None):
             df_completo = ejecutar_read_sql(query_completo, conexion)
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df.empty:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para SIP_05={sip_sel} y Estado={estado_sel}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para SIP_05={sip_sel} y Estado={estado_sel}", text_color="red").pack(pady=10)
             return
 
         df["Mes_termino"] = pd.to_numeric(df["Mes_termino"], errors="coerce")
@@ -3025,8 +3045,8 @@ def generar_tabla_sip05_terminada(parent_frame, conexion=None):
 
         ctk.CTkLabel(frame_tabla_inner,
                      text=f"📊 SIP 05 - OF TERMINADA",
-                     font=("Segoe UI", 14, "bold"),
-                     text_color="#a51c30").pack(anchor="w", padx=12, pady=6)
+                     font=("Segoe UI", 12, "bold"),
+                     text_color="#a51c30").pack(anchor="w", padx=10, pady=6)
 
         container = ctk.CTkFrame(frame_tabla_inner, fg_color="white")
         container.pack(fill="both", expand=True, padx=5, pady=5)
@@ -3078,18 +3098,18 @@ def generar_tabla_sip05_terminada(parent_frame, conexion=None):
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree_local.tag_configure("auditor", background="white", font=("Segoe UI", 10))
-        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree_local.tag_configure("auditor", background="white", font=("Segoe UI", 8))
+        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
     cargar_tabla(combo_sip.get(), combo_estado.get())
 #----------------------------------
@@ -3104,20 +3124,20 @@ def generar_tabla_sip05_monto_of_terminada(parent_frame, conexion=None):
     MAX_COLS_SIN_HSCROLL = 13
 
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=5)
+    filtro_frame.pack(fill="x", padx=10, pady=5)
 
     ctk.CTkLabel(
         filtro_frame,
         text="🔎 SIP_05  - Seleccione filtros:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=10)
 
-    combo_sip05 = ttk.Combobox(filtro_frame, state="readonly", width=20, font=("Segoe UI", 11))
+    combo_sip05 = ttk.Combobox(filtro_frame, state="readonly", width=20, font=("Segoe UI", 7))
     combo_sip05.pack(side="left", padx=6)
 
-    ctk.CTkLabel(filtro_frame, text="Estado:", font=("Segoe UI", 13, "bold"), text_color="#002e6d").pack(side="left", padx=10)
-    combo_estado = ttk.Combobox(filtro_frame, state="readonly", width=18, font=("Segoe UI", 11))
+    ctk.CTkLabel(filtro_frame, text="Estado:", font=("Segoe UI", 7, "bold"), text_color="#002e6d").pack(side="left", padx=10)
+    combo_estado = ttk.Combobox(filtro_frame, state="readonly", width=18, font=("Segoe UI", 7))
     combo_estado.pack(side="left", padx=6)
 
     # ----------------- BOTÓN DE EXPORTACIÓN -----------------
@@ -3156,7 +3176,7 @@ def generar_tabla_sip05_monto_of_terminada(parent_frame, conexion=None):
         combo_estado.set("Terminado")
 
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=10)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=8)
 
     datos_actuales = {
         "df_completo": None,
@@ -3256,11 +3276,11 @@ def generar_tabla_sip05_monto_of_terminada(parent_frame, conexion=None):
             df_completo = ejecutar_read_sql(sql_completo, conexion)
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df.empty:
-            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=10)
             return
 
         df["MTO_SIP_05"] = pd.to_numeric(df.get("MTO_SIP_05", 0.0), errors="coerce").fillna(0.0)
@@ -3382,9 +3402,9 @@ def generar_tabla_sip05_monto_of_terminada(parent_frame, conexion=None):
         ctk.CTkLabel(
             tabla_frame,
             text=f"📊 SIP 05 - MONTO DE OF TERMINADA",
-            font=("Segoe UI", 14, "bold"),
+            font=("Segoe UI", 12, "bold"),
             text_color="#a51c30"
-        ).pack(anchor="w", padx=12, pady=(6, 8))
+        ).pack(anchor="w", padx=10, pady=(6, 8))
 
         container = ctk.CTkFrame(tabla_frame, fg_color="white")
         container.pack(fill="both", expand=True)
@@ -3476,18 +3496,18 @@ def generar_tabla_sip05_monto_of_terminada(parent_frame, conexion=None):
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree.tag_configure("auditor", background="white", font=("Segoe UI", 10))
-        tree.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree.tag_configure("auditor", background="white", font=("Segoe UI", 8))
+        tree.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
     combo_sip05.bind("<<ComboboxSelected>>", lambda e: cargar_tabla(combo_sip05.get(), combo_estado.get()))
     combo_estado.bind("<<ComboboxSelected>>", lambda e: cargar_tabla(combo_sip05.get(), combo_estado.get()))
@@ -3503,7 +3523,7 @@ def generar_tabla_stock_indicador(parent_frame, conexion=None):
     import os
 
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=10)
+    filtro_frame.pack(fill="x", padx=10, pady=8)
 
     ctk.CTkLabel(
         filtro_frame,
@@ -3511,7 +3531,7 @@ def generar_tabla_stock_indicador(parent_frame, conexion=None):
         font=("Segoe UI", 12, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=(12, 4))
-    combo_desest = ttk.Combobox(filtro_frame, state="readonly", width=28, font=("Segoe UI", 11))
+    combo_desest = ttk.Combobox(filtro_frame, state="readonly", width=28, font=("Segoe UI", 7))
     combo_desest.pack(side="left", padx=6)
 
     ctk.CTkLabel(
@@ -3520,7 +3540,7 @@ def generar_tabla_stock_indicador(parent_frame, conexion=None):
         font=("Segoe UI", 12, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=(12, 4))
-    combo_estado = ttk.Combobox(filtro_frame, state="readonly", width=16, font=("Segoe UI", 11))
+    combo_estado = ttk.Combobox(filtro_frame, state="readonly", width=16, font=("Segoe UI", 7))
     combo_estado.pack(side="left", padx=6)
 
     ctk.CTkLabel(
@@ -3529,7 +3549,7 @@ def generar_tabla_stock_indicador(parent_frame, conexion=None):
         font=("Segoe UI", 12, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=(12, 4))
-    combo_stock = ttk.Combobox(filtro_frame, state="readonly", width=10, font=("Segoe UI", 11))
+    combo_stock = ttk.Combobox(filtro_frame, state="readonly", width=10, font=("Segoe UI", 7))
     combo_stock.pack(side="left", padx=6)
 
     # ----------------- BOTÓN DE EXPORTACIÓN -----------------
@@ -3545,7 +3565,7 @@ def generar_tabla_stock_indicador(parent_frame, conexion=None):
     btn_exportar.pack(side="right", padx=10)
 
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=12)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     datos_actuales = {
         "df_completo": None,
@@ -3687,11 +3707,11 @@ def generar_tabla_stock_indicador(parent_frame, conexion=None):
             df_completo = ejecutar_read_sql(query_completo, conexion)
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df.empty:
-            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos con los filtros seleccionados.", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos con los filtros seleccionados.", text_color="red").pack(pady=10)
             return
 
         df["Stock_AUD_25"] = df["Stock_AUD_25"].astype(str).str.strip()
@@ -3747,8 +3767,8 @@ def generar_tabla_stock_indicador(parent_frame, conexion=None):
 
         ctk.CTkLabel(frame_tabla_inner,
                      text="📊 STOCK DE ORDENES DE FISCALIZACIÓN - INDICADOR",
-                     font=("Segoe UI", 14, "bold"),
-                     text_color="#a51c30").pack(anchor="w", padx=12, pady=6)
+                     font=("Segoe UI", 12, "bold"),
+                     text_color="#a51c30").pack(anchor="w", padx=10, pady=6)
 
         container = ctk.CTkFrame(frame_tabla_inner, fg_color="white")
         container.pack(fill="both", expand=True, padx=5, pady=5)
@@ -3800,18 +3820,18 @@ def generar_tabla_stock_indicador(parent_frame, conexion=None):
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree_local.tag_configure("auditor", background="white", font=("Segoe UI", 10))
-        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree_local.tag_configure("supervisor", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree_local.tag_configure("auditor", background="white", font=("Segoe UI", 8))
+        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
     cargar_tabla(combo_desest.get(), combo_estado.get(), combo_stock.get())
 
@@ -3839,7 +3859,7 @@ def generar_tabla_pagos_realizados(parent_frame, conexion=None):
     }
 
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=10)
+    filtro_frame.pack(fill="x", padx=10, pady=8)
 
     class MultiSelectCombo(ctk.CTkFrame):
         def __init__(self, parent, label_text, opciones, width=170, height=30, callback=None, **kwargs):
@@ -3874,7 +3894,7 @@ def generar_tabla_pagos_realizados(parent_frame, conexion=None):
                         v.set(0)
                     self.selected[:] = []
                 self._update_text()
-            chk_all = ctk.CTkCheckBox(self.list_frame, text="Todos", variable=self._var_todos, command=on_todos_change, font=("Segoe UI", 11))
+            chk_all = ctk.CTkCheckBox(self.list_frame, text="Todos", variable=self._var_todos, command=on_todos_change, font=("Segoe UI", 7))
             chk_all.pack(anchor="w", padx=8, pady=3)
             for val in opciones_lista:
                 v = tk.IntVar(value=0)
@@ -3890,8 +3910,8 @@ def generar_tabla_pagos_realizados(parent_frame, conexion=None):
                             self._var_todos.set(0)
                         self._update_text()
                     return cmd
-                chk = ctk.CTkCheckBox(self.list_frame, text=str(val), variable=v, command=make_cmd(), font=("Segoe UI", 11))
-                chk.pack(anchor="w", padx=12, pady=2)
+                chk = ctk.CTkCheckBox(self.list_frame, text=str(val), variable=v, command=make_cmd(), font=("Segoe UI", 7))
+                chk.pack(anchor="w", padx=10, pady=2)
                 self._vars[val] = v
 
         def _toggle_list(self):
@@ -3932,15 +3952,15 @@ def generar_tabla_pagos_realizados(parent_frame, conexion=None):
     opciones_des_ai = obtener_opciones("des_ai")
     opciones_corriente = obtener_opciones("corriente")
 
-    ms_reimputado = MultiSelectCombo(filtro_frame, "Reimputado:", opciones_reimputado, width=180,
+    ms_reimputado = MultiSelectCombo(filtro_frame, "Reimputado:", opciones_reimputado, width=160,
                                      callback=lambda sel: cargar_tabla_wrapper())
     ms_reimputado.pack(side="left", padx=0)
 
-    ms_des_ai = MultiSelectCombo(filtro_frame, "Des AI:", opciones_des_ai, width=180,
+    ms_des_ai = MultiSelectCombo(filtro_frame, "Des AI:", opciones_des_ai, width=160,
                                  callback=lambda sel: cargar_tabla_wrapper())
     ms_des_ai.pack(side="left", padx=0)
 
-    ms_corriente = MultiSelectCombo(filtro_frame, "Corriente:", opciones_corriente, width=140,
+    ms_corriente = MultiSelectCombo(filtro_frame, "Corriente:", opciones_corriente, width=120,
                                     callback=lambda sel: cargar_tabla_wrapper())
     ms_corriente.pack(side="left", padx=0)
 
@@ -3957,7 +3977,7 @@ def generar_tabla_pagos_realizados(parent_frame, conexion=None):
     btn_exportar.pack(side="right", padx=10)
 
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=12)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     datos_actuales = {
         "df_completo": None,
@@ -4080,11 +4100,11 @@ def generar_tabla_pagos_realizados(parent_frame, conexion=None):
             df_completo = ejecutar_read_sql(query_completo, conexion)
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df is None or df.empty:
-            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=10)
             return
 
         df["MES"] = pd.to_numeric(df["MES"], errors="coerce").fillna(0).astype(int)
@@ -4130,8 +4150,8 @@ def generar_tabla_pagos_realizados(parent_frame, conexion=None):
 
         ctk.CTkLabel(frame_tabla_inner,
                      text=f"💰 PAGOS REALIZADOS EN OFS",
-                     font=("Segoe UI", 14, "bold"),
-                     text_color="#a51c30").pack(anchor="w", padx=12, pady=6)
+                     font=("Segoe UI", 12, "bold"),
+                     text_color="#a51c30").pack(anchor="w", padx=10, pady=6)
 
         container = ctk.CTkFrame(frame_tabla_inner, fg_color="white")
         container.pack(fill="both", expand=True, padx=5, pady=5)
@@ -4177,17 +4197,17 @@ def generar_tabla_pagos_realizados(parent_frame, conexion=None):
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
-        tree_local.tag_configure("normal", background="white", font=("Segoe UI", 10))
+        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
+        tree_local.tag_configure("normal", background="white", font=("Segoe UI", 8))
 
     cargar_tabla()
 # ==========================
@@ -4200,7 +4220,7 @@ def dashboard_supervisores():
         preview_frame.pack_forget()
     except Exception:
         pass
-    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=10)
+    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=8)
 
     for widget in dashboard_frame.winfo_children():
         widget.destroy()
@@ -4219,7 +4239,7 @@ def dashboard_supervisores():
     # CONTENEDOR CON SCROLL
     # ====================
     scroll_container = ctk.CTkFrame(dashboard_frame, fg_color=COLOR_WHITE)
-    scroll_container.pack(fill="both", expand=True, padx=15, pady=15)
+    scroll_container.pack(fill="both", expand=True, padx=10, pady=10)
 
     canvas = tk.Canvas(scroll_container, bg=COLOR_WHITE, highlightthickness=0)
     vscroll = ttk.Scrollbar(scroll_container, orient="vertical", command=canvas.yview)
@@ -4271,7 +4291,7 @@ def dashboard_supervisores():
     # MÉTRICAS + ÍNDICE LATERAL (arriba)
     # ====================
     top_container = ctk.CTkFrame(inner_frame, fg_color=COLOR_WHITE)
-    top_container.pack(pady=15, padx=15, fill="x")
+    top_container.pack(pady=10, padx=10, fill="x")
 
     # Frame para métricas (lado izquierdo)
     metrics_frame = ctk.CTkFrame(top_container, fg_color=COLOR_WHITE, corner_radius=15)
@@ -4285,12 +4305,12 @@ def dashboard_supervisores():
         index_frame.pack_propagate(False)
     except Exception:
         pass
-    index_frame.pack(side="right", anchor="n", pady=2, padx=(10,0))
+    index_frame.pack(side="right", anchor="n", pady=2, padx=(8,0))
 
     # función para crear cards de métricas
     def crear_card(parent, icono, texto, valor, color_fondo, color_hover):
         frame = ctk.CTkFrame(parent, corner_radius=15, fg_color=color_fondo)
-        frame.pack(side="left", padx=12, pady=10, ipadx=16, ipady=10)
+        frame.pack(side="left", padx=10, pady=8, ipadx=16, ipady=8)
 
         def on_enter(e): frame.configure(fg_color=color_hover)
         def on_leave(e): frame.configure(fg_color=color_fondo)
@@ -4298,7 +4318,7 @@ def dashboard_supervisores():
         frame.bind("<Leave>", on_leave)
 
         ctk.CTkLabel(frame, text=icono, font=("Segoe UI Emoji", 26)).grid(row=0, column=0, rowspan=2, padx=8)
-        ctk.CTkLabel(frame, text=texto, font=("Segoe UI", 11, "bold")).grid(row=0, column=1, sticky="w", pady=(6,0))
+        ctk.CTkLabel(frame, text=texto, font=("Segoe UI", 7, "bold")).grid(row=0, column=1, sticky="w", pady=(6,0))
         ctk.CTkLabel(frame, text=str(valor), font=("Segoe UI", 16, "bold")).grid(row=1, column=1, sticky="w")
         return frame
 
@@ -4324,7 +4344,7 @@ def dashboard_supervisores():
     index_frame.configure(width=700)
     index_frame.pack_propagate(False)
 
-    ctk.CTkLabel(index_frame, text="📚 Índice de Tablas", font=("Segoe UI", 14, "bold")).pack(pady=(10,8))
+    ctk.CTkLabel(index_frame, text="📚 Índice de Tablas", font=("Segoe UI", 12, "bold")).pack(pady=(8,8))
 
     # contenedor con scrollbar propio para el índice
     idx_container = tk.Frame(index_frame, bg="#f7f9fb")
@@ -4392,7 +4412,7 @@ def dashboard_supervisores():
         label = ctk.CTkLabel(
             titulo_frame, 
             text=f"{icono}  {titulo}", 
-            font=("Segoe UI", 11, "bold"),
+            font=("Segoe UI", 7, "bold"),
             text_color="#01579b"
         )
         label.pack(pady=6)
@@ -4410,7 +4430,7 @@ def dashboard_supervisores():
                 border_width=1,
                 border_color="#cce7ff",
                 anchor="w",
-                font=("Segoe UI", 9),
+                font=("Segoe UI", 7),
                 command=lambda n=nombre_tabla: ir_a_tabla(n)
             )
             btn.pack(fill="x", padx=8, pady=3)
@@ -4573,7 +4593,7 @@ def dashboard_supervisores():
     # ====================
     # Hover en encabezados de tablas (Treeview)
     # ====================
-    style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"), foreground="white", background="#002855")
+    style.configure("Treeview.Heading", font=("Segoe UI", 8, "bold"), foreground="white", background="#002855")
     style.map("Treeview.Heading",
               foreground=[("active", "black")],
               background=[("active", "#f0f0f0")])
@@ -4629,17 +4649,17 @@ def generar_tabla_AI_asignadas(parent_frame, conexion=None, anio=None):
 
     # === Filtro de año ===
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=10)
+    filtro_frame.pack(fill="x", padx=10, pady=8)
 
     ctk.CTkLabel(
         filtro_frame,
         text="📅 Año de emisión:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
-    ).pack(side="left", padx=(10, 4))
+    ).pack(side="left", padx=(8, 4))
 
     anio_button_text = tk.StringVar(value="2025")
-    btn_anios = ctk.CTkButton(filtro_frame, textvariable=anio_button_text, width=140,
+    btn_anios = ctk.CTkButton(filtro_frame, textvariable=anio_button_text, width=120,
                               command=lambda: toggle_dropdown_anios())
     btn_anios.pack(side="left", padx=(0, 8))
 
@@ -4660,7 +4680,7 @@ def generar_tabla_AI_asignadas(parent_frame, conexion=None, anio=None):
     btn_exportar.pack(side="right", padx=10)
 
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=12)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Variable para almacenar los datos actuales
     datos_actuales = {
@@ -4677,7 +4697,7 @@ def generar_tabla_AI_asignadas(parent_frame, conexion=None, anio=None):
         )
         años = [int(x) for x in años_df["Anio_Emis"].tolist()] if not años_df.empty else []
     except Exception as e:
-        ctk.CTkLabel(tabla_frame, text=f"⚠ Error cargando años: {e}", text_color="red").pack(pady=15)
+        ctk.CTkLabel(tabla_frame, text=f"⚠ Error cargando años: {e}", text_color="red").pack(pady=10)
         return
 
     available_years = años
@@ -4856,7 +4876,7 @@ def generar_tabla_AI_asignadas(parent_frame, conexion=None, anio=None):
             años_sel = available_years
         
         if not años_sel:
-            ctk.CTkLabel(tabla_frame, text="⚠ Seleccione al menos un año", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text="⚠ Seleccione al menos un año", text_color="red").pack(pady=10)
             return
 
         # Guardar años filtrados
@@ -4873,12 +4893,12 @@ def generar_tabla_AI_asignadas(parent_frame, conexion=None, anio=None):
         try:
             df_completo = ejecutar_read_sql(query, conexion)
         except Exception as e:
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df_completo.empty:
             años_texto = ", ".join(str(a) for a in años_sel)
-            ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para {años_texto}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ No hay datos para {años_texto}", text_color="red").pack(pady=10)
             return
 
         # Guardar datos completos filtrados
@@ -4951,8 +4971,8 @@ def generar_tabla_AI_asignadas(parent_frame, conexion=None, anio=None):
         años_texto = ", ".join(str(a) for a in sorted(años_sel))
         ctk.CTkLabel(frame_tabla_inner,
                      text=f"📊 AIs ASIGNADAS - {años_texto}",
-                     font=("Segoe UI", 14, "bold"),
-                     text_color="#a51c30").pack(anchor="w", padx=12, pady=6)
+                     font=("Segoe UI", 12, "bold"),
+                     text_color="#a51c30").pack(anchor="w", padx=10, pady=6)
 
         # === Scroll y Treeview ===
         container = ctk.CTkFrame(frame_tabla_inner, fg_color="white")
@@ -5011,18 +5031,18 @@ def generar_tabla_AI_asignadas(parent_frame, conexion=None, anio=None):
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree_local.tag_configure("tipo_ai", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree_local.tag_configure("supervisor", background="white", font=("Segoe UI", 10))
-        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree_local.tag_configure("tipo_ai", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree_local.tag_configure("supervisor", background="white", font=("Segoe UI", 8))
+        tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
     # === Carga inicial ===
     update_button_label()
@@ -5041,20 +5061,20 @@ def generar_tabla_ai_pendientes(parent_frame, conexion=None, anio_default=2025):
 
     # ---------------------------- FILTROS ----------------------------
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=5)
+    filtro_frame.pack(fill="x", padx=10, pady=5)
 
     # ----------------- ESTADO (botón desplegable con checkboxes) -----------------
     ctk.CTkLabel(
         filtro_frame,
         text="🔎 Estado:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=(6, 4))
 
     estado_button_text = tk.StringVar(value="(Todos)")
     btn_estado = ctk.CTkButton(filtro_frame, textvariable=estado_button_text, width=160,
                                command=lambda: toggle_dropdown_estado())
-    btn_estado.pack(side="left", padx=(0, 12))
+    btn_estado.pack(side="left", padx=(0, 10))
 
     dropdown_estado_win = {"win": None}
     check_estado_vars = {}
@@ -5064,12 +5084,12 @@ def generar_tabla_ai_pendientes(parent_frame, conexion=None, anio_default=2025):
     ctk.CTkLabel(
         filtro_frame,
         text="📅 Año:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=(4, 6))
 
     anio_button_text = tk.StringVar(value="(Todos)")
-    btn_anios = ctk.CTkButton(filtro_frame, textvariable=anio_button_text, width=140,
+    btn_anios = ctk.CTkButton(filtro_frame, textvariable=anio_button_text, width=120,
                               command=lambda: toggle_dropdown_anios())
     btn_anios.pack(side="left", padx=(0, 8))
 
@@ -5093,10 +5113,10 @@ def generar_tabla_ai_pendientes(parent_frame, conexion=None, anio_default=2025):
     titulo_label = ctk.CTkLabel(
         parent_frame,
         text="📊 AIs Pendientes",
-        font=("Segoe UI", 14, "bold"),
+        font=("Segoe UI", 12, "bold"),
         text_color="#a51c30"
     )
-    titulo_label.pack(anchor="w", padx=12, pady=(8, 6))
+    titulo_label.pack(anchor="w", padx=10, pady=(8, 6))
 
     # ---------------------------- CONTENEDOR DINÁMICO ----------------------------
     contenedor_tabla = {"frame": None}
@@ -5466,16 +5486,16 @@ def generar_tabla_ai_pendientes(parent_frame, conexion=None, anio_default=2025):
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
             tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-            tabla_frame.pack(fill="x", padx=15, pady=5)
+            tabla_frame.pack(fill="x", padx=10, pady=5)
             contenedor_tabla["frame"] = tabla_frame
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df.empty:
             tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-            tabla_frame.pack(fill="x", padx=15, pady=5)
+            tabla_frame.pack(fill="x", padx=10, pady=5)
             contenedor_tabla["frame"] = tabla_frame
-            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=10)
             return
 
         df["Anio_Emis"] = df["Anio_Emis"].fillna(0).astype(int)
@@ -5583,7 +5603,7 @@ def generar_tabla_ai_pendientes(parent_frame, conexion=None, anio_default=2025):
 
         # CREAR tabla_frame
         tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-        tabla_frame.pack(fill="both", expand=True, padx=15, pady=5)
+        tabla_frame.pack(fill="both", expand=True, padx=10, pady=5)
         contenedor_tabla["frame"] = tabla_frame
 
         # --------------------- TREEVIEW (sin scroll vertical) ---------------------
@@ -5710,19 +5730,19 @@ def generar_tabla_ai_pendientes(parent_frame, conexion=None, anio_default=2025):
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree.tag_configure("tipo_ai", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree.tag_configure("supervisor", background="#ffffff", font=("Segoe UI", 10, "bold"))
-        tree.tag_configure("auditor", background="#f9f9f9", font=("Segoe UI", 10))
-        tree.tag_configure("total", background="#f2f2f2", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree.tag_configure("tipo_ai", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree.tag_configure("supervisor", background="#ffffff", font=("Segoe UI", 8, "bold"))
+        tree.tag_configure("auditor", background="#f9f9f9", font=("Segoe UI", 8))
+        tree.tag_configure("total", background="#f2f2f2", foreground="black", font=("Segoe UI", 7, "bold"))
 
     # ---------------------------- INICIALIZACIÓN ----------------------------
     cargar_filtros()
@@ -5741,20 +5761,20 @@ def generar_tabla_ai_terminadas(parent_frame, conexion=None, anio_default=2025):
 
     # ---------------------------- FILTROS ----------------------------
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=5)
+    filtro_frame.pack(fill="x", padx=10, pady=5)
 
     # ----------------- ESTADO (botón desplegable con checkboxes) -----------------
     ctk.CTkLabel(
         filtro_frame,
         text="🔎 Estado:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=(6, 4))
 
     estado_button_text = tk.StringVar(value="(Todos)")
     btn_estado = ctk.CTkButton(filtro_frame, textvariable=estado_button_text, width=160,
                                command=lambda: toggle_dropdown_estado())
-    btn_estado.pack(side="left", padx=(0, 12))
+    btn_estado.pack(side="left", padx=(0, 10))
 
     dropdown_estado_win = {"win": None}
     check_estado_vars = {}
@@ -5764,12 +5784,12 @@ def generar_tabla_ai_terminadas(parent_frame, conexion=None, anio_default=2025):
     ctk.CTkLabel(
         filtro_frame,
         text="📅 Año Término:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=(4, 6))
 
     anio_button_text = tk.StringVar(value="(Todos)")
-    btn_anios = ctk.CTkButton(filtro_frame, textvariable=anio_button_text, width=140,
+    btn_anios = ctk.CTkButton(filtro_frame, textvariable=anio_button_text, width=120,
                               command=lambda: toggle_dropdown_anios())
     btn_anios.pack(side="left", padx=(0, 8))
 
@@ -5793,10 +5813,10 @@ def generar_tabla_ai_terminadas(parent_frame, conexion=None, anio_default=2025):
     titulo_label = ctk.CTkLabel(
         parent_frame,
         text="📊 AIs Terminadas",
-        font=("Segoe UI", 14, "bold"),
+        font=("Segoe UI", 12, "bold"),
         text_color="#a51c30"
     )
-    titulo_label.pack(anchor="w", padx=12, pady=(8, 6))
+    titulo_label.pack(anchor="w", padx=10, pady=(8, 6))
 
     # ---------------------------- CONTENEDOR DINÁMICO ----------------------------
     contenedor_tabla = {"frame": None}
@@ -6162,16 +6182,16 @@ def generar_tabla_ai_terminadas(parent_frame, conexion=None, anio_default=2025):
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
             tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-            tabla_frame.pack(fill="x", padx=15, pady=5)
+            tabla_frame.pack(fill="x", padx=10, pady=5)
             contenedor_tabla["frame"] = tabla_frame
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df.empty:
             tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-            tabla_frame.pack(fill="x", padx=15, pady=5)
+            tabla_frame.pack(fill="x", padx=10, pady=5)
             contenedor_tabla["frame"] = tabla_frame
-            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=10)
             return
 
         df["Anio_Termino"] = pd.to_numeric(df["Anio_Termino"], errors="coerce").fillna(0).astype(int)
@@ -6260,7 +6280,7 @@ def generar_tabla_ai_terminadas(parent_frame, conexion=None, anio_default=2025):
 
         # CREAR el tabla_frame SOLO cuando hay datos
         tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-        tabla_frame.pack(fill="both", expand=True, padx=15, pady=5)
+        tabla_frame.pack(fill="both", expand=True, padx=10, pady=5)
         contenedor_tabla["frame"] = tabla_frame
 
         # --------------------- TREEVIEW (sin scroll vertical) ---------------------
@@ -6350,19 +6370,19 @@ def generar_tabla_ai_terminadas(parent_frame, conexion=None, anio_default=2025):
                         foreground="#4a4a4a",
                         rowheight=28,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree.tag_configure("tipo_ai", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree.tag_configure("supervisor", background="white", font=("Segoe UI", 10))
-        tree.tag_configure("auditor", background="#fafafa", font=("Segoe UI", 10))
-        tree.tag_configure("total", background="#f2f2f2", foreground="black", font=("Segoe UI", 11, "bold"))
+        tree.tag_configure("tipo_ai", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree.tag_configure("supervisor", background="white", font=("Segoe UI", 8))
+        tree.tag_configure("auditor", background="#fafafa", font=("Segoe UI", 8))
+        tree.tag_configure("total", background="#f2f2f2", foreground="black", font=("Segoe UI", 7, "bold"))
 
     # ---------------------------- INICIALIZACIÓN ----------------------------
     cargar_filtros()
@@ -6381,20 +6401,20 @@ def generar_tabla_ai_rendimiento(parent_frame, conexion=None, anio_default=2025)
 
     # ---------------------------- FILTROS ----------------------------
     filtro_frame = ctk.CTkFrame(parent_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_frame.pack(fill="x", padx=12, pady=5)
+    filtro_frame.pack(fill="x", padx=10, pady=5)
 
     # ----------------- ESTADO (botón desplegable con checkboxes) -----------------
     ctk.CTkLabel(
         filtro_frame,
         text="🔎 Estado:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=(6, 4))
 
     estado_button_text = tk.StringVar(value="(Todos)")
     btn_estado = ctk.CTkButton(filtro_frame, textvariable=estado_button_text, width=160,
                                command=lambda: toggle_dropdown_estado())
-    btn_estado.pack(side="left", padx=(0, 12))
+    btn_estado.pack(side="left", padx=(0, 10))
 
     dropdown_estado_win = {"win": None}
     check_estado_vars = {}
@@ -6404,12 +6424,12 @@ def generar_tabla_ai_rendimiento(parent_frame, conexion=None, anio_default=2025)
     ctk.CTkLabel(
         filtro_frame,
         text="📅 Año Término:",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         text_color="#002e6d"
     ).pack(side="left", padx=(4, 6))
 
     anio_button_text = tk.StringVar(value="(Todos)")
-    btn_anios = ctk.CTkButton(filtro_frame, textvariable=anio_button_text, width=140,
+    btn_anios = ctk.CTkButton(filtro_frame, textvariable=anio_button_text, width=120,
                               command=lambda: toggle_dropdown_anios())
     btn_anios.pack(side="left", padx=(0, 8))
 
@@ -6433,10 +6453,10 @@ def generar_tabla_ai_rendimiento(parent_frame, conexion=None, anio_default=2025)
     titulo = ctk.CTkLabel(
         parent_frame,
         text="📊 AIs Rendimiento",
-        font=("Segoe UI", 14, "bold"),
+        font=("Segoe UI", 12, "bold"),
         text_color="#a51c30"
     )
-    titulo.pack(anchor="w", padx=12, pady=(8, 6))
+    titulo.pack(anchor="w", padx=10, pady=(8, 6))
 
     # ---------------------------- CONTENEDOR DINÁMICO ----------------------------
     contenedor_tabla = {"frame": None}
@@ -6808,16 +6828,16 @@ def generar_tabla_ai_rendimiento(parent_frame, conexion=None, anio_default=2025)
             datos_actuales["df_completo"] = df_completo.copy()
         except Exception as e:
             tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-            tabla_frame.pack(fill="x", padx=15, pady=5)
+            tabla_frame.pack(fill="x", padx=10, pady=5)
             contenedor_tabla["frame"] = tabla_frame
-            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
             return
 
         if df is None or df.empty:
             tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-            tabla_frame.pack(fill="x", padx=15, pady=5)
+            tabla_frame.pack(fill="x", padx=10, pady=5)
             contenedor_tabla["frame"] = tabla_frame
-            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=15)
+            ctk.CTkLabel(tabla_frame, text="⚠ No hay datos para los filtros seleccionados.", text_color="red").pack(pady=10)
             return
 
         df["Cantidad"] = pd.to_numeric(df.get("Cantidad", 0), errors="coerce").fillna(0).astype(int)
@@ -6908,7 +6928,7 @@ def generar_tabla_ai_rendimiento(parent_frame, conexion=None, anio_default=2025)
         datos_actuales["tabla_formateada"] = tabla_formateada_df
 
         tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-        tabla_frame.pack(fill="both", expand=True, padx=15, pady=5)
+        tabla_frame.pack(fill="both", expand=True, padx=10, pady=5)
         contenedor_tabla["frame"] = tabla_frame
         
         container = ctk.CTkFrame(tabla_frame, fg_color="white")
@@ -6940,19 +6960,19 @@ def generar_tabla_ai_rendimiento(parent_frame, conexion=None, anio_default=2025)
                         foreground="#4a4a4a",
                         rowheight=26,
                         fieldbackground="#ffffff",
-                        font=("Segoe UI", 10))
+                        font=("Segoe UI", 8))
         style.configure("Treeview.Heading",
                         background="#002e6d",
                         foreground="white",
-                        font=("Segoe UI", 10, "bold"))
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview",
                   background=[("selected", "#a51c30")],
                   foreground=[("selected", "white")])
 
-        tree.tag_configure("tipo", background="#f0f4fa", font=("Segoe UI", 10, "bold"))
-        tree.tag_configure("supervisor", background="white", font=("Segoe UI", 10, "bold"))
-        tree.tag_configure("auditor", background="#fafafa", font=("Segoe UI", 10))
-        tree.tag_configure("total", background="#f2f2f2", font=("Segoe UI", 11, "bold"))
+        tree.tag_configure("tipo", background="#f0f4fa", font=("Segoe UI", 8, "bold"))
+        tree.tag_configure("supervisor", background="white", font=("Segoe UI", 8, "bold"))
+        tree.tag_configure("auditor", background="#fafafa", font=("Segoe UI", 8))
+        tree.tag_configure("total", background="#f2f2f2", font=("Segoe UI", 7, "bold"))
 
         total_filas = 0
         
@@ -7021,7 +7041,7 @@ def dashboard_acciones_inductivas():
         preview_frame.pack_forget()
     except Exception:
         pass
-    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=10)
+    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=8)
 
     # limpiar contenido previo
     for widget in dashboard_frame.winfo_children():
@@ -7051,7 +7071,7 @@ def dashboard_acciones_inductivas():
     # CONTENEDOR SCROLLEABLE PRINCIPAL
     # =====================================================
     scroll_container = ctk.CTkFrame(dashboard_frame, fg_color="white")
-    scroll_container.pack(fill="both", expand=True, padx=15, pady=15)
+    scroll_container.pack(fill="both", expand=True, padx=10, pady=10)
 
     canvas = tk.Canvas(scroll_container, bg="white", highlightthickness=0)
     vscroll = ttk.Scrollbar(scroll_container, orient="vertical", command=canvas.yview)
@@ -7102,23 +7122,23 @@ def dashboard_acciones_inductivas():
     # MÉTRICAS + ÍNDICE SUPERIOR
     # =====================================================
     top_container = ctk.CTkFrame(inner_frame, fg_color="white")
-    top_container.pack(pady=15, padx=15, fill="x")
+    top_container.pack(pady=10, padx=10, fill="x")
 
     metrics_frame = ctk.CTkFrame(top_container, fg_color="white", corner_radius=15)
     metrics_frame.pack(side="left", fill="x", expand=True, padx=(0, 10))
 
     index_frame = ctk.CTkFrame(top_container, fg_color="#f7f9fb", corner_radius=12, width=240)
     index_frame.pack_propagate(False)
-    index_frame.pack(side="right", anchor="n", pady=2, padx=(10,0))
+    index_frame.pack(side="right", anchor="n", pady=2, padx=(8,0))
 
     # --- Crear cards de métricas ---
     def crear_card(parent, icono, texto, valor, color_fondo, color_hover):
         frame = ctk.CTkFrame(parent, corner_radius=15, fg_color=color_fondo)
-        frame.pack(side="left", padx=12, pady=10, ipadx=16, ipady=10)
+        frame.pack(side="left", padx=10, pady=8, ipadx=16, ipady=8)
         frame.bind("<Enter>", lambda e: frame.configure(fg_color=color_hover))
         frame.bind("<Leave>", lambda e: frame.configure(fg_color=color_fondo))
         ctk.CTkLabel(frame, text=icono, font=("Segoe UI Emoji", 26)).grid(row=0, column=0, rowspan=2, padx=8)
-        ctk.CTkLabel(frame, text=texto, font=("Segoe UI", 11, "bold")).grid(row=0, column=1, sticky="w", pady=(6,0))
+        ctk.CTkLabel(frame, text=texto, font=("Segoe UI", 7, "bold")).grid(row=0, column=1, sticky="w", pady=(6,0))
         ctk.CTkLabel(frame, text=str(valor), font=("Segoe UI", 16, "bold")).grid(row=1, column=1, sticky="w")
         return frame
 
@@ -7536,11 +7556,11 @@ def crear_kpi_card(parent, icono, texto, valor, subtexto, color_bg, color_hover)
     
     ctk.CTkLabel(content, text=icono, font=("Arial", 32)).pack(pady=(0, 5))
     ctk.CTkLabel(content, text=texto, font=("Arial", 11, "bold"),
-                text_color="#1F2937", wraplength=150, justify="center").pack(pady=(0, 10))
+                text_color="#1F2937", wraplength=150, justify="center").pack(pady=(0, 8))
     ctk.CTkLabel(content, text=valor, font=("Arial", 36, "bold"),
                 text_color="#1F2937").pack(pady=5)
     ctk.CTkLabel(content, text=subtexto, font=("Arial", 9),
-                text_color="#6B7280", wraplength=150, justify="center").pack(pady=(5, 0))
+                text_color="#6B7280", wraplength=150, justify="center").pack(pady=(4, 0))
 
 def exportar_grafico_imagen(fig, nombre_base, filtros_texto):
     """Exporta el gráfico matplotlib como imagen PNG"""
@@ -7779,7 +7799,7 @@ def mostrar_dashboard_completo(conexion=None):
 
     # ===================== ÁREA DE SCROLL =====================
     scroll_container = ctk.CTkScrollableFrame(main_container, fg_color=COLOR_GRIS_CLARO)
-    scroll_container.pack(fill="both", expand=True, padx=15, pady=15)
+    scroll_container.pack(fill="both", expand=True, padx=10, pady=10)
 
     # ===================== FUNCIONES DE REDIRECCIÓN A TABLAS =====================
     def ir_a_tabla_determinadas(filtros):
@@ -7789,7 +7809,7 @@ def mostrar_dashboard_completo(conexion=None):
                 w.destroy()
             
             tabla_container = ctk.CTkFrame(dashboard_frame, fg_color="white")
-            tabla_container.pack(fill="both", expand=True, padx=10, pady=10)
+            tabla_container.pack(fill="both", expand=True, padx=10, pady=8)
             
             btn_volver = ctk.CTkButton(
                 tabla_container,
@@ -7801,7 +7821,7 @@ def mostrar_dashboard_completo(conexion=None):
                 width=200,
                 height=35
             )
-            btn_volver.pack(anchor="w", padx=15, pady=10)
+            btn_volver.pack(anchor="w", padx=10, pady=8)
             
             conn_tabla = mysql.connector.connect(**DB_CONFIG)
             anio_tabla = int(filtros['anio']) if filtros['anio'] else 2025
@@ -7819,7 +7839,7 @@ def mostrar_dashboard_completo(conexion=None):
                 w.destroy()
             
             tabla_container = ctk.CTkFrame(dashboard_frame, fg_color="white")
-            tabla_container.pack(fill="both", expand=True, padx=10, pady=10)
+            tabla_container.pack(fill="both", expand=True, padx=10, pady=8)
             
             btn_volver = ctk.CTkButton(
                 tabla_container,
@@ -7831,7 +7851,7 @@ def mostrar_dashboard_completo(conexion=None):
                 width=200,
                 height=35
             )
-            btn_volver.pack(anchor="w", padx=15, pady=10)
+            btn_volver.pack(anchor="w", padx=10, pady=8)
             
             conn_tabla = mysql.connector.connect(**DB_CONFIG)
             anio_tabla = int(filtros['anio']) if filtros['anio'] else 2025
@@ -7848,7 +7868,7 @@ def mostrar_dashboard_completo(conexion=None):
                 w.destroy()
 
             tabla_container = ctk.CTkFrame(dashboard_frame, fg_color="white")
-            tabla_container.pack(fill="both", expand=True, padx=10, pady=10)
+            tabla_container.pack(fill="both", expand=True, padx=10, pady=8)
 
             btn_volver = ctk.CTkButton(
                 tabla_container,
@@ -7860,7 +7880,7 @@ def mostrar_dashboard_completo(conexion=None):
                 width=200,
                 height=35
             )
-            btn_volver.pack(anchor="w", padx=15, pady=10)
+            btn_volver.pack(anchor="w", padx=10, pady=8)
 
             conn_tabla = mysql.connector.connect(**DB_CONFIG)
             generar_tabla_stock_indicador(tabla_container, conexion=conn_tabla)
@@ -7875,7 +7895,7 @@ def mostrar_dashboard_completo(conexion=None):
                 w.destroy()
 
             tabla_container = ctk.CTkFrame(dashboard_frame, fg_color="white")
-            tabla_container.pack(fill="both", expand=True, padx=10, pady=10)
+            tabla_container.pack(fill="both", expand=True, padx=10, pady=8)
 
             btn_volver = ctk.CTkButton(
                 tabla_container,
@@ -7887,7 +7907,7 @@ def mostrar_dashboard_completo(conexion=None):
                 width=200,
                 height=35
             )
-            btn_volver.pack(anchor="w", padx=15, pady=10)
+            btn_volver.pack(anchor="w", padx=10, pady=8)
 
             conn_tabla = mysql.connector.connect(**DB_CONFIG)
             anio_tabla = int(filtros['anio']) if filtros['anio'] else 2025
@@ -8092,7 +8112,7 @@ def mostrar_dashboard_completo(conexion=None):
                 widget.destroy()
 
             header_det = ctk.CTkFrame(frame_determinativas, fg_color="transparent")
-            header_det.pack(fill="x", padx=15, pady=(15, 5))
+            header_det.pack(fill="x", padx=10, pady=(15, 5))
             
             ctk.CTkLabel(
                 header_det,
@@ -8122,7 +8142,7 @@ def mostrar_dashboard_completo(conexion=None):
                 filter_frame,
                 anios_termino,
                 default_text="Seleccionar años...",
-                width=150,
+                width=130,
                 callback=on_anio_change
             )
             multi_anio_det.selected_values = set(anios_sel)
@@ -8133,7 +8153,7 @@ def mostrar_dashboard_completo(conexion=None):
             ctk.CTkButton(
                 controles_det,
                 text="📋 Ver Tabla Completa",
-                width=140,
+                width=120,
                 height=30,
                 fg_color="#3B82F6",
                 hover_color="#2563EB",
@@ -8202,11 +8222,11 @@ def mostrar_dashboard_completo(conexion=None):
                     
                     canvas_det = FigureCanvasTkAgg(fig_det, master=frame_determinativas)
                     canvas_det.draw()
-                    canvas_det.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+                    canvas_det.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=8)
                     
                     # Botones de exportación
                     export_frame_det = ctk.CTkFrame(frame_determinativas, fg_color="transparent")
-                    export_frame_det.pack(pady=(0, 10))
+                    export_frame_det.pack(pady=(0, 8))
 
                     filtros_texto = f"Años: {anio_texto}"
                     
@@ -8257,7 +8277,7 @@ def mostrar_dashboard_completo(conexion=None):
                 widget.destroy()
 
             header_prog_det = ctk.CTkFrame(frame_progreso_det, fg_color="transparent")
-            header_prog_det.pack(fill="x", padx=15, pady=(15, 5))
+            header_prog_det.pack(fill="x", padx=10, pady=(15, 5))
             
             ctk.CTkLabel(
                 header_prog_det,
@@ -8322,7 +8342,7 @@ def mostrar_dashboard_completo(conexion=None):
                 fila1,
                 anios_termino,
                 default_text="Seleccionar años...",
-                width=150,
+                width=130,
                 callback=on_anio_prog_change
             )
             multi_anio_prog.selected_values = set(anios_sel)
@@ -8376,7 +8396,7 @@ def mostrar_dashboard_completo(conexion=None):
             ctk.CTkButton(
                 fila3,
                 text="📋 Ver Tabla Completa",
-                width=180,
+                width=160,
                 height=30,
                 fg_color="#3B82F6",
                 hover_color="#2563EB",
@@ -8462,11 +8482,11 @@ def mostrar_dashboard_completo(conexion=None):
                     
                     canvas_prog = FigureCanvasTkAgg(fig_prog, master=frame_progreso_det)
                     canvas_prog.draw()
-                    canvas_prog.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+                    canvas_prog.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=8)
                     
                     # Botones exportación
                     export_frame_prog = ctk.CTkFrame(frame_progreso_det, fg_color="transparent")
-                    export_frame_prog.pack(pady=(0, 10))
+                    export_frame_prog.pack(pady=(0, 8))
 
                     filtros_texto = f"Años: {anio_texto}"
                     if supervisores_sel and len(supervisores_sel) > 0:
@@ -8525,7 +8545,7 @@ def mostrar_dashboard_completo(conexion=None):
                 widget.destroy()
 
             header_no_det = ctk.CTkFrame(frame_no_determinativas, fg_color="transparent")
-            header_no_det.pack(fill="x", padx=15, pady=(15, 5))
+            header_no_det.pack(fill="x", padx=10, pady=(15, 5))
             
             ctk.CTkLabel(
                 header_no_det,
@@ -8555,7 +8575,7 @@ def mostrar_dashboard_completo(conexion=None):
                 filter_frame,
                 anios_termino,
                 default_text="Seleccionar años...",
-                width=150,
+                width=130,
                 callback=on_anio_no_det_change
             )
             multi_anio_no_det.selected_values = set(anios_sel)
@@ -8566,7 +8586,7 @@ def mostrar_dashboard_completo(conexion=None):
             ctk.CTkButton(
                 controles_no_det,
                 text="📋 Ver Tabla Completa",
-                width=140,
+                width=120,
                 height=30,
                 fg_color="#3B82F6",
                 hover_color="#2563EB",
@@ -8634,11 +8654,11 @@ def mostrar_dashboard_completo(conexion=None):
                     
                     canvas_no_det = FigureCanvasTkAgg(fig_no_det, master=frame_no_determinativas)
                     canvas_no_det.draw()
-                    canvas_no_det.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+                    canvas_no_det.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=8)
                     
                     # Botones exportación
                     export_frame_no_det = ctk.CTkFrame(frame_no_determinativas, fg_color="transparent")
-                    export_frame_no_det.pack(pady=(0, 10))
+                    export_frame_no_det.pack(pady=(0, 8))
 
                     filtros_texto = f"Años: {anio_texto}"
                     
@@ -8689,7 +8709,7 @@ def mostrar_dashboard_completo(conexion=None):
                 widget.destroy()
 
             header_prog_no_det = ctk.CTkFrame(frame_progreso_no_det, fg_color="transparent")
-            header_prog_no_det.pack(fill="x", padx=15, pady=(15, 5))
+            header_prog_no_det.pack(fill="x", padx=10, pady=(15, 5))
             
             ctk.CTkLabel(
                 header_prog_no_det,
@@ -8754,7 +8774,7 @@ def mostrar_dashboard_completo(conexion=None):
                 fila1,
                 anios_termino,
                 default_text="Seleccionar años...",
-                width=150,
+                width=130,
                 callback=on_anio_prog_no_change
             )
             multi_anio_prog_no.selected_values = set(anios_sel)
@@ -8808,7 +8828,7 @@ def mostrar_dashboard_completo(conexion=None):
             ctk.CTkButton(
                 fila3,
                 text="📋 Ver Tabla Completa",
-                width=180,
+                width=160,
                 height=30,
                 fg_color="#3B82F6",
                 hover_color="#2563EB",
@@ -8893,11 +8913,11 @@ def mostrar_dashboard_completo(conexion=None):
                     
                     canvas_prog_no = FigureCanvasTkAgg(fig_prog_no, master=frame_progreso_no_det)
                     canvas_prog_no.draw()
-                    canvas_prog_no.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+                    canvas_prog_no.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=8)
                     
                     # Botones exportación
                     export_frame_prog_no = ctk.CTkFrame(frame_progreso_no_det, fg_color="transparent")
-                    export_frame_prog_no.pack(pady=(0, 10))
+                    export_frame_prog_no.pack(pady=(0, 8))
 
                     filtros_texto = f"Años: {anio_texto}"
                     if supervisores_sel and len(supervisores_sel) > 0:
@@ -8951,7 +8971,7 @@ def mostrar_dashboard_completo(conexion=None):
                 widget.destroy()
 
             header_stock = ctk.CTkFrame(frame_stock_pastel, fg_color="transparent")
-            header_stock.pack(fill="x", padx=15, pady=(15, 5))
+            header_stock.pack(fill="x", padx=10, pady=(15, 5))
             
             ctk.CTkLabel(
                 header_stock,
@@ -8977,7 +8997,7 @@ def mostrar_dashboard_completo(conexion=None):
                 filter_frame,
                 anios_emision,
                 default_text="Seleccionar años...",
-                width=150,
+                width=130,
                 callback=on_anio_stock_change
             )
             # Todos seleccionados por defecto si no hay selección
@@ -8992,7 +9012,7 @@ def mostrar_dashboard_completo(conexion=None):
             ctk.CTkButton(
                 controles_stock,
                 text="📋 Ver Tabla Stock",
-                width=140,
+                width=120,
                 height=30,
                 fg_color="#3B82F6",
                 hover_color="#2563EB",
@@ -9065,11 +9085,11 @@ def mostrar_dashboard_completo(conexion=None):
 
                     canvas_stock = FigureCanvasTkAgg(fig_stock, master=frame_stock_pastel)
                     canvas_stock.draw()
-                    canvas_stock.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+                    canvas_stock.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=8)
 
                     # Botones exportación
                     export_frame_stock = ctk.CTkFrame(frame_stock_pastel, fg_color="transparent")
-                    export_frame_stock.pack(pady=(0, 10))
+                    export_frame_stock.pack(pady=(0, 8))
 
                     filtros_texto = f"Año Emisión: {anio_texto}"
 
@@ -9118,7 +9138,7 @@ def mostrar_dashboard_completo(conexion=None):
                 widget.destroy()
 
             header_barras = ctk.CTkFrame(frame_stock_barras, fg_color="transparent")
-            header_barras.pack(fill="x", padx=15, pady=(15, 5))
+            header_barras.pack(fill="x", padx=10, pady=(15, 5))
 
             ctk.CTkLabel(
                 header_barras,
@@ -9207,7 +9227,7 @@ def mostrar_dashboard_completo(conexion=None):
                 fila1,
                 anios_emision,
                 default_text="Seleccionar...",
-                width=150,
+                width=130,
                 callback=on_anio_barras_change
             )
             if not anios_emis_sel or len(anios_emis_sel) == len(anios_emision):
@@ -9215,7 +9235,7 @@ def mostrar_dashboard_completo(conexion=None):
             else:
                 multi_anio_barras.selected_values = set([str(a) for a in anios_emis_sel if str(a) in anios_emision])
             multi_anio_barras.update_button_text()
-            multi_anio_barras.pack(side="left", padx=(0, 15))
+            multi_anio_barras.pack(side="left", padx=(0, 10))
 
             ctk.CTkLabel(fila1, text="📊 Estado:", font=("Arial", 10, "bold")).pack(side="left", padx=(0, 5))
 
@@ -9232,7 +9252,7 @@ def mostrar_dashboard_completo(conexion=None):
                 fila1,
                 estados_disponibles,
                 default_text="Seleccionar...",
-                width=150,
+                width=130,
                 callback=on_estado_barras_change
             )
             multi_estado_barras.selected_values = {estado_sel.upper()}
@@ -9253,7 +9273,7 @@ def mostrar_dashboard_completo(conexion=None):
                 fila2,
                 supervisores_anio,
                 default_text="Seleccionar...",
-                width=180,
+                width=160,
                 callback=on_supervisor_barras_change
             )
             if supervisores_sel:
@@ -9271,7 +9291,7 @@ def mostrar_dashboard_completo(conexion=None):
                 fila2,
                 auditores_anio,
                 default_text="Seleccionar...",
-                width=180,
+                width=160,
                 callback=on_auditor_barras_change
             )
             if auditores_sel:
@@ -9373,11 +9393,11 @@ def mostrar_dashboard_completo(conexion=None):
 
                     canvas_barras = FigureCanvasTkAgg(fig_barras, master=frame_stock_barras)
                     canvas_barras.draw()
-                    canvas_barras.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+                    canvas_barras.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=8)
 
                     # Botones exportación
                     export_frame = ctk.CTkFrame(frame_stock_barras, fg_color="transparent")
-                    export_frame.pack(pady=(0, 10))
+                    export_frame.pack(pady=(0, 8))
 
                     filtros_texto = f"Año Emisión: {anio_texto} | Estado: {estado_sel}"
                     if supervisores_sel and len(supervisores_sel) > 0:
@@ -9435,7 +9455,7 @@ def mostrar_dashboard_completo(conexion=None):
                 widget.destroy()
 
             header_rend = ctk.CTkFrame(frame_rendimiento, fg_color="transparent")
-            header_rend.pack(fill="x", padx=15, pady=(15, 5))
+            header_rend.pack(fill="x", padx=10, pady=(15, 5))
 
             ctk.CTkLabel(
                 header_rend,
@@ -9522,12 +9542,12 @@ def mostrar_dashboard_completo(conexion=None):
                 fila1_rend,
                 anios_termino,
                 default_text="Seleccionar años...",
-                width=150,
+                width=130,
                 callback=on_anio_rend_change
             )
             multi_anio_rend.selected_values = set(anios_sel)
             multi_anio_rend.update_button_text()
-            multi_anio_rend.pack(side="left", padx=(0, 15))
+            multi_anio_rend.pack(side="left", padx=(0, 10))
 
             ctk.CTkLabel(fila1_rend, text="🔢 COD:", font=("Arial", 10, "bold")).pack(side="left", padx=(0, 5))
 
@@ -9544,7 +9564,7 @@ def mostrar_dashboard_completo(conexion=None):
                 fila1_rend,
                 codigos_anio,
                 default_text="Seleccionar...",
-                width=150,
+                width=130,
                 callback=on_cod_rend_change
             )
             if cod_tipact_sel:
@@ -9566,7 +9586,7 @@ def mostrar_dashboard_completo(conexion=None):
                 fila2_rend,
                 supervisores_anio,
                 default_text="Seleccionar...",
-                width=180,
+                width=160,
                 callback=on_supervisor_rend_change
             )
             if supervisores_sel:
@@ -9584,7 +9604,7 @@ def mostrar_dashboard_completo(conexion=None):
                 fila2_rend,
                 auditores_anio,
                 default_text="Seleccionar...",
-                width=180,
+                width=160,
                 callback=on_auditor_rend_change
             )
             if auditores_sel:
@@ -9704,11 +9724,11 @@ def mostrar_dashboard_completo(conexion=None):
 
                     canvas_rend = FigureCanvasTkAgg(fig_rend, master=frame_rendimiento)
                     canvas_rend.draw()
-                    canvas_rend.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+                    canvas_rend.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=8)
 
                     # Botones exportación
                     export_frame_rend = ctk.CTkFrame(frame_rendimiento, fg_color="transparent")
-                    export_frame_rend.pack(pady=(0, 10))
+                    export_frame_rend.pack(pady=(0, 8))
 
                     filtros_texto = f"Años: {anio_texto}"
                     if cod_tipact_sel and len(cod_tipact_sel) > 0:
@@ -9811,7 +9831,7 @@ def mostrar_dashboard_completo(conexion=None):
                 pass
             
             dashboard_frame.pack_forget()
-            preview_frame.pack(fill="both", expand=True, padx=10, pady=(5,10))
+            preview_frame.pack(fill="both", expand=True, padx=10, pady=(4,10))
         
         ctk.CTkButton(
             footer,
@@ -9822,7 +9842,7 @@ def mostrar_dashboard_completo(conexion=None):
             hover_color="#DC2626",
             font=("Arial", 12, "bold"),
             command=volver_inicio
-        ).pack(pady=10)
+        ).pack(pady=8)
 
     # Cargar automáticamente el contenido OF
     cargar_contenido_of()
@@ -9854,13 +9874,13 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
     INCLUYE COLUMNA DE PADRÓN MYPE
     """
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=12)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Título
     ctk.CTkLabel(tabla_frame,
                  text="💰 CONTROL SALDO CUENTA DETRACCIONES - OF",
-                 font=("Segoe UI", 14, "bold"),
-                 text_color="#a51c30").pack(anchor="w", padx=12, pady=6)
+                 font=("Segoe UI", 12, "bold"),
+                 text_color="#a51c30").pack(anchor="w", padx=10, pady=6)
 
     # Construir condiciones WHERE dinámicas
     condiciones_extra = []
@@ -9902,11 +9922,11 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
         df = pd.read_sql(query, DB_ENGINE)
         conn_temp.close()
     except Exception as e:
-        ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+        ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
         return
 
     if df.empty:
-        ctk.CTkLabel(tabla_frame, text="⚠ No hay datos disponibles con los filtros seleccionados", text_color="red").pack(pady=15)
+        ctk.CTkLabel(tabla_frame, text="⚠ No hay datos disponibles con los filtros seleccionados", text_color="red").pack(pady=10)
         return
 
     # Contenedor con scroll
@@ -9972,18 +9992,18 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                     foreground="#4a4a4a",
                     rowheight=28,
                     fieldbackground="#ffffff",
-                    font=("Segoe UI", 10))
+                    font=("Segoe UI", 8))
     style.configure("Treeview.Heading",
                     background="#002e6d",
                     foreground="white",
-                    font=("Segoe UI", 10, "bold"))
+                    font=("Segoe UI", 8, "bold"))
     style.map("Treeview",
               background=[("selected", "#a51c30")],
               foreground=[("selected", "white")])
 
-    tree_local.tag_configure("normal", background="white", font=("Segoe UI", 10))
-    tree_local.tag_configure("mype", background="#f5f5f5", font=("Segoe UI", 10, "bold"))
-    tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+    tree_local.tag_configure("normal", background="white", font=("Segoe UI", 8))
+    tree_local.tag_configure("mype", background="#f5f5f5", font=("Segoe UI", 8, "bold"))
+    tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
     # Función para mostrar detalles en popup - ACTUALIZADA CON PADRON_MYPE
     def mostrar_detalles(event):
@@ -10006,15 +10026,15 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
         popup.grab_set()
         
         main_frame = ctk.CTkFrame(popup, corner_radius=15, fg_color="#f5f6fa")
-        main_frame.pack(fill="both", expand=True, padx=15, pady=15)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
         ctk.CTkLabel(main_frame,
                      text=f"📋 Detalle Completo - OF N° {num_ord_fi}",
                      font=("Segoe UI", 16, "bold"),
-                     text_color="#002e6d").pack(pady=10)
+                     text_color="#002e6d").pack(pady=8)
         
         scroll_frame = ctk.CTkScrollableFrame(main_frame, fg_color="white", corner_radius=10)
-        scroll_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        scroll_frame.pack(fill="both", expand=True, padx=10, pady=8)
         
         # Query con PADRON_MYPE
         query_detalle = f"""
@@ -10048,7 +10068,7 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                 
                 ctk.CTkLabel(seccion_frame,
                              text="🔍 Datos de Fiscalización",
-                             font=("Segoe UI", 13, "bold"),
+                             font=("Segoe UI", 7, "bold"),
                              text_color="#002e6d").pack(anchor="w", padx=10, pady=5)
                 
                 for col in df_completo.columns:
@@ -10062,14 +10082,14 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                         
                         ctk.CTkLabel(campo_frame,
                                      text=f"{col}:",
-                                     font=("Segoe UI", 10, "bold"),
+                                     font=("Segoe UI", 8, "bold"),
                                      text_color="#4a4a4a",
                                      width=200,
                                      anchor="w").pack(side="left", padx=5, pady=3)
                         
                         ctk.CTkLabel(campo_frame,
                                      text=str(valor),
-                                     font=("Segoe UI", 10),
+                                     font=("Segoe UI", 8),
                                      text_color="#2d3436",
                                      anchor="w").pack(side="left", padx=5, pady=3, fill="x", expand=True)
                 
@@ -10079,7 +10099,7 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                 
                 ctk.CTkLabel(seccion_frame2,
                              text="💳 Datos de Cuenta Detracciones",
-                             font=("Segoe UI", 13, "bold"),
+                             font=("Segoe UI", 7, "bold"),
                              text_color="#e67e22").pack(anchor="w", padx=10, pady=5)
                 
                 campos_f4 = {
@@ -10110,14 +10130,14 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                     
                     ctk.CTkLabel(campo_frame,
                                  text=f"{etiqueta}:",
-                                 font=("Segoe UI", 10, "bold"),
+                                 font=("Segoe UI", 8, "bold"),
                                  text_color="#4a4a4a",
                                  width=200,
                                  anchor="w").pack(side="left", padx=5, pady=3)
                     
                     ctk.CTkLabel(campo_frame,
                                  text=str(valor),
-                                 font=("Segoe UI", 10, "bold" if col == 'PADRON_MYPE' else "normal"),
+                                 font=("Segoe UI", 8, "bold" if col == 'PADRON_MYPE' else "normal"),
                                  text_color="#155724" if col == 'PADRON_MYPE' and valor == 'SI' else "#2d3436",
                                  anchor="w").pack(side="left", padx=5, pady=3, fill="x", expand=True)
         
@@ -10131,8 +10151,8 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                       command=popup.destroy,
                       fg_color="#a51c30",
                       hover_color="#8b1629",
-                      font=("Segoe UI", 11, "bold"),
-                      width=120).pack(pady=10)
+                      font=("Segoe UI", 7, "bold"),
+                      width=120).pack(pady=8)
         
         popup.update_idletasks()
         x = (popup.winfo_screenwidth() // 2) - (popup.winfo_width() // 2)
@@ -10142,11 +10162,11 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
     tree_local.bind("<Double-1>", mostrar_detalles)
     
     info_frame = ctk.CTkFrame(tabla_frame, fg_color="transparent")
-    info_frame.pack(pady=5, fill="x", padx=12)
+    info_frame.pack(pady=5, fill="x", padx=10)
     
     ctk.CTkLabel(info_frame,
                  text="💡 Haz doble clic en cualquier fila para ver los detalles completos",
-                 font=("Segoe UI", 9, "italic"),
+                 font=("Segoe UI", 7, "italic"),
                  text_color="#636e72").pack(side="left")
     
     # Botón para ver todos los datos - ACTUALIZADO CON PADRON_MYPE
@@ -10157,10 +10177,10 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
         ventana_tabla.transient(parent_frame)
         
         main_frame = ctk.CTkFrame(ventana_tabla, corner_radius=15, fg_color="#f5f6fa")
-        main_frame.pack(fill="both", expand=True, padx=15, pady=15)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
         header_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-        header_frame.pack(fill="x", padx=15, pady=(10, 15))
+        header_frame.pack(fill="x", padx=10, pady=(8, 15))
         
         ctk.CTkLabel(header_frame,
                      text="📊 Control Saldo Cuenta Detracciones - Vista Completa",
@@ -10169,11 +10189,11 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
         
         ctk.CTkLabel(header_frame,
                      text=f"Total registros: {len(df)}",
-                     font=("Segoe UI", 11),
+                     font=("Segoe UI", 7),
                      text_color="#6B7280").pack(side="right")
         
         tabla_completa_frame = ctk.CTkFrame(main_frame, fg_color="white", corner_radius=10)
-        tabla_completa_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
+        tabla_completa_frame.pack(fill="both", expand=True, padx=10, pady=(0, 15))
         
         where_completo = ""
         if condiciones_extra:
@@ -10266,7 +10286,7 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                 return
             
             container_completo = ctk.CTkFrame(tabla_completa_frame, fg_color="white")
-            container_completo.pack(fill="both", expand=True, padx=10, pady=10)
+            container_completo.pack(fill="both", expand=True, padx=10, pady=8)
             
             columnas = df_completo.columns.tolist()
             tree_completo = ttk.Treeview(container_completo, columns=columnas, show="headings", height=25)
@@ -10329,21 +10349,21 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                                     foreground="#4a4a4a",
                                     rowheight=26,
                                     fieldbackground="#ffffff",
-                                    font=("Segoe UI", 9))
+                                    font=("Segoe UI", 7))
             style_completo.configure("Treeview.Heading",
                                     background="#002e6d",
                                     foreground="white",
-                                    font=("Segoe UI", 9, "bold"))
+                                    font=("Segoe UI", 7, "bold"))
             style_completo.map("Treeview",
                               background=[("selected", "#a51c30")],
                               foreground=[("selected", "white")])
             
             tree_completo.tag_configure("par", background="#f9fafb")
             tree_completo.tag_configure("impar", background="white")
-            tree_completo.tag_configure("mype", background="#f5f5f5", font=("Segoe UI", 9, "bold"))
+            tree_completo.tag_configure("mype", background="#f5f5f5", font=("Segoe UI", 7, "bold"))
             
             botones_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-            botones_frame.pack(fill="x", padx=15, pady=(0, 10))
+            botones_frame.pack(fill="x", padx=10, pady=(0, 8))
             
             def exportar_excel():
                 try:
@@ -10365,8 +10385,8 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                          command=exportar_excel,
                          fg_color="#10B981",
                          hover_color="#059669",
-                         font=("Segoe UI", 10, "bold"),
-                         width=150,
+                         font=("Segoe UI", 8, "bold"),
+                         width=130,
                          height=35).pack(side="left", padx=5)
             
             ctk.CTkButton(botones_frame,
@@ -10374,7 +10394,7 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                          command=lambda: [ventana_tabla.destroy(), ver_todos_datos()],
                          fg_color="#3B82F6",
                          hover_color="#2563EB",
-                         font=("Segoe UI", 10, "bold"),
+                         font=("Segoe UI", 8, "bold"),
                          width=130,
                          height=35).pack(side="left", padx=5)
             
@@ -10383,13 +10403,13 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                          command=ventana_tabla.destroy,
                          fg_color="#6B7280",
                          hover_color="#4B5563",
-                         font=("Segoe UI", 10, "bold"),
+                         font=("Segoe UI", 8, "bold"),
                          width=100,
                          height=35).pack(side="right", padx=5)
             
             ctk.CTkLabel(botones_frame,
                         text=f"💡 Mostrando {len(df_completo)} registros | 🏢 MYPES resaltadas en verde",
-                        font=("Segoe UI", 9, "italic"),
+                        font=("Segoe UI", 7, "italic"),
                         text_color="#6B7280").pack(side="left", padx=20)
             
         except Exception as e:
@@ -10407,9 +10427,9 @@ def generar_tabla_control_saldo_detracciones(parent_frame, filtros_des_cod=None,
                  command=ver_todos_datos,
                  fg_color="#3B82F6",
                  hover_color="#2563EB",
-                 font=("Segoe UI", 10, "bold"),
+                 font=("Segoe UI", 8, "bold"),
                  width=160,
-                 height=32).pack(side="right")
+                 height=28).pack(side="right")
 
 #---------------------------------------------------------------
 #TABLA AI
@@ -10419,13 +10439,13 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
     INCLUYE COLUMNA DE PADRÓN MYPE
     """
     tabla_frame = ctk.CTkFrame(parent_frame, corner_radius=15, fg_color="white")
-    tabla_frame.pack(fill="both", expand=True, padx=15, pady=12)
+    tabla_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Título
     ctk.CTkLabel(tabla_frame,
                  text="💰 CONTROL SALDO CUENTA DETRACCIONES - AI",
-                 font=("Segoe UI", 14, "bold"),
-                 text_color="#a51c30").pack(anchor="w", padx=12, pady=6)
+                 font=("Segoe UI", 12, "bold"),
+                 text_color="#a51c30").pack(anchor="w", padx=10, pady=6)
 
     # Construir condiciones WHERE dinámicas
     condiciones_extra = []
@@ -10471,11 +10491,11 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
         df = pd.read_sql(query, DB_ENGINE)
         conn_temp.close()
     except Exception as e:
-        ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=15)
+        ctk.CTkLabel(tabla_frame, text=f"⚠ Error al consultar BD: {e}", text_color="red").pack(pady=10)
         return
 
     if df.empty:
-        ctk.CTkLabel(tabla_frame, text="⚠ No hay datos disponibles con los filtros seleccionados", text_color="red").pack(pady=15)
+        ctk.CTkLabel(tabla_frame, text="⚠ No hay datos disponibles con los filtros seleccionados", text_color="red").pack(pady=10)
         return
 
     # Contenedor con scroll
@@ -10541,18 +10561,18 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
                     foreground="#4a4a4a",
                     rowheight=28,
                     fieldbackground="#ffffff",
-                    font=("Segoe UI", 10))
+                    font=("Segoe UI", 8))
     style.configure("Treeview.Heading",
                     background="#002e6d",
                     foreground="white",
-                    font=("Segoe UI", 10, "bold"))
+                    font=("Segoe UI", 8, "bold"))
     style.map("Treeview",
               background=[("selected", "#a51c30")],
               foreground=[("selected", "white")])
 
-    tree_local.tag_configure("normal", background="white", font=("Segoe UI", 10))
-    tree_local.tag_configure("mype", background="#f5f5f5", font=("Segoe UI", 10, "bold"))
-    tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 11, "bold"))
+    tree_local.tag_configure("normal", background="white", font=("Segoe UI", 8))
+    tree_local.tag_configure("mype", background="#f5f5f5", font=("Segoe UI", 8, "bold"))
+    tree_local.tag_configure("total", background="#dfe6e9", foreground="black", font=("Segoe UI", 7, "bold"))
 
     # Función para mostrar detalles en popup - ACTUALIZADA CON PADRON_MYPE
     def mostrar_detalles(event):
@@ -10575,15 +10595,15 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
         popup.grab_set()
         
         main_frame = ctk.CTkFrame(popup, corner_radius=15, fg_color="#f5f6fa")
-        main_frame.pack(fill="both", expand=True, padx=15, pady=15)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
         ctk.CTkLabel(main_frame,
                      text=f"📋 Detalle Completo - AI N° {num_acc_in}",
                      font=("Segoe UI", 16, "bold"),
-                     text_color="#002e6d").pack(pady=10)
+                     text_color="#002e6d").pack(pady=8)
         
         scroll_frame = ctk.CTkScrollableFrame(main_frame, fg_color="white", corner_radius=10)
-        scroll_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        scroll_frame.pack(fill="both", expand=True, padx=10, pady=8)
         
         # Query con PADRON_MYPE
         query_detalle = f"""
@@ -10617,7 +10637,7 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
                 
                 ctk.CTkLabel(seccion_frame,
                              text="🔍 Datos de Acción Inductiva",
-                             font=("Segoe UI", 13, "bold"),
+                             font=("Segoe UI", 7, "bold"),
                              text_color="#002e6d").pack(anchor="w", padx=10, pady=5)
                 
                 for col in df_completo.columns:
@@ -10631,14 +10651,14 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
                         
                         ctk.CTkLabel(campo_frame,
                                      text=f"{col}:",
-                                     font=("Segoe UI", 10, "bold"),
+                                     font=("Segoe UI", 8, "bold"),
                                      text_color="#4a4a4a",
                                      width=200,
                                      anchor="w").pack(side="left", padx=5, pady=3)
                         
                         ctk.CTkLabel(campo_frame,
                                      text=str(valor),
-                                     font=("Segoe UI", 10),
+                                     font=("Segoe UI", 8),
                                      text_color="#2d3436",
                                      anchor="w").pack(side="left", padx=5, pady=3, fill="x", expand=True)
                 
@@ -10648,7 +10668,7 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
                 
                 ctk.CTkLabel(seccion_frame2,
                              text="💳 Datos de Cuenta Detracciones",
-                             font=("Segoe UI", 13, "bold"),
+                             font=("Segoe UI", 7, "bold"),
                              text_color="#e67e22").pack(anchor="w", padx=10, pady=5)
                 
                 campos_f4 = {
@@ -10680,14 +10700,14 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
                     
                     ctk.CTkLabel(campo_frame,
                                  text=f"{etiqueta}:",
-                                 font=("Segoe UI", 10, "bold"),
+                                 font=("Segoe UI", 8, "bold"),
                                  text_color="#4a4a4a",
                                  width=200,
                                  anchor="w").pack(side="left", padx=5, pady=3)
                     
                     ctk.CTkLabel(campo_frame,
                                  text=str(valor),
-                                 font=("Segoe UI", 10, "bold" if col == 'PADRON_MYPE' else "normal"),
+                                 font=("Segoe UI", 8, "bold" if col == 'PADRON_MYPE' else "normal"),
                                  text_color="#155724" if col == 'PADRON_MYPE' and valor == 'SI' else "#2d3436",
                                  anchor="w").pack(side="left", padx=5, pady=3, fill="x", expand=True)
         
@@ -10701,8 +10721,8 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
                       command=popup.destroy,
                       fg_color="#a51c30",
                       hover_color="#8b1629",
-                      font=("Segoe UI", 11, "bold"),
-                      width=120).pack(pady=10)
+                      font=("Segoe UI", 7, "bold"),
+                      width=120).pack(pady=8)
         
         popup.update_idletasks()
         x = (popup.winfo_screenwidth() // 2) - (popup.winfo_width() // 2)
@@ -10712,11 +10732,11 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
     tree_local.bind("<Double-1>", mostrar_detalles)
     
     info_frame = ctk.CTkFrame(tabla_frame, fg_color="transparent")
-    info_frame.pack(pady=5, fill="x", padx=12)
+    info_frame.pack(pady=5, fill="x", padx=10)
     
     ctk.CTkLabel(info_frame,
                  text="💡 Haz doble clic en cualquier fila para ver los detalles completos",
-                 font=("Segoe UI", 9, "italic"),
+                 font=("Segoe UI", 7, "italic"),
                  text_color="#636e72").pack(side="left")
     
     # Botón para ver todos los datos - ACTUALIZADO CON PADRON_MYPE
@@ -10727,10 +10747,10 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
         ventana_tabla.transient(parent_frame)
         
         main_frame = ctk.CTkFrame(ventana_tabla, corner_radius=15, fg_color="#f5f6fa")
-        main_frame.pack(fill="both", expand=True, padx=15, pady=15)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
         header_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-        header_frame.pack(fill="x", padx=15, pady=(10, 15))
+        header_frame.pack(fill="x", padx=10, pady=(8, 15))
         
         ctk.CTkLabel(header_frame,
                      text="📊 Control Saldo Cuenta Detracciones AI - Vista Completa",
@@ -10739,11 +10759,11 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
         
         ctk.CTkLabel(header_frame,
                      text=f"Total registros: {len(df)}",
-                     font=("Segoe UI", 11),
+                     font=("Segoe UI", 7),
                      text_color="#6B7280").pack(side="right")
         
         tabla_completa_frame = ctk.CTkFrame(main_frame, fg_color="white", corner_radius=10)
-        tabla_completa_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
+        tabla_completa_frame.pack(fill="both", expand=True, padx=10, pady=(0, 15))
         
         where_completo = ""
         if condiciones_extra:
@@ -10817,7 +10837,7 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
                 return
             
             container_completo = ctk.CTkFrame(tabla_completa_frame, fg_color="white")
-            container_completo.pack(fill="both", expand=True, padx=10, pady=10)
+            container_completo.pack(fill="both", expand=True, padx=10, pady=8)
             
             columnas = df_completo.columns.tolist()
             tree_completo = ttk.Treeview(container_completo, columns=columnas, show="headings", height=25)
@@ -10875,21 +10895,21 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
                                     foreground="#4a4a4a",
                                     rowheight=26,
                                     fieldbackground="#ffffff",
-                                    font=("Segoe UI", 9))
+                                    font=("Segoe UI", 7))
             style_completo.configure("Treeview.Heading",
                                     background="#002e6d",
                                     foreground="white",
-                                    font=("Segoe UI", 9, "bold"))
+                                    font=("Segoe UI", 7, "bold"))
             style_completo.map("Treeview",
                               background=[("selected", "#a51c30")],
                               foreground=[("selected", "white")])
             
             tree_completo.tag_configure("par", background="#f9fafb")
             tree_completo.tag_configure("impar", background="white")
-            tree_completo.tag_configure("mype", background="#f5f5f5", font=("Segoe UI", 9, "bold"))
+            tree_completo.tag_configure("mype", background="#f5f5f5", font=("Segoe UI", 7, "bold"))
             
             botones_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-            botones_frame.pack(fill="x", padx=15, pady=(0, 10))
+            botones_frame.pack(fill="x", padx=10, pady=(0, 8))
             
             def exportar_excel():
                 try:
@@ -10911,8 +10931,8 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
                          command=exportar_excel,
                          fg_color="#10B981",
                          hover_color="#059669",
-                         font=("Segoe UI", 10, "bold"),
-                         width=150,
+                         font=("Segoe UI", 8, "bold"),
+                         width=130,
                          height=35).pack(side="left", padx=5)
             
             ctk.CTkButton(botones_frame,
@@ -10920,7 +10940,7 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
                          command=lambda: [ventana_tabla.destroy(), ver_todos_datos()],
                          fg_color="#3B82F6",
                          hover_color="#2563EB",
-                         font=("Segoe UI", 10, "bold"),
+                         font=("Segoe UI", 8, "bold"),
                          width=130,
                          height=35).pack(side="left", padx=5)
             
@@ -10929,13 +10949,13 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
                          command=ventana_tabla.destroy,
                          fg_color="#6B7280",
                          hover_color="#4B5563",
-                         font=("Segoe UI", 10, "bold"),
+                         font=("Segoe UI", 8, "bold"),
                          width=100,
                          height=35).pack(side="right", padx=5)
             
             ctk.CTkLabel(botones_frame,
                         text=f"💡 Mostrando {len(df_completo)} registros | 🏢 MYPES resaltadas en verde",
-                        font=("Segoe UI", 9, "italic"),
+                        font=("Segoe UI", 7, "italic"),
                         text_color="#6B7280").pack(side="left", padx=20)
             
         except Exception as e:
@@ -10953,9 +10973,9 @@ def generar_tabla_control_saldo_detracciones_ai(parent_frame, filtros_supervisor
                  command=ver_todos_datos,
                  fg_color="#3B82F6",
                  hover_color="#2563EB",
-                 font=("Segoe UI", 10, "bold"),
+                 font=("Segoe UI", 8, "bold"),
                  width=160,
-                 height=32).pack(side="right")
+                 height=28).pack(side="right")
 # ============================================================
 # DASHBOARD PRINCIPAL - CONTROL SALDO DETRACCIONES
 # ============================================================
@@ -10979,7 +10999,7 @@ def dashboard_control_detracciones():
         pass
     
     # Mostrar dashboard frame
-    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=10)
+    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=8)
 
     # Limpiar dashboard
     for widget in dashboard_frame.winfo_children():
@@ -11045,7 +11065,7 @@ def dashboard_control_detracciones():
     # PESTAÑAS (TABS) - OF y AI
     # ====================
     tabs_frame = ctk.CTkFrame(inner_frame, fg_color="transparent")
-    tabs_frame.pack(fill="x", padx=15, pady=(10, 0))
+    tabs_frame.pack(fill="x", padx=10, pady=(8, 0))
 
     # Variable para rastrear la pestaña activa
     active_tab = {"current": "OF"}
@@ -11060,14 +11080,14 @@ def dashboard_control_detracciones():
             btn_tab_ai.configure(fg_color="#6B7280", hover_color="#4B5563")
             
             # Mostrar contenido OF, ocultar AI
-            contenido_of_frame.pack(fill="both", expand=True, pady=(0, 10))
+            contenido_of_frame.pack(fill="both", expand=True, pady=(0, 8))
             contenido_ai_frame.pack_forget()
         else:  # AI
             btn_tab_ai.configure(fg_color="#a51c30", hover_color="#8b1629")
             btn_tab_of.configure(fg_color="#6B7280", hover_color="#4B5563")
             
             # Mostrar contenido AI, ocultar OF
-            contenido_ai_frame.pack(fill="both", expand=True, pady=(0, 10))
+            contenido_ai_frame.pack(fill="both", expand=True, pady=(0, 8))
             contenido_of_frame.pack_forget()
 
     # Botones de pestañas
@@ -11077,7 +11097,7 @@ def dashboard_control_detracciones():
         command=lambda: cambiar_tab("OF"),
         fg_color="#a51c30",
         hover_color="#8b1629",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         width=300,
         height=40
     )
@@ -11089,7 +11109,7 @@ def dashboard_control_detracciones():
         command=lambda: cambiar_tab("AI"),
         fg_color="#6B7280",
         hover_color="#4B5563",
-        font=("Segoe UI", 13, "bold"),
+        font=("Segoe UI", 7, "bold"),
         width=300,
         height=40
     )
@@ -11129,11 +11149,11 @@ def dashboard_control_detracciones():
 
     # ===== MÉTRICAS OF =====
     metrics_of_container = ctk.CTkFrame(contenido_of_frame, fg_color=COLOR_WHITE)
-    metrics_of_container.pack(pady=(4, 3), padx=15, fill="x")
+    metrics_of_container.pack(pady=(4, 3), padx=10, fill="x")
 
     def crear_card(parent, icono, texto, valor, color_fondo, color_hover):
         frame = ctk.CTkFrame(parent, corner_radius=15, fg_color=color_fondo)
-        frame.pack(side="left", padx=12, pady=10, ipadx=16, ipady=10)
+        frame.pack(side="left", padx=10, pady=8, ipadx=16, ipady=8)
 
         def on_enter(e): frame.configure(fg_color=color_hover)
         def on_leave(e): frame.configure(fg_color=color_fondo)
@@ -11141,7 +11161,7 @@ def dashboard_control_detracciones():
         frame.bind("<Leave>", on_leave)
 
         ctk.CTkLabel(frame, text=icono, font=("Segoe UI Emoji", 26)).grid(row=0, column=0, rowspan=2, padx=8)
-        ctk.CTkLabel(frame, text=texto, font=("Segoe UI", 11, "bold")).grid(row=0, column=1, sticky="w", pady=(6,0))
+        ctk.CTkLabel(frame, text=texto, font=("Segoe UI", 7, "bold")).grid(row=0, column=1, sticky="w", pady=(6,0))
         ctk.CTkLabel(frame, text=str(valor), font=("Segoe UI", 16, "bold")).grid(row=1, column=1, sticky="w")
         return frame
 
@@ -11202,7 +11222,7 @@ def dashboard_control_detracciones():
 
     # ===== FILTROS OF =====
     filtro_of_frame = ctk.CTkFrame(contenido_of_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_of_frame.pack(fill="x", padx=12, pady=(5, 5))
+    filtro_of_frame.pack(fill="x", padx=10, pady=(4, 5))
 
     def aplicar_filtros_of_auto():
         selected_descod = [k for k, v in check_descod_vars.items() if v.get() == 1 and k != "(Todos)"]
@@ -11220,13 +11240,13 @@ def dashboard_control_detracciones():
         recalcular_metricas_of(filtros_des, filtros_anio)
 
     # Descripción (des_cod)
-    ctk.CTkLabel(filtro_of_frame, text="🔎 Descripción:", font=("Segoe UI", 13, "bold"),
+    ctk.CTkLabel(filtro_of_frame, text="🔎 Descripción:", font=("Segoe UI", 7, "bold"),
                  text_color="#002e6d").pack(side="left", padx=(6, 4))
 
     descod_button_text = tk.StringVar(value="(Todos)")
-    btn_descod = ctk.CTkButton(filtro_of_frame, textvariable=descod_button_text, width=180,
+    btn_descod = ctk.CTkButton(filtro_of_frame, textvariable=descod_button_text, width=160,
                                command=lambda: toggle_dropdown_descod())
-    btn_descod.pack(side="left", padx=(0, 12))
+    btn_descod.pack(side="left", padx=(0, 10))
 
     dropdown_descod_win = {"win": None}
     check_descod_vars = {"(Todos)": tk.IntVar(value=1)}
@@ -11272,13 +11292,13 @@ def dashboard_control_detracciones():
 
         cb_todos = ctk.CTkCheckBox(frame_inner, text="(Todos)", variable=check_descod_vars["(Todos)"],
                                    command=lambda: on_check_change_descod("(Todos)"),
-                                   font=("Segoe UI", 10, "bold"), text_color="#002e6d")
+                                   font=("Segoe UI", 8, "bold"), text_color="#002e6d")
         cb_todos.pack(anchor="w", padx=8, pady=2)
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=3)
 
         for val in available_des_cod:
             cb = ctk.CTkCheckBox(frame_inner, text=str(val), variable=check_descod_vars[val],
-                                command=lambda v=val: on_check_change_descod(v), font=("Segoe UI", 10))
+                                command=lambda v=val: on_check_change_descod(v), font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -11298,13 +11318,13 @@ def dashboard_control_detracciones():
         top.bind("<Escape>", close_dropdown_descod)
 
     # Año de Emisión
-    ctk.CTkLabel(filtro_of_frame, text="📅 Año Emisión:", font=("Segoe UI", 13, "bold"),
+    ctk.CTkLabel(filtro_of_frame, text="📅 Año Emisión:", font=("Segoe UI", 7, "bold"),
                  text_color="#002e6d").pack(side="left", padx=(6, 4))
 
     anio_button_text = tk.StringVar(value="(Todos)")
-    btn_anio = ctk.CTkButton(filtro_of_frame, textvariable=anio_button_text, width=180,
+    btn_anio = ctk.CTkButton(filtro_of_frame, textvariable=anio_button_text, width=160,
                              command=lambda: toggle_dropdown_anio())
-    btn_anio.pack(side="left", padx=(0, 12))
+    btn_anio.pack(side="left", padx=(0, 10))
 
     dropdown_anio_win = {"win": None}
     check_anio_vars = {"(Todos)": tk.IntVar(value=1)}
@@ -11350,13 +11370,13 @@ def dashboard_control_detracciones():
 
         cb_todos = ctk.CTkCheckBox(frame_inner, text="(Todos)", variable=check_anio_vars["(Todos)"],
                                    command=lambda: on_check_change_anio("(Todos)"),
-                                   font=("Segoe UI", 10, "bold"), text_color="#002e6d")
+                                   font=("Segoe UI", 8, "bold"), text_color="#002e6d")
         cb_todos.pack(anchor="w", padx=8, pady=2)
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=3)
 
         for val in available_anios:
             cb = ctk.CTkCheckBox(frame_inner, text=str(val), variable=check_anio_vars[val],
-                                command=lambda v=val: on_check_change_anio(v), font=("Segoe UI", 10))
+                                command=lambda v=val: on_check_change_anio(v), font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -11390,11 +11410,11 @@ def dashboard_control_detracciones():
         aplicar_filtros_of_auto()
 
     ctk.CTkButton(filtro_of_frame, text="🔄 Limpiar", command=limpiar_filtros_of,
-                  fg_color="#F59E0B", hover_color="#D97706", font=("Segoe UI", 11, "bold"),
-                  width=120, height=32).pack(side="left", padx=5)
+                  fg_color="#F59E0B", hover_color="#D97706", font=("Segoe UI", 7, "bold"),
+                  width=110, height=25).pack(side="left", padx=5)
 
     # Generar tabla OF inicial
-    frame_tabla_of.pack(pady=(5, 10), anchor="center", fill="both", expand=True)
+    frame_tabla_of.pack(pady=(4, 10), anchor="center", fill="both", expand=True)
     try:
         generar_tabla_control_saldo_detracciones(frame_tabla_of)
     except Exception as e:
@@ -11444,7 +11464,7 @@ def dashboard_control_detracciones():
 
     # ===== MÉTRICAS AI =====
     metrics_ai_container = ctk.CTkFrame(contenido_ai_frame, fg_color=COLOR_WHITE)
-    metrics_ai_container.pack(pady=(4, 3), padx=15, fill="x")
+    metrics_ai_container.pack(pady=(4, 3), padx=10, fill="x")
 
     def recalcular_metricas_ai(filtros_sup=None, filtros_tipo=None, filtros_anio=None):
         for widget in metrics_ai_container.winfo_children():
@@ -11506,7 +11526,7 @@ def dashboard_control_detracciones():
 
     # ===== FILTROS AI =====
     filtro_ai_frame = ctk.CTkFrame(contenido_ai_frame, corner_radius=12, fg_color="#f5f6fa")
-    filtro_ai_frame.pack(fill="x", padx=12, pady=(5, 5))
+    filtro_ai_frame.pack(fill="x", padx=10, pady=(4, 5))
 
     def aplicar_filtros_ai_auto():
         selected_sup = [k for k, v in check_supervisor_vars.items() if v.get() == 1 and k != "(Todos)"]
@@ -11528,13 +11548,13 @@ def dashboard_control_detracciones():
         recalcular_metricas_ai(filtros_sup, filtros_tipo, filtros_anio)
 
     # Supervisor
-    ctk.CTkLabel(filtro_ai_frame, text="👤 Supervisor:", font=("Segoe UI", 13, "bold"),
+    ctk.CTkLabel(filtro_ai_frame, text="👤 Supervisor:", font=("Segoe UI", 7, "bold"),
                  text_color="#002e6d").pack(side="left", padx=(6, 4))
 
     supervisor_button_text = tk.StringVar(value="(Todos)")
-    btn_supervisor = ctk.CTkButton(filtro_ai_frame, textvariable=supervisor_button_text, width=180,
+    btn_supervisor = ctk.CTkButton(filtro_ai_frame, textvariable=supervisor_button_text, width=160,
                                    command=lambda: toggle_dropdown_supervisor())
-    btn_supervisor.pack(side="left", padx=(0, 12))
+    btn_supervisor.pack(side="left", padx=(0, 10))
 
     dropdown_supervisor_win = {"win": None}
     check_supervisor_vars = {"(Todos)": tk.IntVar(value=1)}
@@ -11580,13 +11600,13 @@ def dashboard_control_detracciones():
 
         cb_todos = ctk.CTkCheckBox(frame_inner, text="(Todos)", variable=check_supervisor_vars["(Todos)"],
                                    command=lambda: on_check_change_supervisor("(Todos)"),
-                                   font=("Segoe UI", 10, "bold"), text_color="#002e6d")
+                                   font=("Segoe UI", 8, "bold"), text_color="#002e6d")
         cb_todos.pack(anchor="w", padx=8, pady=2)
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=3)
 
         for val in available_supervisores:
             cb = ctk.CTkCheckBox(frame_inner, text=str(val), variable=check_supervisor_vars[val],
-                                command=lambda v=val: on_check_change_supervisor(v), font=("Segoe UI", 10))
+                                command=lambda v=val: on_check_change_supervisor(v), font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -11606,13 +11626,13 @@ def dashboard_control_detracciones():
         top.bind("<Escape>", close_dropdown_supervisor)
 
     # Tipo AI
-    ctk.CTkLabel(filtro_ai_frame, text="📋 Tipo AI:", font=("Segoe UI", 13, "bold"),
+    ctk.CTkLabel(filtro_ai_frame, text="📋 Tipo AI:", font=("Segoe UI", 7, "bold"),
                  text_color="#002e6d").pack(side="left", padx=(6, 4))
 
     tipo_ai_button_text = tk.StringVar(value="(Todos)")
-    btn_tipo_ai = ctk.CTkButton(filtro_ai_frame, textvariable=tipo_ai_button_text, width=180,
+    btn_tipo_ai = ctk.CTkButton(filtro_ai_frame, textvariable=tipo_ai_button_text, width=160,
                                 command=lambda: toggle_dropdown_tipo_ai())
-    btn_tipo_ai.pack(side="left", padx=(0, 12))
+    btn_tipo_ai.pack(side="left", padx=(0, 10))
 
     dropdown_tipo_ai_win = {"win": None}
     check_tipo_ai_vars = {"(Todos)": tk.IntVar(value=1)}
@@ -11658,13 +11678,13 @@ def dashboard_control_detracciones():
 
         cb_todos = ctk.CTkCheckBox(frame_inner, text="(Todos)", variable=check_tipo_ai_vars["(Todos)"],
                                    command=lambda: on_check_change_tipo_ai("(Todos)"),
-                                   font=("Segoe UI", 10, "bold"), text_color="#002e6d")
+                                   font=("Segoe UI", 8, "bold"), text_color="#002e6d")
         cb_todos.pack(anchor="w", padx=8, pady=2)
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=3)
 
         for val in available_tipos_ai:
             cb = ctk.CTkCheckBox(frame_inner, text=str(val), variable=check_tipo_ai_vars[val],
-                                command=lambda v=val: on_check_change_tipo_ai(v), font=("Segoe UI", 10))
+                                command=lambda v=val: on_check_change_tipo_ai(v), font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -11684,13 +11704,13 @@ def dashboard_control_detracciones():
         top.bind("<Escape>", close_dropdown_tipo_ai)
 
     # Año de Emisión AI
-    ctk.CTkLabel(filtro_ai_frame, text="📅 Año Emisión:", font=("Segoe UI", 13, "bold"),
+    ctk.CTkLabel(filtro_ai_frame, text="📅 Año Emisión:", font=("Segoe UI", 7, "bold"),
                  text_color="#002e6d").pack(side="left", padx=(6, 4))
 
     anio_ai_button_text = tk.StringVar(value="(Todos)")
-    btn_anio_ai = ctk.CTkButton(filtro_ai_frame, textvariable=anio_ai_button_text, width=180,
+    btn_anio_ai = ctk.CTkButton(filtro_ai_frame, textvariable=anio_ai_button_text, width=160,
                                 command=lambda: toggle_dropdown_anio_ai())
-    btn_anio_ai.pack(side="left", padx=(0, 12))
+    btn_anio_ai.pack(side="left", padx=(0, 10))
 
     dropdown_anio_ai_win = {"win": None}
     check_anio_ai_vars = {"(Todos)": tk.IntVar(value=1)}
@@ -11736,13 +11756,13 @@ def dashboard_control_detracciones():
 
         cb_todos = ctk.CTkCheckBox(frame_inner, text="(Todos)", variable=check_anio_ai_vars["(Todos)"],
                                    command=lambda: on_check_change_anio_ai("(Todos)"),
-                                   font=("Segoe UI", 10, "bold"), text_color="#002e6d")
+                                   font=("Segoe UI", 8, "bold"), text_color="#002e6d")
         cb_todos.pack(anchor="w", padx=8, pady=2)
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=3)
 
         for val in available_anios_ai:
             cb = ctk.CTkCheckBox(frame_inner, text=str(val), variable=check_anio_ai_vars[val],
-                                command=lambda v=val: on_check_change_anio_ai(v), font=("Segoe UI", 10))
+                                command=lambda v=val: on_check_change_anio_ai(v), font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -11783,11 +11803,11 @@ def dashboard_control_detracciones():
         aplicar_filtros_ai_auto()
 
     ctk.CTkButton(filtro_ai_frame, text="🔄 Limpiar", command=limpiar_filtros_ai,
-                  fg_color="#F59E0B", hover_color="#D97706", font=("Segoe UI", 11, "bold"),
-                  width=120, height=32).pack(side="left", padx=5)
+                  fg_color="#F59E0B", hover_color="#D97706", font=("Segoe UI", 7, "bold"),
+                  width=110, height=25).pack(side="left", padx=5)
 
     # Generar tabla AI inicial
-    frame_tabla_ai.pack(pady=(5, 10), anchor="center", fill="both", expand=True)
+    frame_tabla_ai.pack(pady=(4, 10), anchor="center", fill="both", expand=True)
     try:
         generar_tabla_control_saldo_detracciones_ai(frame_tabla_ai)
     except Exception as e:
@@ -11796,7 +11816,7 @@ def dashboard_control_detracciones():
     # ====================
     # MOSTRAR CONTENIDO INICIAL (OF)
     # ====================
-    contenido_of_frame.pack(fill="both", expand=True, pady=(0, 10))
+    contenido_of_frame.pack(fill="both", expand=True, pady=(0, 8))
 
     # ====================
     # Forzar redraw
@@ -11842,7 +11862,7 @@ def generar_tabla_of_recaudacion_auditoria(parent_frame, df_filtrado):
 
     if df_filtrado.empty:
         lbl_no_data = ctk.CTkLabel(parent_frame, text="No hay datos para mostrar",
-                                   font=("Segoe UI", 14), text_color=COLOR_TEXT)
+                                   font=("Segoe UI", 12), text_color=COLOR_TEXT)
         lbl_no_data.pack(pady=20)
         return
 
@@ -11903,7 +11923,7 @@ def generar_tabla_of_recaudacion_auditoria(parent_frame, df_filtrado):
 
     # Encabezado "Auditores"
     lbl_header_auditor = ctk.CTkLabel(header_frame, text="AUDITORES",
-                                       font=("Segoe UI", 10, "bold"),
+                                       font=("Segoe UI", 8, "bold"),
                                        text_color="white", width=280, anchor="w")
     lbl_header_auditor.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
@@ -11911,13 +11931,13 @@ def generar_tabla_of_recaudacion_auditoria(parent_frame, df_filtrado):
     for idx, mes_num in enumerate(sorted([c for c in df_pivot.columns if c != 'TOTAL']), start=1):
         mes_nombre = meses_map.get(mes_num, str(mes_num))
         lbl_mes = ctk.CTkLabel(header_frame, text=mes_nombre, 
-                               font=("Segoe UI", 9, "bold"),
+                               font=("Segoe UI", 7, "bold"),
                                text_color="white", width=70, anchor="center")
         lbl_mes.grid(row=0, column=idx, padx=1, pady=5, sticky="ew")
 
     # Encabezado TOTAL
     lbl_total_header = ctk.CTkLabel(header_frame, text="TOTAL", 
-                                     font=("Segoe UI", 9, "bold"),
+                                     font=("Segoe UI", 7, "bold"),
                                      text_color="white", width=85, anchor="center")
     lbl_total_header.grid(row=0, column=13, padx=1, pady=5, sticky="ew")
 
@@ -11932,7 +11952,7 @@ def generar_tabla_of_recaudacion_auditoria(parent_frame, df_filtrado):
         # Fila especial para TOTAL
         if auditor == 'TOTAL':
             bg_color = "#FEE2E2"  # Rojo claro para totales
-            font_style = ("Segoe UI", 9, "bold")
+            font_style = ("Segoe UI", 7, "bold")
         else:
             font_style = ("Segoe UI", 8)
 
@@ -11967,7 +11987,7 @@ def generar_tabla_of_recaudacion_auditoria(parent_frame, df_filtrado):
         total_valor = row_data['TOTAL']
         texto_total = f"S/ {total_valor:,.2f}"
         lbl_total = ctk.CTkLabel(row_frame, text=texto_total, 
-                                font=("Segoe UI", 9, "bold") if auditor == 'TOTAL' else ("Segoe UI", 8, "bold"),
+                                font=("Segoe UI", 7, "bold") if auditor == 'TOTAL' else ("Segoe UI", 8, "bold"),
                                 text_color="#DC2626", width=85, anchor="center")
         lbl_total.grid(row=0, column=13, padx=1, pady=3, sticky="ew")
 
@@ -12016,7 +12036,7 @@ def generar_tabla_ai_recaudacion_auditoria(parent_frame, df_filtrado):
 
     if df_filtrado.empty:
         lbl_no_data = ctk.CTkLabel(parent_frame, text="No hay datos para mostrar",
-                                   font=("Segoe UI", 14), text_color=COLOR_TEXT)
+                                   font=("Segoe UI", 12), text_color=COLOR_TEXT)
         lbl_no_data.pack(pady=20)
         return
 
@@ -12077,7 +12097,7 @@ def generar_tabla_ai_recaudacion_auditoria(parent_frame, df_filtrado):
 
     # Encabezado "Auditores"
     lbl_header_auditor = ctk.CTkLabel(header_frame, text="AUDITORES",
-                                       font=("Segoe UI", 10, "bold"),
+                                       font=("Segoe UI", 8, "bold"),
                                        text_color="white", width=280, anchor="w")
     lbl_header_auditor.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
@@ -12085,13 +12105,13 @@ def generar_tabla_ai_recaudacion_auditoria(parent_frame, df_filtrado):
     for idx, mes_num in enumerate(sorted([c for c in df_pivot.columns if c != 'TOTAL']), start=1):
         mes_nombre = meses_map.get(mes_num, str(mes_num))
         lbl_mes = ctk.CTkLabel(header_frame, text=mes_nombre,
-                               font=("Segoe UI", 9, "bold"),
+                               font=("Segoe UI", 7, "bold"),
                                text_color="white", width=70, anchor="center")
         lbl_mes.grid(row=0, column=idx, padx=1, pady=5, sticky="ew")
 
     # Encabezado TOTAL
     lbl_total_header = ctk.CTkLabel(header_frame, text="TOTAL", 
-                                     font=("Segoe UI", 9, "bold"),
+                                     font=("Segoe UI", 7, "bold"),
                                      text_color="white", width=85, anchor="center")
     lbl_total_header.grid(row=0, column=13, padx=1, pady=5, sticky="ew")
 
@@ -12106,7 +12126,7 @@ def generar_tabla_ai_recaudacion_auditoria(parent_frame, df_filtrado):
         # Fila especial para TOTAL
         if auditor == 'TOTAL':
             bg_color = "#FEE2E2"  # Rojo claro para totales
-            font_style = ("Segoe UI", 9, "bold")
+            font_style = ("Segoe UI", 7, "bold")
         else:
             font_style = ("Segoe UI", 8)
 
@@ -12141,7 +12161,7 @@ def generar_tabla_ai_recaudacion_auditoria(parent_frame, df_filtrado):
         total_valor = row_data['TOTAL']
         texto_total = f"S/ {total_valor:,.2f}"
         lbl_total = ctk.CTkLabel(row_frame, text=texto_total, 
-                                font=("Segoe UI", 9, "bold") if auditor == 'TOTAL' else ("Segoe UI", 8, "bold"),
+                                font=("Segoe UI", 7, "bold") if auditor == 'TOTAL' else ("Segoe UI", 8, "bold"),
                                 text_color="#DC2626", width=85, anchor="center")
         lbl_total.grid(row=0, column=13, padx=1, pady=3, sticky="ew")
 
@@ -12196,7 +12216,7 @@ def dashboard_avance_metas_of():
     except Exception:
         pass
 
-    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=(5, 10))
+    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=(4, 10))
 
     for widget in dashboard_frame.winfo_children():
         widget.destroy()
@@ -12238,25 +12258,25 @@ def dashboard_avance_metas_of():
     canvas_main.bind_all("<Button-4>", _on_mousewheel)
     canvas_main.bind_all("<Button-5>", _on_mousewheel)
 
-    canvas_main.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+    canvas_main.pack(side="left", fill="both", expand=True, padx=10, pady=8)
     scrollbar_main.pack(side="right", fill="y")
 
     # ====================
     # TÍTULO Y BOTÓN VOLVER
     # ====================
     titulo_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_PRIMARY, corner_radius=10)
-    titulo_frame.pack(fill="x", padx=10, pady=(10, 5))
+    titulo_frame.pack(fill="x", padx=10, pady=(8, 5))
 
     titulo_container = ctk.CTkFrame(titulo_frame, fg_color="transparent")
-    titulo_container.pack(fill="x", padx=15, pady=12)
+    titulo_container.pack(fill="x", padx=10, pady=10)
 
     ctk.CTkLabel(titulo_container, text="📊 AVANCE DE METAS - OF",
-                 font=("Segoe UI", 18, "bold"), text_color="white").pack(side="left", expand=True)
+                 font=("Segoe UI", 16, "bold"), text_color="white").pack(side="left", expand=True)
 
     # Botón Volver
     ctk.CTkButton(titulo_container, text="← Volver", command=mostrar_dashboard_metas,
-                  fg_color="#4B5563", hover_color="#374151", font=("Segoe UI", 11, "bold"),
-                  width=100, height=32).pack(side="right", padx=5)
+                  fg_color="#4B5563", hover_color="#374151", font=("Segoe UI", 7, "bold"),
+                  width=90, height=25).pack(side="right", padx=5)
 
     # Variables para almacenar objetos del gráfico (para exportar)
     grafico_fig = {"fig": None}
@@ -12394,14 +12414,14 @@ def dashboard_avance_metas_of():
     # SELECTOR DE AÑO Y FILTROS (TODO EN UNA FILA)
     # ====================
     filtros_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_BOX, corner_radius=10)
-    filtros_frame.pack(fill="x", padx=10, pady=(10, 5))
+    filtros_frame.pack(fill="x", padx=10, pady=(8, 5))
 
     # Una sola fila con todos los filtros
     filtros_fila1 = ctk.CTkFrame(filtros_frame, fg_color="transparent")
-    filtros_fila1.pack(fill="x", padx=15, pady=15)
+    filtros_fila1.pack(fill="x", padx=10, pady=10)
 
     # Selector de Año
-    ctk.CTkLabel(filtros_fila1, text="📅 Año:", font=("Segoe UI", 11, "bold"),
+    ctk.CTkLabel(filtros_fila1, text="📅 Año:", font=("Segoe UI", 7, "bold"),
                  text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
 
     try:
@@ -12417,13 +12437,13 @@ def dashboard_avance_metas_of():
         lista_anios = [anio_actual]
 
     combo_anio = ctk.CTkComboBox(filtros_fila1, values=[str(a) for a in lista_anios],
-                                  width=100, height=32,
-                                  font=("Segoe UI", 11), state="readonly")
-    combo_anio.pack(side="left", padx=(0, 15))
+                                  width=90, height=25,
+                                  font=("Segoe UI", 7), state="readonly")
+    combo_anio.pack(side="left", padx=(0, 10))
     combo_anio.set(str(anio_actual))
 
     # Filtro de Mes con checkboxes
-    ctk.CTkLabel(filtros_fila1, text="📆 Mes:", font=("Segoe UI", 11, "bold"),
+    ctk.CTkLabel(filtros_fila1, text="📆 Mes:", font=("Segoe UI", 7, "bold"),
                  text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
 
     # Variables para checkboxes de meses
@@ -12438,9 +12458,9 @@ def dashboard_avance_metas_of():
     btn_mes = ctk.CTkButton(filtros_fila1, textvariable=mes_button_text,
                             fg_color="#ffffff", text_color=COLOR_TEXT, border_width=2,
                             border_color=COLOR_PRIMARY, hover_color=COLOR_PANEL,
-                            font=("Segoe UI", 10), width=130, height=32, anchor="w",
+                            font=("Segoe UI", 8), width=130, height=28, anchor="w",
                             command=lambda: toggle_dropdown_mes())
-    btn_mes.pack(side="left", padx=(0, 15))
+    btn_mes.pack(side="left", padx=(0, 10))
 
     def toggle_dropdown_mes():
         """Abre/cierra dropdown de selección múltiple de meses"""
@@ -12485,8 +12505,8 @@ def dashboard_avance_metas_of():
         btn_todos = ctk.CTkButton(frame_inner, text="✓ Seleccionar Todos",
                                   command=select_all_mes,
                                   fg_color=COLOR_SECONDARY, hover_color=COLOR_PRIMARY,
-                                  font=("Segoe UI", 10, "bold"), height=28)
-        btn_todos.pack(fill="x", padx=8, pady=(5, 2))
+                                  font=("Segoe UI", 8, "bold"), height=28)
+        btn_todos.pack(fill="x", padx=8, pady=(4, 2))
 
         # Botón "Ninguno"
         def deselect_all_mes():
@@ -12497,7 +12517,7 @@ def dashboard_avance_metas_of():
         btn_ninguno = ctk.CTkButton(frame_inner, text="✗ Deseleccionar Todos",
                                     command=deselect_all_mes,
                                     fg_color="#6B7280", hover_color="#4B5563",
-                                    font=("Segoe UI", 10, "bold"), height=28)
+                                    font=("Segoe UI", 8, "bold"), height=28)
         btn_ninguno.pack(fill="x", padx=8, pady=(2, 5))
 
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=5)
@@ -12507,7 +12527,7 @@ def dashboard_avance_metas_of():
             cb = ctk.CTkCheckBox(frame_inner, text=meses_nombres[i-1],
                                 variable=check_mes_vars[i],
                                 command=on_check_change_mes,
-                                font=("Segoe UI", 10))
+                                font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -12531,32 +12551,32 @@ def dashboard_avance_metas_of():
     auditor_seleccionado = tk.StringVar(value="(Todos)")
 
     # Filtro Supervisor (en la misma fila)
-    ctk.CTkLabel(filtros_fila1, text="👤 Supervisor:", font=("Segoe UI", 11, "bold"),
+    ctk.CTkLabel(filtros_fila1, text="👤 Supervisor:", font=("Segoe UI", 7, "bold"),
                  text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
 
     combo_supervisor = ctk.CTkComboBox(filtros_fila1, values=["(Todos)"],
                                         variable=supervisor_seleccionado,
-                                        width=160, height=32,
-                                        font=("Segoe UI", 10), state="readonly")
-    combo_supervisor.pack(side="left", padx=(0, 15))
+                                        width=160, height=28,
+                                        font=("Segoe UI", 8), state="readonly")
+    combo_supervisor.pack(side="left", padx=(0, 10))
 
     # Filtro Auditor (en la misma fila)
-    ctk.CTkLabel(filtros_fila1, text="👨‍💼 Auditor:", font=("Segoe UI", 11, "bold"),
+    ctk.CTkLabel(filtros_fila1, text="👨‍💼 Auditor:", font=("Segoe UI", 7, "bold"),
                  text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
 
     combo_auditor = ctk.CTkComboBox(filtros_fila1, values=["(Todos)"],
                                      variable=auditor_seleccionado,
-                                     width=180, height=32,
-                                     font=("Segoe UI", 10), state="readonly")
+                                     width=160, height=28,
+                                     font=("Segoe UI", 8), state="readonly")
     combo_auditor.pack(side="left", padx=(0, 10))
 
     # Frame para gráfico
     grafico_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_WHITE, corner_radius=10)
-    grafico_frame.pack(fill="both", expand=True, padx=10, pady=(10, 5))
+    grafico_frame.pack(fill="both", expand=True, padx=10, pady=(8, 5))
 
     # Frame para tabla
     tabla_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_WHITE, corner_radius=10)
-    tabla_frame.pack(fill="x", padx=10, pady=(5, 10))
+    tabla_frame.pack(fill="x", padx=10, pady=(4, 10))
 
     def cargar_supervisores_auditores():
         """Carga opciones de supervisores y auditores para los filtros - OPTIMIZADO"""
@@ -12827,12 +12847,12 @@ def dashboard_avance_metas_of():
 
         if not datos:
             ctk.CTkLabel(parent, text="No hay datos para mostrar",
-                        font=("Segoe UI", 14), text_color=COLOR_TEXT).pack(pady=20)
+                        font=("Segoe UI", 12), text_color=COLOR_TEXT).pack(pady=20)
             return
 
         # Crear contenedor con dos columnas
         main_container = ctk.CTkFrame(parent, fg_color="transparent")
-        main_container.pack(fill="both", expand=True, padx=10, pady=10)
+        main_container.pack(fill="both", expand=True, padx=10, pady=8)
 
         # Columna izquierda: Gráfico
         grafico_container = ctk.CTkFrame(main_container, fg_color=COLOR_WHITE)
@@ -12840,21 +12860,21 @@ def dashboard_avance_metas_of():
 
         # Header del gráfico con botón de exportación
         grafico_header = ctk.CTkFrame(grafico_container, fg_color="transparent")
-        grafico_header.pack(fill="x", padx=10, pady=(10, 0))
+        grafico_header.pack(fill="x", padx=10, pady=(8, 0))
 
-        ctk.CTkLabel(grafico_header, text="", font=("Segoe UI", 10)).pack(side="left", expand=True)
+        ctk.CTkLabel(grafico_header, text="", font=("Segoe UI", 8)).pack(side="left", expand=True)
 
         # Botón pequeño y sutil para exportar gráfico
         btn_export_graf = ctk.CTkButton(grafico_header, text="📷",
                                         command=exportar_grafico_imagen,
                                         fg_color="#059669", hover_color="#047857",
-                                        width=30, height=24, corner_radius=5,
+                                        width=30, height=22, corner_radius=5,
                                         font=("Segoe UI", 12))
         btn_export_graf.pack(side="right")
 
         # Columna derecha: Tabla de auditores
         tabla_auditores_container = ctk.CTkFrame(main_container, fg_color=COLOR_WHITE, width=450)
-        tabla_auditores_container.pack(side="right", fill="y", padx=(10, 0))
+        tabla_auditores_container.pack(side="right", fill="y", padx=(8, 0))
         tabla_auditores_container.pack_propagate(False)
 
         # === GRÁFICO ===
@@ -12954,22 +12974,22 @@ def dashboard_avance_metas_of():
         # === TABLA DE AUDITORES ===
         # Header con título y botón de exportación
         tabla_aud_header = ctk.CTkFrame(tabla_auditores_container, fg_color="transparent")
-        tabla_aud_header.pack(fill="x", padx=10, pady=(10, 5))
+        tabla_aud_header.pack(fill="x", padx=10, pady=(8, 5))
 
         # Título dinámico con el mes
         mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
         titulo_tabla = f"📊 AVANCE POR AUDITOR\n(hasta {mes_nombre})"
         ctk.CTkLabel(tabla_aud_header, text=titulo_tabla,
-                    font=("Segoe UI", 11, "bold"), text_color=COLOR_PRIMARY,
+                    font=("Segoe UI", 7, "bold"), text_color=COLOR_PRIMARY,
                     justify="center").pack(side="top", expand=True)
 
         # Botón pequeño para exportar tabla de auditores
         btn_export_aud = ctk.CTkButton(tabla_aud_header, text="📊",
                                        command=exportar_tabla_auditores,
                                        fg_color="#10B981", hover_color="#059669",
-                                       width=30, height=24, corner_radius=5,
+                                       width=30, height=22, corner_radius=5,
                                        font=("Segoe UI", 12))
-        btn_export_aud.pack(side="top", pady=(5, 0))
+        btn_export_aud.pack(side="top", pady=(4, 0))
 
         # Canvas con scroll para la tabla
         canvas_tabla = tk.Canvas(tabla_auditores_container, bg=COLOR_WHITE, highlightthickness=0)
@@ -12994,7 +13014,7 @@ def dashboard_avance_metas_of():
 
         widths = [180, 80, 80, 80]
         for i, (header, width) in enumerate(zip(headers, widths)):
-            ctk.CTkLabel(header_frame, text=header, font=("Segoe UI", 9, "bold"),
+            ctk.CTkLabel(header_frame, text=header, font=("Segoe UI", 7, "bold"),
                         text_color="white", width=width).grid(row=0, column=i, padx=1, pady=5)
 
         # Filas de datos
@@ -13039,27 +13059,27 @@ def dashboard_avance_metas_of():
 
         # Header con título y botón de exportación
         tabla_mens_header = ctk.CTkFrame(parent, fg_color="transparent")
-        tabla_mens_header.pack(fill="x", padx=10, pady=(10, 0))
+        tabla_mens_header.pack(fill="x", padx=10, pady=(8, 0))
 
         # Título
         ctk.CTkLabel(tabla_mens_header, text="📈 AVANCE MENSUAL Y ANUAL",
-                    font=("Segoe UI", 14, "bold"), text_color=COLOR_PRIMARY).pack(side="left")
+                    font=("Segoe UI", 12, "bold"), text_color=COLOR_PRIMARY).pack(side="left")
 
         # Botón pequeño para exportar tabla mensual
         btn_export_mens = ctk.CTkButton(tabla_mens_header, text="📊",
                                        command=exportar_tabla_mensual,
                                        fg_color="#10B981", hover_color="#059669",
-                                       width=30, height=24, corner_radius=5,
+                                       width=30, height=22, corner_radius=5,
                                        font=("Segoe UI", 12))
         btn_export_mens.pack(side="right")
 
         # Contenedor centrado para la tabla
         tabla_outer = ctk.CTkFrame(parent, fg_color="transparent")
-        tabla_outer.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+        tabla_outer.pack(fill="both", expand=True, padx=20, pady=(0, 8))
 
         # Crear tabla centrada con ancho máximo
         tabla_container = ctk.CTkFrame(tabla_outer, fg_color=COLOR_WHITE)
-        tabla_container.pack(anchor="center", padx=10, pady=(0, 10))
+        tabla_container.pack(anchor="center", padx=10, pady=(0, 8))
 
         # Encabezados
         headers = ["Mes", "Ejecutado", "Meta", "Cumplimiento Mes", "Avance Anual"]
@@ -13067,8 +13087,8 @@ def dashboard_avance_metas_of():
         header_frame.pack(fill="x", padx=2, pady=2)
 
         for i, header in enumerate(headers):
-            ctk.CTkLabel(header_frame, text=header, font=("Segoe UI", 10, "bold"),
-                        text_color="white", width=150).grid(row=0, column=i, padx=2, pady=5)
+            ctk.CTkLabel(header_frame, text=header, font=("Segoe UI", 8, "bold"),
+                        text_color="white", width=130).grid(row=0, column=i, padx=2, pady=5)
 
         meses_nombres = ["", "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
                         "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
@@ -13088,8 +13108,8 @@ def dashboard_avance_metas_of():
             ]
 
             for i, valor in enumerate(valores):
-                ctk.CTkLabel(row_frame, text=valor, font=("Segoe UI", 9),
-                            text_color=COLOR_TEXT, width=150).grid(row=0, column=i, padx=2, pady=3)
+                ctk.CTkLabel(row_frame, text=valor, font=("Segoe UI", 7),
+                            text_color=COLOR_TEXT, width=130).grid(row=0, column=i, padx=2, pady=3)
 
     # Cargar datos iniciales inmediatamente (sin esperar filtros)
     cargar_datos_y_actualizar()
@@ -13118,7 +13138,7 @@ def dashboard_avance_metas_ai():
     except Exception:
         pass
 
-    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=(5, 10))
+    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=(4, 10))
 
     for widget in dashboard_frame.winfo_children():
         widget.destroy()
@@ -13160,25 +13180,25 @@ def dashboard_avance_metas_ai():
     canvas_main.bind_all("<Button-4>", _on_mousewheel)
     canvas_main.bind_all("<Button-5>", _on_mousewheel)
 
-    canvas_main.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+    canvas_main.pack(side="left", fill="both", expand=True, padx=10, pady=8)
     scrollbar_main.pack(side="right", fill="y")
 
     # ====================
     # TÍTULO Y BOTÓN VOLVER
     # ====================
     titulo_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_PRIMARY, corner_radius=10)
-    titulo_frame.pack(fill="x", padx=10, pady=(10, 5))
+    titulo_frame.pack(fill="x", padx=10, pady=(8, 5))
 
     titulo_container = ctk.CTkFrame(titulo_frame, fg_color="transparent")
-    titulo_container.pack(fill="x", padx=15, pady=12)
+    titulo_container.pack(fill="x", padx=10, pady=10)
 
     ctk.CTkLabel(titulo_container, text="📊 AVANCE DE METAS - AI",
-                 font=("Segoe UI", 18, "bold"), text_color="white").pack(side="left", expand=True)
+                 font=("Segoe UI", 16, "bold"), text_color="white").pack(side="left", expand=True)
 
     # Botón Volver
     ctk.CTkButton(titulo_container, text="← Volver", command=mostrar_dashboard_metas,
-                  fg_color="#4B5563", hover_color="#374151", font=("Segoe UI", 11, "bold"),
-                  width=100, height=32).pack(side="right", padx=5)
+                  fg_color="#4B5563", hover_color="#374151", font=("Segoe UI", 7, "bold"),
+                  width=90, height=25).pack(side="right", padx=5)
 
     # Variables para almacenar objetos del gráfico (para exportar)
     grafico_fig = {"fig": None}
@@ -13316,14 +13336,14 @@ def dashboard_avance_metas_ai():
     # SELECTOR DE AÑO Y FILTROS (TODO EN UNA FILA)
     # ====================
     filtros_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_BOX, corner_radius=10)
-    filtros_frame.pack(fill="x", padx=10, pady=(10, 5))
+    filtros_frame.pack(fill="x", padx=10, pady=(8, 5))
 
     # Una sola fila con todos los filtros
     filtros_fila1 = ctk.CTkFrame(filtros_frame, fg_color="transparent")
-    filtros_fila1.pack(fill="x", padx=15, pady=15)
+    filtros_fila1.pack(fill="x", padx=10, pady=10)
 
     # Selector de Año
-    ctk.CTkLabel(filtros_fila1, text="📅 Año:", font=("Segoe UI", 11, "bold"),
+    ctk.CTkLabel(filtros_fila1, text="📅 Año:", font=("Segoe UI", 7, "bold"),
                  text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
 
     try:
@@ -13339,13 +13359,13 @@ def dashboard_avance_metas_ai():
         lista_anios = [anio_actual]
 
     combo_anio = ctk.CTkComboBox(filtros_fila1, values=[str(a) for a in lista_anios],
-                                  width=100, height=32,
-                                  font=("Segoe UI", 11), state="readonly")
-    combo_anio.pack(side="left", padx=(0, 15))
+                                  width=90, height=25,
+                                  font=("Segoe UI", 7), state="readonly")
+    combo_anio.pack(side="left", padx=(0, 10))
     combo_anio.set(str(anio_actual))
 
     # Filtro de Mes con checkboxes
-    ctk.CTkLabel(filtros_fila1, text="📆 Mes:", font=("Segoe UI", 11, "bold"),
+    ctk.CTkLabel(filtros_fila1, text="📆 Mes:", font=("Segoe UI", 7, "bold"),
                  text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
 
     # Variables para checkboxes de meses
@@ -13360,9 +13380,9 @@ def dashboard_avance_metas_ai():
     btn_mes = ctk.CTkButton(filtros_fila1, textvariable=mes_button_text,
                             fg_color="#ffffff", text_color=COLOR_TEXT, border_width=2,
                             border_color=COLOR_PRIMARY, hover_color=COLOR_PANEL,
-                            font=("Segoe UI", 10), width=130, height=32, anchor="w",
+                            font=("Segoe UI", 8), width=130, height=28, anchor="w",
                             command=lambda: toggle_dropdown_mes())
-    btn_mes.pack(side="left", padx=(0, 15))
+    btn_mes.pack(side="left", padx=(0, 10))
 
     def toggle_dropdown_mes():
         """Abre/cierra dropdown de selección múltiple de meses"""
@@ -13407,8 +13427,8 @@ def dashboard_avance_metas_ai():
         btn_todos = ctk.CTkButton(frame_inner, text="✓ Seleccionar Todos",
                                   command=select_all_mes,
                                   fg_color=COLOR_SECONDARY, hover_color=COLOR_PRIMARY,
-                                  font=("Segoe UI", 10, "bold"), height=28)
-        btn_todos.pack(fill="x", padx=8, pady=(5, 2))
+                                  font=("Segoe UI", 8, "bold"), height=28)
+        btn_todos.pack(fill="x", padx=8, pady=(4, 2))
 
         # Botón "Ninguno"
         def deselect_all_mes():
@@ -13419,7 +13439,7 @@ def dashboard_avance_metas_ai():
         btn_ninguno = ctk.CTkButton(frame_inner, text="✗ Deseleccionar Todos",
                                     command=deselect_all_mes,
                                     fg_color="#6B7280", hover_color="#4B5563",
-                                    font=("Segoe UI", 10, "bold"), height=28)
+                                    font=("Segoe UI", 8, "bold"), height=28)
         btn_ninguno.pack(fill="x", padx=8, pady=(2, 5))
 
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=5)
@@ -13429,7 +13449,7 @@ def dashboard_avance_metas_ai():
             cb = ctk.CTkCheckBox(frame_inner, text=meses_nombres[i-1],
                                 variable=check_mes_vars[i],
                                 command=on_check_change_mes,
-                                font=("Segoe UI", 10))
+                                font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -13453,32 +13473,32 @@ def dashboard_avance_metas_ai():
     auditor_seleccionado = tk.StringVar(value="(Todos)")
 
     # Filtro Supervisor (en la misma fila)
-    ctk.CTkLabel(filtros_fila1, text="👤 Supervisor:", font=("Segoe UI", 11, "bold"),
+    ctk.CTkLabel(filtros_fila1, text="👤 Supervisor:", font=("Segoe UI", 7, "bold"),
                  text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
 
     combo_supervisor = ctk.CTkComboBox(filtros_fila1, values=["(Todos)"],
                                         variable=supervisor_seleccionado,
-                                        width=160, height=32,
-                                        font=("Segoe UI", 10), state="readonly")
-    combo_supervisor.pack(side="left", padx=(0, 15))
+                                        width=160, height=28,
+                                        font=("Segoe UI", 8), state="readonly")
+    combo_supervisor.pack(side="left", padx=(0, 10))
 
     # Filtro Auditor (en la misma fila)
-    ctk.CTkLabel(filtros_fila1, text="👨‍💼 Auditor:", font=("Segoe UI", 11, "bold"),
+    ctk.CTkLabel(filtros_fila1, text="👨‍💼 Auditor:", font=("Segoe UI", 7, "bold"),
                  text_color=COLOR_TEXT).pack(side="left", padx=(0, 8))
 
     combo_auditor = ctk.CTkComboBox(filtros_fila1, values=["(Todos)"],
                                      variable=auditor_seleccionado,
-                                     width=180, height=32,
-                                     font=("Segoe UI", 10), state="readonly")
+                                     width=160, height=28,
+                                     font=("Segoe UI", 8), state="readonly")
     combo_auditor.pack(side="left", padx=(0, 10))
 
     # Frame para gráfico
     grafico_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_WHITE, corner_radius=10)
-    grafico_frame.pack(fill="both", expand=True, padx=10, pady=(10, 5))
+    grafico_frame.pack(fill="both", expand=True, padx=10, pady=(8, 5))
 
     # Frame para tabla
     tabla_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_WHITE, corner_radius=10)
-    tabla_frame.pack(fill="x", padx=10, pady=(5, 10))
+    tabla_frame.pack(fill="x", padx=10, pady=(4, 10))
 
     def cargar_supervisores_auditores():
         """Carga opciones de supervisores y auditores para los filtros - OPTIMIZADO"""
@@ -13749,12 +13769,12 @@ def dashboard_avance_metas_ai():
 
         if not datos:
             ctk.CTkLabel(parent, text="No hay datos para mostrar",
-                        font=("Segoe UI", 14), text_color=COLOR_TEXT).pack(pady=20)
+                        font=("Segoe UI", 12), text_color=COLOR_TEXT).pack(pady=20)
             return
 
         # Crear contenedor con dos columnas
         main_container = ctk.CTkFrame(parent, fg_color="transparent")
-        main_container.pack(fill="both", expand=True, padx=10, pady=10)
+        main_container.pack(fill="both", expand=True, padx=10, pady=8)
 
         # Columna izquierda: Gráfico
         grafico_container = ctk.CTkFrame(main_container, fg_color=COLOR_WHITE)
@@ -13762,21 +13782,21 @@ def dashboard_avance_metas_ai():
 
         # Header del gráfico con botón de exportación
         grafico_header = ctk.CTkFrame(grafico_container, fg_color="transparent")
-        grafico_header.pack(fill="x", padx=10, pady=(10, 0))
+        grafico_header.pack(fill="x", padx=10, pady=(8, 0))
 
-        ctk.CTkLabel(grafico_header, text="", font=("Segoe UI", 10)).pack(side="left", expand=True)
+        ctk.CTkLabel(grafico_header, text="", font=("Segoe UI", 8)).pack(side="left", expand=True)
 
         # Botón pequeño y sutil para exportar gráfico
         btn_export_graf = ctk.CTkButton(grafico_header, text="📷",
                                         command=exportar_grafico_imagen,
                                         fg_color="#059669", hover_color="#047857",
-                                        width=30, height=24, corner_radius=5,
+                                        width=30, height=22, corner_radius=5,
                                         font=("Segoe UI", 12))
         btn_export_graf.pack(side="right")
 
         # Columna derecha: Tabla de auditores
         tabla_auditores_container = ctk.CTkFrame(main_container, fg_color=COLOR_WHITE, width=450)
-        tabla_auditores_container.pack(side="right", fill="y", padx=(10, 0))
+        tabla_auditores_container.pack(side="right", fill="y", padx=(8, 0))
         tabla_auditores_container.pack_propagate(False)
 
         # === GRÁFICO ===
@@ -13876,22 +13896,22 @@ def dashboard_avance_metas_ai():
         # === TABLA DE AUDITORES ===
         # Header con título y botón de exportación
         tabla_aud_header = ctk.CTkFrame(tabla_auditores_container, fg_color="transparent")
-        tabla_aud_header.pack(fill="x", padx=10, pady=(10, 5))
+        tabla_aud_header.pack(fill="x", padx=10, pady=(8, 5))
 
         # Título dinámico con el mes
         mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
         titulo_tabla = f"📊 AVANCE POR AUDITOR\n(hasta {mes_nombre})"
         ctk.CTkLabel(tabla_aud_header, text=titulo_tabla,
-                    font=("Segoe UI", 11, "bold"), text_color=COLOR_PRIMARY,
+                    font=("Segoe UI", 7, "bold"), text_color=COLOR_PRIMARY,
                     justify="center").pack(side="top", expand=True)
 
         # Botón pequeño para exportar tabla de auditores
         btn_export_aud = ctk.CTkButton(tabla_aud_header, text="📊",
                                        command=exportar_tabla_auditores,
                                        fg_color="#10B981", hover_color="#059669",
-                                       width=30, height=24, corner_radius=5,
+                                       width=30, height=22, corner_radius=5,
                                        font=("Segoe UI", 12))
-        btn_export_aud.pack(side="top", pady=(5, 0))
+        btn_export_aud.pack(side="top", pady=(4, 0))
 
         # Canvas con scroll para la tabla
         canvas_tabla = tk.Canvas(tabla_auditores_container, bg=COLOR_WHITE, highlightthickness=0)
@@ -13916,7 +13936,7 @@ def dashboard_avance_metas_ai():
 
         widths = [180, 80, 80, 80]
         for i, (header, width) in enumerate(zip(headers, widths)):
-            ctk.CTkLabel(header_frame, text=header, font=("Segoe UI", 9, "bold"),
+            ctk.CTkLabel(header_frame, text=header, font=("Segoe UI", 7, "bold"),
                         text_color="white", width=width).grid(row=0, column=i, padx=1, pady=5)
 
         # Filas de datos
@@ -13961,27 +13981,27 @@ def dashboard_avance_metas_ai():
 
         # Header con título y botón de exportación
         tabla_mens_header = ctk.CTkFrame(parent, fg_color="transparent")
-        tabla_mens_header.pack(fill="x", padx=10, pady=(10, 0))
+        tabla_mens_header.pack(fill="x", padx=10, pady=(8, 0))
 
         # Título
         ctk.CTkLabel(tabla_mens_header, text="📈 AVANCE MENSUAL Y ANUAL",
-                    font=("Segoe UI", 14, "bold"), text_color=COLOR_PRIMARY).pack(side="left")
+                    font=("Segoe UI", 12, "bold"), text_color=COLOR_PRIMARY).pack(side="left")
 
         # Botón pequeño para exportar tabla mensual
         btn_export_mens = ctk.CTkButton(tabla_mens_header, text="📊",
                                        command=exportar_tabla_mensual,
                                        fg_color="#10B981", hover_color="#059669",
-                                       width=30, height=24, corner_radius=5,
+                                       width=30, height=22, corner_radius=5,
                                        font=("Segoe UI", 12))
         btn_export_mens.pack(side="right")
 
         # Contenedor centrado para la tabla
         tabla_outer = ctk.CTkFrame(parent, fg_color="transparent")
-        tabla_outer.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+        tabla_outer.pack(fill="both", expand=True, padx=20, pady=(0, 8))
 
         # Crear tabla centrada con ancho máximo
         tabla_container = ctk.CTkFrame(tabla_outer, fg_color=COLOR_WHITE)
-        tabla_container.pack(anchor="center", padx=10, pady=(0, 10))
+        tabla_container.pack(anchor="center", padx=10, pady=(0, 8))
 
         # Encabezados
         headers = ["Mes", "Ejecutado", "Meta", "Cumplimiento Mes", "Avance Anual"]
@@ -13989,8 +14009,8 @@ def dashboard_avance_metas_ai():
         header_frame.pack(fill="x", padx=2, pady=2)
 
         for i, header in enumerate(headers):
-            ctk.CTkLabel(header_frame, text=header, font=("Segoe UI", 10, "bold"),
-                        text_color="white", width=150).grid(row=0, column=i, padx=2, pady=5)
+            ctk.CTkLabel(header_frame, text=header, font=("Segoe UI", 8, "bold"),
+                        text_color="white", width=130).grid(row=0, column=i, padx=2, pady=5)
 
         meses_nombres = ["", "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
                         "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
@@ -14010,8 +14030,8 @@ def dashboard_avance_metas_ai():
             ]
 
             for i, valor in enumerate(valores):
-                ctk.CTkLabel(row_frame, text=valor, font=("Segoe UI", 9),
-                            text_color=COLOR_TEXT, width=150).grid(row=0, column=i, padx=2, pady=3)
+                ctk.CTkLabel(row_frame, text=valor, font=("Segoe UI", 7),
+                            text_color=COLOR_TEXT, width=130).grid(row=0, column=i, padx=2, pady=3)
 
     # Cargar datos iniciales inmediatamente (sin esperar filtros)
     cargar_datos_y_actualizar()
@@ -14034,7 +14054,7 @@ def mostrar_dashboard_metas():
     except Exception:
         pass
     
-    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=(5, 10))
+    dashboard_frame.pack(fill="both", expand=True, padx=10, pady=(4, 10))
     
     for widget in dashboard_frame.winfo_children():
         widget.destroy()
@@ -14062,10 +14082,10 @@ def mostrar_dashboard_metas():
     # TÍTULO PRINCIPAL
     # ====================
     titulo_frame = ctk.CTkFrame(inner_frame, fg_color=COLOR_BOX, corner_radius=10)
-    titulo_frame.pack(fill="x", padx=10, pady=(10, 5))
+    titulo_frame.pack(fill="x", padx=10, pady=(8, 5))
 
     ctk.CTkLabel(titulo_frame, text="📊 DASHBOARD DE METAS - RECAUDACIÓN AUDITORIA",
-                 font=("Segoe UI", 18, "bold"), text_color=COLOR_PRIMARY).pack(pady=12)
+                 font=("Segoe UI", 16, "bold"), text_color=COLOR_PRIMARY).pack(pady=10)
 
     # ====================
     # PESTAÑAS (TABVIEW)
@@ -14075,7 +14095,7 @@ def mostrar_dashboard_metas():
                              segmented_button_selected_color=COLOR_SECONDARY,
                              segmented_button_selected_hover_color=COLOR_PRIMARY,
                              height=600)
-    tabview.pack(fill="both", expand=True, padx=10, pady=10)
+    tabview.pack(fill="both", expand=True, padx=10, pady=8)
 
     tab_of = tabview.add("OF - Recaudación Auditoria")
     tab_ai = tabview.add("AI - Recaudación Auditoria")
@@ -14094,10 +14114,10 @@ def mostrar_dashboard_metas():
 
     # Frame de filtros OF
     filtro_of_frame = ctk.CTkFrame(tab_of, fg_color=COLOR_BOX, corner_radius=10)
-    filtro_of_frame.pack(fill="x", padx=10, pady=(10, 5))
+    filtro_of_frame.pack(fill="x", padx=10, pady=(8, 5))
 
-    ctk.CTkLabel(filtro_of_frame, text="Filtros:", font=("Segoe UI", 13, "bold"),
-                 text_color=COLOR_TEXT).pack(side="left", padx=(10, 15), pady=10)
+    ctk.CTkLabel(filtro_of_frame, text="Filtros:", font=("Segoe UI", 7, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(8, 15), pady=8)
 
     # Obtener valores únicos para filtros OF
     valores_reimputado_of = sorted(df_of_completo['reimputado'].dropna().unique().tolist())
@@ -14124,7 +14144,7 @@ def mostrar_dashboard_metas():
 
     # Frame para tabla OF
     frame_tabla_of = ctk.CTkFrame(tab_of, fg_color=COLOR_WHITE, corner_radius=10, height=450)
-    frame_tabla_of.pack(fill="both", expand=True, pady=(5, 10), padx=10)
+    frame_tabla_of.pack(fill="both", expand=True, pady=(4, 10), padx=10)
 
     # Función para aplicar filtros OF
     def aplicar_filtros_of_auto():
@@ -14162,10 +14182,10 @@ def mostrar_dashboard_metas():
 
     # FILTRO 1: REIMPUTADO
     filtro_1_container = ctk.CTkFrame(filtro_of_frame, fg_color="transparent")
-    filtro_1_container.pack(side="left", padx=(0, 12))
+    filtro_1_container.pack(side="left", padx=(0, 10))
     
     ctk.CTkLabel(filtro_1_container, text="Reimputado:", 
-                 font=("Segoe UI", 10), text_color=COLOR_TEXT).pack(anchor="w")
+                 font=("Segoe UI", 8), text_color=COLOR_TEXT).pack(anchor="w")
     
     reimputado_of_button_text = tk.StringVar(value="(Todos)")
     dropdown_reimputado_of_win = {"win": None}
@@ -14173,7 +14193,7 @@ def mostrar_dashboard_metas():
     btn_reimputado_of = ctk.CTkButton(filtro_1_container, textvariable=reimputado_of_button_text,
                                       fg_color="#ffffff", text_color=COLOR_TEXT, border_width=2,
                                       border_color=COLOR_PRIMARY, hover_color=COLOR_PANEL,
-                                      font=("Segoe UI", 11), width=150, height=32, anchor="w",
+                                      font=("Segoe UI", 7), width=115, height=25, anchor="w",
                                       command=lambda: toggle_dropdown_reimputado_of())
     btn_reimputado_of.pack()
 
@@ -14218,7 +14238,7 @@ def mostrar_dashboard_metas():
         cb_todos = ctk.CTkCheckBox(frame_inner, text="(Todos)", 
                                    variable=check_reimputado_of_vars["(Todos)"],
                                    command=lambda: on_check_change_reimputado_of("(Todos)"),
-                                   font=("Segoe UI", 10, "bold"), text_color="#002e6d")
+                                   font=("Segoe UI", 8, "bold"), text_color="#002e6d")
         cb_todos.pack(anchor="w", padx=8, pady=2)
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=3)
 
@@ -14226,7 +14246,7 @@ def mostrar_dashboard_metas():
             cb = ctk.CTkCheckBox(frame_inner, text=str(val), 
                                 variable=check_reimputado_of_vars[val],
                                 command=lambda v=val: on_check_change_reimputado_of(v), 
-                                font=("Segoe UI", 10))
+                                font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -14247,10 +14267,10 @@ def mostrar_dashboard_metas():
 
     # FILTRO 2: ÁREA DE INFLUENCIA
     filtro_2_container = ctk.CTkFrame(filtro_of_frame, fg_color="transparent")
-    filtro_2_container.pack(side="left", padx=(0, 12))
+    filtro_2_container.pack(side="left", padx=(0, 10))
     
     ctk.CTkLabel(filtro_2_container, text="Área de Influencia:", 
-                 font=("Segoe UI", 10), text_color=COLOR_TEXT).pack(anchor="w")
+                 font=("Segoe UI", 8), text_color=COLOR_TEXT).pack(anchor="w")
     
     des_ai_of_button_text = tk.StringVar(value="(Todos)")
     dropdown_des_ai_of_win = {"win": None}
@@ -14258,7 +14278,7 @@ def mostrar_dashboard_metas():
     btn_des_ai_of = ctk.CTkButton(filtro_2_container, textvariable=des_ai_of_button_text,
                                   fg_color="#ffffff", text_color=COLOR_TEXT, border_width=2,
                                   border_color=COLOR_PRIMARY, hover_color=COLOR_PANEL,
-                                  font=("Segoe UI", 11), width=150, height=32, anchor="w",
+                                  font=("Segoe UI", 7), width=115, height=25, anchor="w",
                                   command=lambda: toggle_dropdown_des_ai_of())
     btn_des_ai_of.pack()
 
@@ -14303,7 +14323,7 @@ def mostrar_dashboard_metas():
         cb_todos = ctk.CTkCheckBox(frame_inner, text="(Todos)", 
                                    variable=check_des_ai_of_vars["(Todos)"],
                                    command=lambda: on_check_change_des_ai_of("(Todos)"),
-                                   font=("Segoe UI", 10, "bold"), text_color="#002e6d")
+                                   font=("Segoe UI", 8, "bold"), text_color="#002e6d")
         cb_todos.pack(anchor="w", padx=8, pady=2)
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=3)
 
@@ -14311,7 +14331,7 @@ def mostrar_dashboard_metas():
             cb = ctk.CTkCheckBox(frame_inner, text=str(val), 
                                 variable=check_des_ai_of_vars[val],
                                 command=lambda v=val: on_check_change_des_ai_of(v), 
-                                font=("Segoe UI", 10))
+                                font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -14332,10 +14352,10 @@ def mostrar_dashboard_metas():
 
     # FILTRO 3: CORRIENTE
     filtro_3_container = ctk.CTkFrame(filtro_of_frame, fg_color="transparent")
-    filtro_3_container.pack(side="left", padx=(0, 12))
+    filtro_3_container.pack(side="left", padx=(0, 10))
     
     ctk.CTkLabel(filtro_3_container, text="Corriente:", 
-                 font=("Segoe UI", 10), text_color=COLOR_TEXT).pack(anchor="w")
+                 font=("Segoe UI", 8), text_color=COLOR_TEXT).pack(anchor="w")
     
     corriente_of_button_text = tk.StringVar(value="(Todos)")
     dropdown_corriente_of_win = {"win": None}
@@ -14343,7 +14363,7 @@ def mostrar_dashboard_metas():
     btn_corriente_of = ctk.CTkButton(filtro_3_container, textvariable=corriente_of_button_text,
                                      fg_color="#ffffff", text_color=COLOR_TEXT, border_width=2,
                                      border_color=COLOR_PRIMARY, hover_color=COLOR_PANEL,
-                                     font=("Segoe UI", 11), width=150, height=32, anchor="w",
+                                     font=("Segoe UI", 7), width=115, height=25, anchor="w",
                                      command=lambda: toggle_dropdown_corriente_of())
     btn_corriente_of.pack()
 
@@ -14388,7 +14408,7 @@ def mostrar_dashboard_metas():
         cb_todos = ctk.CTkCheckBox(frame_inner, text="(Todos)", 
                                    variable=check_corriente_of_vars["(Todos)"],
                                    command=lambda: on_check_change_corriente_of("(Todos)"),
-                                   font=("Segoe UI", 10, "bold"), text_color="#002e6d")
+                                   font=("Segoe UI", 8, "bold"), text_color="#002e6d")
         cb_todos.pack(anchor="w", padx=8, pady=2)
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=3)
 
@@ -14396,7 +14416,7 @@ def mostrar_dashboard_metas():
             cb = ctk.CTkCheckBox(frame_inner, text=str(val), 
                                 variable=check_corriente_of_vars[val],
                                 command=lambda v=val: on_check_change_corriente_of(v), 
-                                font=("Segoe UI", 10))
+                                font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -14417,10 +14437,10 @@ def mostrar_dashboard_metas():
 
     # FILTRO 4: FUNCIONARIO
     filtro_4_container = ctk.CTkFrame(filtro_of_frame, fg_color="transparent")
-    filtro_4_container.pack(side="left", padx=(0, 12))
+    filtro_4_container.pack(side="left", padx=(0, 10))
     
     ctk.CTkLabel(filtro_4_container, text="Funcionario:", 
-                 font=("Segoe UI", 10), text_color=COLOR_TEXT).pack(anchor="w")
+                 font=("Segoe UI", 8), text_color=COLOR_TEXT).pack(anchor="w")
     
     des_func_of_button_text = tk.StringVar(value="(Todos)")
     dropdown_des_func_of_win = {"win": None}
@@ -14428,7 +14448,7 @@ def mostrar_dashboard_metas():
     btn_des_func_of = ctk.CTkButton(filtro_4_container, textvariable=des_func_of_button_text,
                                     fg_color="#ffffff", text_color=COLOR_TEXT, border_width=2,
                                     border_color=COLOR_PRIMARY, hover_color=COLOR_PANEL,
-                                    font=("Segoe UI", 11), width=150, height=32, anchor="w",
+                                    font=("Segoe UI", 7), width=115, height=25, anchor="w",
                                     command=lambda: toggle_dropdown_des_func_of())
     btn_des_func_of.pack()
 
@@ -14473,7 +14493,7 @@ def mostrar_dashboard_metas():
         cb_todos = ctk.CTkCheckBox(frame_inner, text="(Todos)", 
                                    variable=check_des_func_of_vars["(Todos)"],
                                    command=lambda: on_check_change_des_func_of("(Todos)"),
-                                   font=("Segoe UI", 10, "bold"), text_color="#002e6d")
+                                   font=("Segoe UI", 8, "bold"), text_color="#002e6d")
         cb_todos.pack(anchor="w", padx=8, pady=2)
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=3)
 
@@ -14481,7 +14501,7 @@ def mostrar_dashboard_metas():
             cb = ctk.CTkCheckBox(frame_inner, text=str(val), 
                                 variable=check_des_func_of_vars[val],
                                 command=lambda v=val: on_check_change_des_func_of(v), 
-                                font=("Segoe UI", 10))
+                                font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -14533,8 +14553,8 @@ def mostrar_dashboard_metas():
         aplicar_filtros_of_auto()
 
     ctk.CTkButton(botones_container, text="🔄 Limpiar", command=limpiar_filtros_of,
-                  fg_color="#F59E0B", hover_color="#D97706", font=("Segoe UI", 11, "bold"),
-                  width=120, height=32).pack(side="left", padx=5)
+                  fg_color="#F59E0B", hover_color="#D97706", font=("Segoe UI", 7, "bold"),
+                  width=110, height=25).pack(side="left", padx=5)
 
     # Botón METAS OF
     def mostrar_metas_of():
@@ -14583,17 +14603,17 @@ def mostrar_dashboard_metas():
         canvas.bind_all("<Button-4>", _on_mousewheel_main)
         canvas.bind_all("<Button-5>", _on_mousewheel_main)
 
-        canvas.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+        canvas.pack(side="left", fill="both", expand=True, padx=10, pady=8)
         scrollbar.pack(side="right", fill="y")
         
         # ====================
         # ENCABEZADO CON BOTÓN VOLVER
         # ====================
         header_frame = ctk.CTkFrame(main_frame, fg_color=COLOR_PRIMARY, corner_radius=10)
-        header_frame.pack(fill="x", padx=10, pady=(10, 5))
+        header_frame.pack(fill="x", padx=10, pady=(8, 5))
         
         header_inner = ctk.CTkFrame(header_frame, fg_color="transparent")
-        header_inner.pack(fill="x", padx=15, pady=12)
+        header_inner.pack(fill="x", padx=10, pady=10)
         
         # Botón volver
         def volver_dashboard():
@@ -14603,7 +14623,7 @@ def mostrar_dashboard_metas():
         
         ctk.CTkButton(header_inner, text="← Volver", command=volver_dashboard,
                     fg_color="transparent", hover_color=COLOR_SECONDARY,
-                    font=("Segoe UI", 11, "bold"), width=100, height=32,
+                    font=("Segoe UI", 7, "bold"), width=90, height=25,
                     border_width=2, border_color="white").pack(side="left")
         
         ctk.CTkLabel(header_inner, text="🎯 GESTIÓN DE METAS ANUALES - OF", 
@@ -14613,18 +14633,18 @@ def mostrar_dashboard_metas():
         # SECCIÓN META ANUAL
         # ====================
         meta_frame = ctk.CTkFrame(main_frame, fg_color=COLOR_BOX, corner_radius=10)
-        meta_frame.pack(fill="x", padx=10, pady=(10, 10))
+        meta_frame.pack(fill="x", padx=10, pady=(8, 10))
         
         meta_inner = ctk.CTkFrame(meta_frame, fg_color="transparent")
-        meta_inner.pack(fill="x", padx=15, pady=15)
+        meta_inner.pack(fill="x", padx=10, pady=10)
         
         ctk.CTkLabel(meta_inner, text="💰 Meta Anual Total:", 
-                    font=("Segoe UI", 13, "bold"), text_color=COLOR_TEXT).pack(side="left", padx=(0, 10))
+                    font=("Segoe UI", 7, "bold"), text_color=COLOR_TEXT).pack(side="left", padx=(0, 10))
         
         entry_meta_anual = ctk.CTkEntry(meta_inner, textvariable=meta_anual_var, 
-                                        font=("Segoe UI", 13), width=200, height=35,
+                                        font=("Segoe UI", 7), width=200, height=35,
                                         border_color=COLOR_PRIMARY, border_width=2)
-        entry_meta_anual.pack(side="left", padx=(0, 15))
+        entry_meta_anual.pack(side="left", padx=(0, 10))
         
         def distribuir_equitativamente():
             """Divide la meta anual equitativamente entre todos los auditores"""
@@ -14648,30 +14668,30 @@ def mostrar_dashboard_metas():
         ctk.CTkButton(meta_inner, text="⚖️ Distribuir Equitativamente", 
                     command=distribuir_equitativamente,
                     fg_color=COLOR_SECONDARY, hover_color=COLOR_PRIMARY,
-                    font=("Segoe UI", 11, "bold"), width=200, height=35).pack(side="left")
+                    font=("Segoe UI", 7, "bold"), width=200, height=35).pack(side="left")
         
         # ====================
         # SECCIÓN RESUMEN
         # ====================
         resumen_frame = ctk.CTkFrame(main_frame, fg_color="#F0F9FF", corner_radius=10, border_width=2, border_color="#3B82F6")
-        resumen_frame.pack(fill="x", padx=10, pady=(0, 10))
+        resumen_frame.pack(fill="x", padx=10, pady=(0, 8))
         
         resumen_inner = ctk.CTkFrame(resumen_frame, fg_color="transparent")
-        resumen_inner.pack(fill="x", padx=15, pady=12)
+        resumen_inner.pack(fill="x", padx=10, pady=10)
         
         ctk.CTkLabel(resumen_inner, text="📊 Suma Total Asignada:", 
                     font=("Segoe UI", 12, "bold"), text_color="#1E40AF").pack(side="left", padx=(0, 10))
         
         label_suma = ctk.CTkLabel(resumen_inner, textvariable=suma_total_var, 
-                                font=("Segoe UI", 14, "bold"), text_color="#059669")
+                                font=("Segoe UI", 12, "bold"), text_color="#059669")
         label_suma.pack(side="left", padx=(0, 20))
         
         diferencia_label = ctk.CTkLabel(resumen_inner, text="", 
-                                        font=("Segoe UI", 11), text_color="#DC2626")
+                                        font=("Segoe UI", 7), text_color="#DC2626")
         diferencia_label.pack(side="left")
         
         fecha_label = ctk.CTkLabel(resumen_inner, textvariable=fecha_guardado_var,
-                                font=("Segoe UI", 10, "italic"), text_color="#6B7280")
+                                font=("Segoe UI", 8, "italic"), text_color="#6B7280")
         fecha_label.pack(side="right")
         
         def calcular_suma_total():
@@ -14708,10 +14728,10 @@ def mostrar_dashboard_metas():
         # SECCIÓN AUDITORES (CON SCROLL)
         # ====================
         auditores_container_frame = ctk.CTkFrame(main_frame, fg_color=COLOR_BOX, corner_radius=10)
-        auditores_container_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        auditores_container_frame.pack(fill="both", expand=True, padx=10, pady=(0, 8))
         
         ctk.CTkLabel(auditores_container_frame, text="👥 Distribución por Auditor", 
-                    font=("Segoe UI", 13, "bold"), text_color=COLOR_TEXT, anchor="w").pack(fill="x", padx=15, pady=(15, 10))
+                    font=("Segoe UI", 7, "bold"), text_color=COLOR_TEXT, anchor="w").pack(fill="x", padx=10, pady=(15, 10))
         
         # Canvas con scrollbar para auditores
         canvas_auditores = tk.Canvas(auditores_container_frame, bg=COLOR_WHITE, highlightthickness=0, height=300)
@@ -14744,7 +14764,7 @@ def mostrar_dashboard_metas():
         canvas_auditores.bind_all("<Button-5>", _on_mousewheel_aud)
 
         canvas_auditores.pack(side="left", fill="both", expand=True, padx=(15, 5), pady=(0, 15))
-        scrollbar_auditores.pack(side="right", fill="y", padx=(0, 15), pady=(0, 15))
+        scrollbar_auditores.pack(side="right", fill="y", padx=(0, 10), pady=(0, 15))
         
         # ====================
         # CARGAR AUDITORES Y DATOS
@@ -14799,12 +14819,12 @@ def mostrar_dashboard_metas():
                     auditor_frame.pack(fill="x", padx=8, pady=5)
 
                     inner_frame = ctk.CTkFrame(auditor_frame, fg_color="transparent")
-                    inner_frame.pack(fill="x", padx=15, pady=12)
+                    inner_frame.pack(fill="x", padx=10, pady=10)
 
                     # Nombre del auditor con mayor ancho
                     ctk.CTkLabel(inner_frame, text=f"👤 {nombre_auditor}",
                                 font=("Segoe UI", 12, "bold"), text_color=COLOR_PRIMARY,
-                                width=450, anchor="w").pack(side="left", padx=(0, 15))
+                                width=450, anchor="w").pack(side="left", padx=(0, 10))
 
                     # Label "S/" antes del entry
                     ctk.CTkLabel(inner_frame, text="S/",
@@ -14845,7 +14865,7 @@ def mostrar_dashboard_metas():
         # BOTONES DE ACCIÓN
         # ====================
         botones_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-        botones_frame.pack(fill="x", padx=10, pady=(10, 15))
+        botones_frame.pack(fill="x", padx=10, pady=(8, 15))
         
         def guardar_metas():
             """Guarda o actualiza las metas en la base de datos"""
@@ -14935,12 +14955,12 @@ def mostrar_dashboard_metas():
         # Botón Guardar
         ctk.CTkButton(botones_frame, text="💾 Guardar Metas", command=guardar_metas,
                     fg_color="#10B981", hover_color="#059669", 
-                    font=("Segoe UI", 12, "bold"), width=180, height=40).pack(side="left", padx=5)
+                    font=("Segoe UI", 12, "bold"), width=160, height=40).pack(side="left", padx=5)
         
         # Botón Volver
         ctk.CTkButton(botones_frame, text="← Volver al Dashboard", command=volver_dashboard,
                     fg_color="#6B7280", hover_color="#4B5563", 
-                    font=("Segoe UI", 12, "bold"), width=180, height=40).pack(side="right", padx=5)
+                    font=("Segoe UI", 12, "bold"), width=160, height=40).pack(side="right", padx=5)
         
         # Cargar datos iniciales
         dashboard_frame.after(100, cargar_auditores)
@@ -14961,8 +14981,8 @@ def mostrar_dashboard_metas():
         dashboard_frame.after(200, _force_redraw)
     
     ctk.CTkButton(botones_container, text="🎯 Metas", command=mostrar_metas_of,
-                  fg_color="#10B981", hover_color="#059669", font=("Segoe UI", 11, "bold"),
-                  width=120, height=32).pack(side="left", padx=5)
+                  fg_color="#10B981", hover_color="#059669", font=("Segoe UI", 7, "bold"),
+                  width=110, height=25).pack(side="left", padx=5)
 
     # Botón AVANCE DE METAS OF (llama al dashboard de avance de metas)
     def ir_a_avance_metas():
@@ -14974,8 +14994,8 @@ def mostrar_dashboard_metas():
         dashboard_avance_metas_of()
 
     ctk.CTkButton(botones_container, text="📊 Avance de Metas", command=ir_a_avance_metas,
-                  fg_color="#6366F1", hover_color="#4F46E5", font=("Segoe UI", 11, "bold"),
-                  width=150, height=32).pack(side="left", padx=5)
+                  fg_color="#6366F1", hover_color="#4F46E5", font=("Segoe UI", 7, "bold"),
+                  width=115, height=25).pack(side="left", padx=5)
 
     # Generar tabla OF inicial
     aplicar_filtros_of_auto()
@@ -14994,10 +15014,10 @@ def mostrar_dashboard_metas():
 
     # Frame de filtros AI
     filtro_ai_frame = ctk.CTkFrame(tab_ai, fg_color=COLOR_BOX, corner_radius=10)
-    filtro_ai_frame.pack(fill="x", padx=10, pady=(10, 5))
+    filtro_ai_frame.pack(fill="x", padx=10, pady=(8, 5))
 
-    ctk.CTkLabel(filtro_ai_frame, text="Filtros:", font=("Segoe UI", 13, "bold"),
-                 text_color=COLOR_TEXT).pack(side="left", padx=(10, 15), pady=10)
+    ctk.CTkLabel(filtro_ai_frame, text="Filtros:", font=("Segoe UI", 7, "bold"),
+                 text_color=COLOR_TEXT).pack(side="left", padx=(8, 15), pady=8)
 
     # Obtener valores únicos para filtros AI
     valores_reimputado_ai = sorted(df_ai_completo['reimputado'].dropna().unique().tolist())
@@ -15019,7 +15039,7 @@ def mostrar_dashboard_metas():
 
     # Frame para tabla AI
     frame_tabla_ai = ctk.CTkFrame(tab_ai, fg_color=COLOR_WHITE, corner_radius=10, height=450)
-    frame_tabla_ai.pack(fill="both", expand=True, pady=(5, 10), padx=10)
+    frame_tabla_ai.pack(fill="both", expand=True, pady=(4, 10), padx=10)
 
     # Función para aplicar filtros
 # Función para aplicar filtros AI
@@ -15051,10 +15071,10 @@ def mostrar_dashboard_metas():
 
     # FILTRO 1: REIMPUTADO AI
     filtro_1_ai_container = ctk.CTkFrame(filtro_ai_frame, fg_color="transparent")
-    filtro_1_ai_container.pack(side="left", padx=(0, 12))
+    filtro_1_ai_container.pack(side="left", padx=(0, 10))
     
     ctk.CTkLabel(filtro_1_ai_container, text="Reimputado:", 
-                 font=("Segoe UI", 10), text_color=COLOR_TEXT).pack(anchor="w")
+                 font=("Segoe UI", 8), text_color=COLOR_TEXT).pack(anchor="w")
     
     reimputado_ai_button_text = tk.StringVar(value="(Todos)")
     dropdown_reimputado_ai_win = {"win": None}
@@ -15062,7 +15082,7 @@ def mostrar_dashboard_metas():
     btn_reimputado_ai = ctk.CTkButton(filtro_1_ai_container, textvariable=reimputado_ai_button_text,
                                       fg_color="#ffffff", text_color=COLOR_TEXT, border_width=2,
                                       border_color=COLOR_PRIMARY, hover_color=COLOR_PANEL,
-                                      font=("Segoe UI", 11), width=150, height=32, anchor="w",
+                                      font=("Segoe UI", 7), width=115, height=25, anchor="w",
                                       command=lambda: toggle_dropdown_reimputado_ai())
     btn_reimputado_ai.pack()
 
@@ -15107,7 +15127,7 @@ def mostrar_dashboard_metas():
         cb_todos = ctk.CTkCheckBox(frame_inner, text="(Todos)", 
                                    variable=check_reimputado_ai_vars["(Todos)"],
                                    command=lambda: on_check_change_reimputado_ai("(Todos)"),
-                                   font=("Segoe UI", 10, "bold"), text_color="#002e6d")
+                                   font=("Segoe UI", 8, "bold"), text_color="#002e6d")
         cb_todos.pack(anchor="w", padx=8, pady=2)
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=3)
 
@@ -15115,7 +15135,7 @@ def mostrar_dashboard_metas():
             cb = ctk.CTkCheckBox(frame_inner, text=str(val), 
                                 variable=check_reimputado_ai_vars[val],
                                 command=lambda v=val: on_check_change_reimputado_ai(v), 
-                                font=("Segoe UI", 10))
+                                font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -15136,10 +15156,10 @@ def mostrar_dashboard_metas():
 
     # FILTRO 2: CORRIENTE AI
     filtro_2_ai_container = ctk.CTkFrame(filtro_ai_frame, fg_color="transparent")
-    filtro_2_ai_container.pack(side="left", padx=(0, 12))
+    filtro_2_ai_container.pack(side="left", padx=(0, 10))
     
     ctk.CTkLabel(filtro_2_ai_container, text="Corriente:", 
-                 font=("Segoe UI", 10), text_color=COLOR_TEXT).pack(anchor="w")
+                 font=("Segoe UI", 8), text_color=COLOR_TEXT).pack(anchor="w")
     
     corriente_ai_button_text = tk.StringVar(value="(Todos)")
     dropdown_corriente_ai_win = {"win": None}
@@ -15147,7 +15167,7 @@ def mostrar_dashboard_metas():
     btn_corriente_ai = ctk.CTkButton(filtro_2_ai_container, textvariable=corriente_ai_button_text,
                                      fg_color="#ffffff", text_color=COLOR_TEXT, border_width=2,
                                      border_color=COLOR_PRIMARY, hover_color=COLOR_PANEL,
-                                     font=("Segoe UI", 11), width=150, height=32, anchor="w",
+                                     font=("Segoe UI", 7), width=115, height=25, anchor="w",
                                      command=lambda: toggle_dropdown_corriente_ai())
     btn_corriente_ai.pack()
 
@@ -15192,7 +15212,7 @@ def mostrar_dashboard_metas():
         cb_todos = ctk.CTkCheckBox(frame_inner, text="(Todos)", 
                                    variable=check_corriente_ai_vars["(Todos)"],
                                    command=lambda: on_check_change_corriente_ai("(Todos)"),
-                                   font=("Segoe UI", 10, "bold"), text_color="#002e6d")
+                                   font=("Segoe UI", 8, "bold"), text_color="#002e6d")
         cb_todos.pack(anchor="w", padx=8, pady=2)
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=3)
 
@@ -15200,7 +15220,7 @@ def mostrar_dashboard_metas():
             cb = ctk.CTkCheckBox(frame_inner, text=str(val), 
                                 variable=check_corriente_ai_vars[val],
                                 command=lambda v=val: on_check_change_corriente_ai(v), 
-                                font=("Segoe UI", 10))
+                                font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -15221,10 +15241,10 @@ def mostrar_dashboard_metas():
 
     # FILTRO 3: VERIFICADOR AI
     filtro_3_ai_container = ctk.CTkFrame(filtro_ai_frame, fg_color="transparent")
-    filtro_3_ai_container.pack(side="left", padx=(0, 12))
+    filtro_3_ai_container.pack(side="left", padx=(0, 10))
     
     ctk.CTkLabel(filtro_3_ai_container, text="Verificador:", 
-                 font=("Segoe UI", 10), text_color=COLOR_TEXT).pack(anchor="w")
+                 font=("Segoe UI", 8), text_color=COLOR_TEXT).pack(anchor="w")
     
     nomb_ver_ai_button_text = tk.StringVar(value="(Todos)")
     dropdown_nomb_ver_ai_win = {"win": None}
@@ -15232,7 +15252,7 @@ def mostrar_dashboard_metas():
     btn_nomb_ver_ai = ctk.CTkButton(filtro_3_ai_container, textvariable=nomb_ver_ai_button_text,
                                     fg_color="#ffffff", text_color=COLOR_TEXT, border_width=2,
                                     border_color=COLOR_PRIMARY, hover_color=COLOR_PANEL,
-                                    font=("Segoe UI", 11), width=150, height=32, anchor="w",
+                                    font=("Segoe UI", 7), width=115, height=25, anchor="w",
                                     command=lambda: toggle_dropdown_nomb_ver_ai())
     btn_nomb_ver_ai.pack()
 
@@ -15277,7 +15297,7 @@ def mostrar_dashboard_metas():
         cb_todos = ctk.CTkCheckBox(frame_inner, text="(Todos)", 
                                    variable=check_nomb_ver_ai_vars["(Todos)"],
                                    command=lambda: on_check_change_nomb_ver_ai("(Todos)"),
-                                   font=("Segoe UI", 10, "bold"), text_color="#002e6d")
+                                   font=("Segoe UI", 8, "bold"), text_color="#002e6d")
         cb_todos.pack(anchor="w", padx=8, pady=2)
         ttk.Separator(frame_inner, orient="horizontal").pack(fill="x", padx=5, pady=3)
 
@@ -15285,7 +15305,7 @@ def mostrar_dashboard_metas():
             cb = ctk.CTkCheckBox(frame_inner, text=str(val), 
                                 variable=check_nomb_ver_ai_vars[val],
                                 command=lambda v=val: on_check_change_nomb_ver_ai(v), 
-                                font=("Segoe UI", 10))
+                                font=("Segoe UI", 8))
             cb.pack(anchor="w", padx=8, pady=2)
 
         top.update_idletasks()
@@ -15331,16 +15351,16 @@ def mostrar_dashboard_metas():
         aplicar_filtros_ai_auto()
 
     ctk.CTkButton(botones_ai_container, text="🔄 Limpiar", command=limpiar_filtros_ai,
-                  fg_color="#F59E0B", hover_color="#D97706", font=("Segoe UI", 11, "bold"),
-                  width=120, height=32).pack(side="left", padx=5)
+                  fg_color="#F59E0B", hover_color="#D97706", font=("Segoe UI", 7, "bold"),
+                  width=110, height=25).pack(side="left", padx=5)
 
     # Botón METAS AI
     def mostrar_metas_ai():
         messagebox.showinfo("Metas AI", "Funcionalidad de Metas AI en desarrollo")
 
     ctk.CTkButton(botones_ai_container, text="🎯 Metas", command=mostrar_metas_ai,
-                  fg_color="#10B981", hover_color="#059669", font=("Segoe UI", 11, "bold"),
-                  width=120, height=32).pack(side="left", padx=5)
+                  fg_color="#10B981", hover_color="#059669", font=("Segoe UI", 7, "bold"),
+                  width=110, height=25).pack(side="left", padx=5)
 
     # Botón AVANCE DE METAS AI (llama al dashboard de avance de metas)
     def ir_a_avance_metas_ai():
@@ -15352,8 +15372,8 @@ def mostrar_dashboard_metas():
         dashboard_avance_metas_ai()
 
     ctk.CTkButton(botones_ai_container, text="📊 Avance de Metas", command=ir_a_avance_metas_ai,
-                  fg_color="#6366F1", hover_color="#4F46E5", font=("Segoe UI", 11, "bold"),
-                  width=150, height=32).pack(side="left", padx=5)
+                  fg_color="#6366F1", hover_color="#4F46E5", font=("Segoe UI", 7, "bold"),
+                  width=115, height=25).pack(side="left", padx=5)
 
     # Generar tabla AI inicial
     aplicar_filtros_ai_auto()
@@ -15395,7 +15415,7 @@ def mostrar_datos():
             dashboard_frame.pack_forget()
         except Exception:
             pass
-        preview_frame.pack(fill="both", expand=True, padx=10, pady=(5,10))
+        preview_frame.pack(fill="both", expand=True, padx=10, pady=(4,10))
 
         conn = mysql.connector.connect(**DB_CONFIG)
         cursor = conn.cursor()
@@ -15439,7 +15459,7 @@ def ir_a_modulo():
         dashboard_frame.pack_forget()
     except Exception:
         pass
-    preview_frame.pack(fill="both", expand=True, padx=10, pady=(5,10))
+    preview_frame.pack(fill="both", expand=True, padx=10, pady=(4,10))
     if "banner_modulo_path" in config:
         mostrar_banner_modulo(config["banner_modulo_path"])
     mostrar_datos()
