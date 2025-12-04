@@ -15356,7 +15356,427 @@ def mostrar_dashboard_metas():
 
     # Botón METAS AI
     def mostrar_metas_ai():
-        messagebox.showinfo("Metas AI", "Funcionalidad de Metas AI en desarrollo")
+        """
+        Muestra la gestión de metas OF dentro del dashboard principal
+        """
+        # Limpiar el dashboard
+        for widget in dashboard_frame.winfo_children():
+            widget.destroy()
+        
+        # Variables globales de la ventana
+        auditores_data = {}  # {nombre_auditor: {'entry': widget, 'var': StringVar}}
+        meta_anual_var = tk.StringVar(value="0.00")
+        suma_total_var = tk.StringVar(value="0.00")
+        modo_edicion = tk.BooleanVar(value=False)
+        fecha_guardado_var = tk.StringVar(value="")
+        anio_actual = datetime.now().year
+        
+        # Canvas principal con scroll
+        canvas = tk.Canvas(dashboard_frame, bg=COLOR_WHITE, highlightthickness=0)
+        scrollbar = ctk.CTkScrollbar(dashboard_frame, orientation="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        main_frame = ctk.CTkFrame(canvas, fg_color=COLOR_WHITE)
+        canvas_window = canvas.create_window((0, 0), window=main_frame, anchor="nw")
+
+        def _on_frame_configure(event=None):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+            if canvas.winfo_width() > 1:
+                canvas.itemconfig(canvas_window, width=canvas.winfo_width())
+
+        main_frame.bind("<Configure>", _on_frame_configure)
+        canvas.bind("<Configure>", _on_frame_configure)
+
+        # Permitir scroll con rueda del mouse en canvas principal
+        def _on_mousewheel_main(event):
+            if event.delta:  # Windows / MacOS
+                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            else:  # Linux (event.num)
+                if event.num == 5:
+                    canvas.yview_scroll(1, "units")
+                elif event.num == 4:
+                    canvas.yview_scroll(-1, "units")
+
+        canvas.bind_all("<MouseWheel>", _on_mousewheel_main)
+        canvas.bind_all("<Button-4>", _on_mousewheel_main)
+        canvas.bind_all("<Button-5>", _on_mousewheel_main)
+
+        canvas.pack(side="left", fill="both", expand=True, padx=10, pady=8)
+        scrollbar.pack(side="right", fill="y")
+        
+        # ====================
+        # ENCABEZADO CON BOTÓN VOLVER
+        # ====================
+        header_frame = ctk.CTkFrame(main_frame, fg_color=COLOR_PRIMARY, corner_radius=10)
+        header_frame.pack(fill="x", padx=10, pady=(8, 5))
+        
+        header_inner = ctk.CTkFrame(header_frame, fg_color="transparent")
+        header_inner.pack(fill="x", padx=10, pady=10)
+        
+        # Botón volver
+        def volver_dashboard():
+            canvas.pack_forget()
+            scrollbar.pack_forget()
+            mostrar_dashboard_metas()
+        
+        ctk.CTkButton(header_inner, text="← Volver", command=volver_dashboard,
+                    fg_color="transparent", hover_color=COLOR_SECONDARY,
+                    font=("Segoe UI", 7, "bold"), width=90, height=25,
+                    border_width=2, border_color="white").pack(side="left")
+        
+        ctk.CTkLabel(header_inner, text="🎯 GESTIÓN DE METAS ANUALES - AI", 
+                    font=("Segoe UI", 16, "bold"), text_color="white").pack(side="left", padx=20, expand=True)
+        
+        # ====================
+        # SECCIÓN META ANUAL
+        # ====================
+        meta_frame = ctk.CTkFrame(main_frame, fg_color=COLOR_BOX, corner_radius=10)
+        meta_frame.pack(fill="x", padx=10, pady=(8, 10))
+        
+        meta_inner = ctk.CTkFrame(meta_frame, fg_color="transparent")
+        meta_inner.pack(fill="x", padx=10, pady=10)
+        
+        ctk.CTkLabel(meta_inner, text="💰 Meta Anual Total:", 
+                    font=("Segoe UI", 7, "bold"), text_color=COLOR_TEXT).pack(side="left", padx=(0, 10))
+        
+        entry_meta_anual = ctk.CTkEntry(meta_inner, textvariable=meta_anual_var, 
+                                        font=("Segoe UI", 7), width=200, height=35,
+                                        border_color=COLOR_PRIMARY, border_width=2)
+        entry_meta_anual.pack(side="left", padx=(0, 10))
+        
+        def distribuir_equitativamente():
+            """Divide la meta anual equitativamente entre todos los auditores"""
+            try:
+                meta = float(meta_anual_var.get().replace(",", ""))
+                total_auditores = len(auditores_data)
+                
+                if total_auditores == 0:
+                    messagebox.showwarning("Advertencia", "No hay auditores para distribuir")
+                    return
+                
+                monto_por_auditor = meta / total_auditores
+                
+                for nombre, data in auditores_data.items():
+                    data['var'].set(f"{monto_por_auditor:,.2f}")
+                
+                calcular_suma_total()
+            except ValueError:
+                messagebox.showerror("Error", "Ingrese un monto válido")
+        
+        ctk.CTkButton(meta_inner, text="⚖️ Distribuir Equitativamente", 
+                    command=distribuir_equitativamente,
+                    fg_color=COLOR_SECONDARY, hover_color=COLOR_PRIMARY,
+                    font=("Segoe UI", 7, "bold"), width=200, height=35).pack(side="left")
+        
+        # ====================
+        # SECCIÓN RESUMEN
+        # ====================
+        resumen_frame = ctk.CTkFrame(main_frame, fg_color="#F0F9FF", corner_radius=10, border_width=2, border_color="#3B82F6")
+        resumen_frame.pack(fill="x", padx=10, pady=(0, 8))
+        
+        resumen_inner = ctk.CTkFrame(resumen_frame, fg_color="transparent")
+        resumen_inner.pack(fill="x", padx=10, pady=10)
+        
+        ctk.CTkLabel(resumen_inner, text="📊 Suma Total Asignada:", 
+                    font=("Segoe UI", 12, "bold"), text_color="#1E40AF").pack(side="left", padx=(0, 10))
+        
+        label_suma = ctk.CTkLabel(resumen_inner, textvariable=suma_total_var, 
+                                font=("Segoe UI", 12, "bold"), text_color="#059669")
+        label_suma.pack(side="left", padx=(0, 20))
+        
+        diferencia_label = ctk.CTkLabel(resumen_inner, text="", 
+                                        font=("Segoe UI", 7), text_color="#DC2626")
+        diferencia_label.pack(side="left")
+        
+        fecha_label = ctk.CTkLabel(resumen_inner, textvariable=fecha_guardado_var,
+                                font=("Segoe UI", 8, "italic"), text_color="#6B7280")
+        fecha_label.pack(side="right")
+        
+        def calcular_suma_total():
+            """Calcula la suma de todos los montos asignados y muestra diferencias"""
+            try:
+                suma = 0.0
+                for nombre, data in auditores_data.items():
+                    valor = data['var'].get().replace(",", "")
+                    if valor and valor != "":
+                        suma += float(valor)
+                
+                suma_total_var.set(f"S/ {suma:,.2f}")
+                
+                # Calcular diferencia con meta anual
+                try:
+                    meta = float(meta_anual_var.get().replace(",", ""))
+                    diferencia = suma - meta
+                    
+                    if abs(diferencia) < 0.01:  # Igual (tolerancia de centavos)
+                        diferencia_label.configure(text="✅ Distribución correcta", text_color="#059669")
+                        label_suma.configure(text_color="#059669")
+                    elif diferencia > 0:
+                        diferencia_label.configure(text=f"⚠️ Excede en S/ {diferencia:,.2f}", text_color="#DC2626")
+                        label_suma.configure(text_color="#DC2626")
+                    else:
+                        diferencia_label.configure(text=f"⚠️ Falta asignar S/ {abs(diferencia):,.2f}", text_color="#F59E0B")
+                        label_suma.configure(text_color="#F59E0B")
+                except:
+                    diferencia_label.configure(text="")
+            except:
+                suma_total_var.set("S/ 0.00")
+        
+        # ====================
+        # SECCIÓN AUDITORES (CON SCROLL)
+        # ====================
+        auditores_container_frame = ctk.CTkFrame(main_frame, fg_color=COLOR_BOX, corner_radius=10)
+        auditores_container_frame.pack(fill="both", expand=True, padx=10, pady=(0, 8))
+        
+        ctk.CTkLabel(auditores_container_frame, text="👥 Distribución por Auditor", 
+                    font=("Segoe UI", 7, "bold"), text_color=COLOR_TEXT, anchor="w").pack(fill="x", padx=10, pady=(15, 10))
+        
+        # Canvas con scrollbar para auditores
+        canvas_auditores = tk.Canvas(auditores_container_frame, bg=COLOR_WHITE, highlightthickness=0, height=300)
+        scrollbar_auditores = ctk.CTkScrollbar(auditores_container_frame, orientation="vertical", command=canvas_auditores.yview)
+        canvas_auditores.configure(yscrollcommand=scrollbar_auditores.set)
+        
+        frame_auditores = ctk.CTkFrame(canvas_auditores, fg_color=COLOR_WHITE)
+        canvas_window_aud = canvas_auditores.create_window((0, 0), window=frame_auditores, anchor="nw")
+        
+        def on_frame_configure_aud(event=None):
+            canvas_auditores.configure(scrollregion=canvas_auditores.bbox("all"))
+            if canvas_auditores.winfo_width() > 1:
+                canvas_auditores.itemconfig(canvas_window_aud, width=canvas_auditores.winfo_width())
+        
+        frame_auditores.bind("<Configure>", on_frame_configure_aud)
+        canvas_auditores.bind("<Configure>", on_frame_configure_aud)
+
+        # Permitir scroll con rueda del mouse en canvas de auditores
+        def _on_mousewheel_aud(event):
+            if event.delta:  # Windows / MacOS
+                canvas_auditores.yview_scroll(int(-1*(event.delta/120)), "units")
+            else:  # Linux (event.num)
+                if event.num == 5:
+                    canvas_auditores.yview_scroll(1, "units")
+                elif event.num == 4:
+                    canvas_auditores.yview_scroll(-1, "units")
+
+        canvas_auditores.bind_all("<MouseWheel>", _on_mousewheel_aud)
+        canvas_auditores.bind_all("<Button-4>", _on_mousewheel_aud)
+        canvas_auditores.bind_all("<Button-5>", _on_mousewheel_aud)
+
+        canvas_auditores.pack(side="left", fill="both", expand=True, padx=(15, 5), pady=(0, 15))
+        scrollbar_auditores.pack(side="right", fill="y", padx=(0, 10), pady=(0, 15))
+        
+        # ====================
+        # CARGAR AUDITORES Y DATOS
+        # ====================
+        def cargar_auditores():
+            """Carga auditores únicos de fiscalizaciones5 y verifica si hay datos guardados"""
+            try:
+                # Obtener auditores únicos de fiscalizaciones5
+                query_auditores = """
+                    SELECT DISTINCT nomb_ver 
+                    FROM fiscalizaciones5 
+                    WHERE nomb_ver IS NOT NULL AND nomb_ver != ''
+                    ORDER BY nomb_ver
+                """
+                df_auditores = pd.read_sql(query_auditores, DB_ENGINE)
+                
+                if df_auditores.empty:
+                    messagebox.showwarning("Advertencia", "No se encontraron auditores en la base de datos")
+                    volver_dashboard()
+                    return
+                
+                # Verificar si ya existen datos guardados para este año
+                query_guardados = """
+                    SELECT nombre_auditor, monto_asignado, monto_anual, fecha
+                    FROM distribucion
+                    WHERE tipo = 'AI' AND anio = %s
+                """
+                df_guardados = pd.read_sql(query_guardados, DB_ENGINE, params=(anio_actual,))
+                
+                if not df_guardados.empty:
+                    # MODO EDICIÓN - Cargar datos existentes
+                    modo_edicion.set(True)
+                    meta_anual_var.set(f"{df_guardados['monto_anual'].iloc[0]:,.2f}")
+                    fecha_guardado_var.set(f"📅 Última actualización: {df_guardados['fecha'].iloc[0].strftime('%d/%m/%Y %H:%M')}")
+                    
+                    # Crear diccionario de montos guardados
+                    montos_guardados = {}
+                    for idx, row in df_guardados.iterrows():
+                        montos_guardados[row['nombre_auditor']] = row['monto_asignado']
+                else:
+                    # MODO NUEVO
+                    modo_edicion.set(False)
+                    montos_guardados = {}
+                
+                # Crear campos para cada auditor
+                for idx, row in df_auditores.iterrows():
+                    nombre_auditor = row['nomb_ver']
+
+                    # Frame para cada auditor con estilo mejorado
+                    auditor_frame = ctk.CTkFrame(frame_auditores, fg_color="#FFFFFF", corner_radius=10,
+                                                 border_width=2, border_color="#E5E7EB")
+                    auditor_frame.pack(fill="x", padx=8, pady=5)
+
+                    inner_frame = ctk.CTkFrame(auditor_frame, fg_color="transparent")
+                    inner_frame.pack(fill="x", padx=10, pady=10)
+
+                    # Nombre del auditor con mayor ancho
+                    ctk.CTkLabel(inner_frame, text=f"👤 {nombre_auditor}",
+                                font=("Segoe UI", 12, "bold"), text_color=COLOR_PRIMARY,
+                                width=450, anchor="w").pack(side="left", padx=(0, 10))
+
+                    # Label "S/" antes del entry
+                    ctk.CTkLabel(inner_frame, text="S/",
+                                font=("Segoe UI", 12, "bold"), text_color=COLOR_SECONDARY).pack(side="left", padx=(0, 5))
+
+                    # Entry para monto
+                    monto_var = tk.StringVar(value="0.00")
+
+                    # Si hay datos guardados, cargar el monto
+                    if nombre_auditor in montos_guardados:
+                        monto_var.set(f"{montos_guardados[nombre_auditor]:,.2f}")
+
+                    def on_monto_change(*args, var=monto_var):
+                        calcular_suma_total()
+
+                    monto_var.trace_add("write", on_monto_change)
+
+                    entry_monto = ctk.CTkEntry(inner_frame, textvariable=monto_var,
+                                            font=("Segoe UI", 12), width=200, height=38,
+                                            border_color=COLOR_SECONDARY, border_width=2,
+                                            placeholder_text="0.00", corner_radius=8)
+                    entry_monto.pack(side="left")
+                    
+                    # Guardar referencia
+                    auditores_data[nombre_auditor] = {
+                        'entry': entry_monto,
+                        'var': monto_var
+                    }
+                
+                # Calcular suma inicial
+                calcular_suma_total()
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Error al cargar auditores:\n{e}")
+                volver_dashboard()
+        
+        # ====================
+        # BOTONES DE ACCIÓN
+        # ====================
+        botones_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        botones_frame.pack(fill="x", padx=10, pady=(8, 15))
+        
+        def guardar_metas():
+            """Guarda o actualiza las metas en la base de datos"""
+            try:
+                # Validar meta anual
+                try:
+                    meta_anual = float(meta_anual_var.get().replace(",", ""))
+                except:
+                    messagebox.showerror("Error", "Ingrese una meta anual válida")
+                    return
+                
+                if meta_anual <= 0:
+                    messagebox.showerror("Error", "La meta anual debe ser mayor a 0")
+                    return
+                
+                # Validar que todos los montos sean válidos
+                suma_total = 0.0
+                datos_a_guardar = []
+                
+                for nombre in auditores_data.keys():
+                    data = auditores_data[nombre]
+                    try:
+                        monto_str = data['var'].get().replace(",", "").strip()
+                        if not monto_str or monto_str == "":
+                            monto_str = "0"
+                        monto = float(monto_str)
+                        suma_total += monto
+                        datos_a_guardar.append(tuple([nombre, monto, meta_anual, anio_actual]))
+                    except ValueError as ve:
+                        messagebox.showerror("Error", f"Monto inválido para {nombre}: {data['var'].get()}")
+                        return
+                    except Exception as ex:
+                        messagebox.showerror("Error", f"Error procesando {nombre}: {str(ex)}")
+                        return
+                
+                # Advertir si hay diferencia
+                diferencia = abs(suma_total - meta_anual)
+                if diferencia > 0.01:
+                    respuesta = messagebox.askyesno(
+                        "Advertencia",
+                        f"La suma total (S/ {suma_total:,.2f}) difiere de la meta anual (S/ {meta_anual:,.2f})\n"
+                        f"Diferencia: S/ {diferencia:,.2f}\n\n"
+                        "¿Desea guardar de todos modos?"
+                    )
+                    if not respuesta:
+                        return
+                
+                # Guardar en base de datos
+                connection = DB_ENGINE.raw_connection()
+                cursor = connection.cursor()
+                
+                try:
+                    # Eliminar registros existentes del año y tipo OF
+                    cursor.execute("""
+                        DELETE FROM distribucion 
+                        WHERE tipo = 'AI' AND anio = %s
+                    """, (anio_actual,))
+                    
+                    # Insertar nuevos registros
+                    cursor.executemany("""
+                        INSERT INTO distribucion 
+                        (nombre_auditor, monto_asignado, monto_anual, anio, tipo, fecha)
+                        VALUES (%s, %s, %s, %s, 'AI', NOW())
+                    """, datos_a_guardar)
+                    
+                    connection.commit()
+                    
+                    messagebox.showinfo("Éxito", f"✅ Metas guardadas correctamente\n\n"
+                                                f"Total de auditores: {len(datos_a_guardar)}\n"
+                                                f"Meta anual: S/ {meta_anual:,.2f}\n"
+                                                f"Suma asignada: S/ {suma_total:,.2f}")
+                    
+                    # Actualizar fecha de guardado
+                    fecha_guardado_var.set(f"📅 Última actualización: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+                    modo_edicion.set(True)
+                    
+                except Exception as e:
+                    connection.rollback()
+                    raise e
+                finally:
+                    cursor.close()
+                    connection.close()
+                    
+            except Exception as e:
+                messagebox.showerror("Error", f"Error al guardar metas:\n{e}")
+        
+        # Botón Guardar
+        ctk.CTkButton(botones_frame, text="💾 Guardar Metas", command=guardar_metas,
+                    fg_color="#10B981", hover_color="#059669", 
+                    font=("Segoe UI", 12, "bold"), width=160, height=40).pack(side="left", padx=5)
+        
+        # Botón Volver
+        ctk.CTkButton(botones_frame, text="← Volver al Dashboard", command=volver_dashboard,
+                    fg_color="#6B7280", hover_color="#4B5563", 
+                    font=("Segoe UI", 12, "bold"), width=160, height=40).pack(side="right", padx=5)
+        
+        # Cargar datos iniciales
+        dashboard_frame.after(100, cargar_auditores)
+        
+        # Forzar redraw
+        def _force_redraw():
+            try:
+                if canvas.winfo_exists() and main_frame.winfo_exists():
+                    main_frame.update_idletasks()
+                    canvas.itemconfig(canvas_window, width=canvas.winfo_width())
+                    canvas.configure(scrollregion=canvas.bbox("all"))
+                    canvas.update()
+                    canvas.yview_moveto(0)
+            except Exception:
+                pass
+        
+        dashboard_frame.after(50, _force_redraw)
+        dashboard_frame.after(200, _force_redraw)
 
     ctk.CTkButton(botones_ai_container, text="🎯 Metas", command=mostrar_metas_ai,
                   fg_color="#10B981", hover_color="#059669", font=("Segoe UI", 7, "bold"),
