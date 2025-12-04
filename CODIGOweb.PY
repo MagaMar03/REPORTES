@@ -12886,41 +12886,62 @@ def dashboard_avance_metas_of():
 
         y_pos = range(len(auditores))
 
-        # Barras horizontales
-        bars_meta = ax.barh(y_pos, meta, color='#E5E7EB', label='Meta Acumulada', height=0.4, alpha=0.7)
-        bars_recaudado = ax.barh(y_pos, recaudado, color=COLOR_SECONDARY, label='Recaudado', height=0.4)
+        # Calcular porcentajes y limitar la visualización a 110%
+        porcentaje_recaudado = []
+        porcentaje_meta = []
+        for i in range(len(auditores)):
+            if meta[i] > 0:
+                pct = (recaudado[i] / meta[i]) * 100
+                porcentaje_recaudado.append(min(pct, 110))  # Limitar visualización a 110%
+                porcentaje_meta.append(100)  # Meta siempre es 100%
+            else:
+                porcentaje_recaudado.append(0)
+                porcentaje_meta.append(100)
+
+        # Barras horizontales (en porcentaje)
+        bars_meta = ax.barh(y_pos, porcentaje_meta, color='#E5E7EB', label='Meta (100%)', height=0.4, alpha=0.7)
+        bars_recaudado = ax.barh(y_pos, porcentaje_recaudado, color=COLOR_SECONDARY, label='Recaudado', height=0.4)
 
         # Añadir cifras en las barras con fondo
-        for i, (bar_meta, bar_rec) in enumerate(zip(bars_meta, bars_recaudado)):
+        for i in range(len(auditores)):
             cumplimiento = (recaudado[i] / meta[i] * 100) if meta[i] > 0 else 0
 
-            # Cifra de meta (al final de la barra gris) con fondo blanco
-            if meta[i] > 0:
-                ax.text(meta[i], bar_meta.get_y() + bar_meta.get_height()/2,
-                       f' S/ {meta[i]:,.0f} ',
-                       ha='left', va='center', fontsize=8, color='#374151', fontweight='bold',
-                       bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor='#D1D5DB', linewidth=1))
+            # Etiqueta de meta (100%) en la barra gris
+            ax.text(100, bars_meta[i].get_y() + bars_meta[i].get_height()/2,
+                   f' S/ {meta[i]:,.0f} ',
+                   ha='left', va='center', fontsize=7, color='#374151', fontweight='bold',
+                   bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='#D1D5DB', linewidth=1))
 
-            # Cifra de recaudado (al final de la barra azul) con fondo y % cumplimiento
-            if recaudado[i] > 0:
-                texto_recaudado = f' S/ {recaudado[i]:,.0f} ({cumplimiento:.1f}%) '
-                ax.text(recaudado[i], bar_rec.get_y() + bar_rec.get_height()/2,
-                       texto_recaudado,
-                       ha='left', va='center', fontsize=8, color='#1E3A8A', fontweight='bold',
-                       bbox=dict(boxstyle='round,pad=0.4', facecolor='#EFF6FF', edgecolor='#3B82F6', linewidth=1.5))
+            # Etiqueta de recaudado con porcentaje
+            if cumplimiento > 110:
+                # Si excede 110%, mostrar indicador compacto en el borde
+                ax.text(108, bars_recaudado[i].get_y() + bars_recaudado[i].get_height()/2,
+                       f'{cumplimiento:.0f}%',
+                       ha='center', va='center', fontsize=7, color='white', fontweight='bold',
+                       bbox=dict(boxstyle='square,pad=0.3', facecolor='#059669', edgecolor='#047857', linewidth=1.5))
+            elif cumplimiento > 0:
+                # Mostrar porcentaje normal
+                pos_x = min(porcentaje_recaudado[i], 105)
+                color_texto = '#1E3A8A' if cumplimiento < 100 else '#065F46'
+                color_fondo = '#EFF6FF' if cumplimiento < 100 else '#D1FAE5'
+                color_borde = '#3B82F6' if cumplimiento < 100 else '#10B981'
+
+                ax.text(pos_x, bars_recaudado[i].get_y() + bars_recaudado[i].get_height()/2,
+                       f' {cumplimiento:.1f}% ',
+                       ha='right' if cumplimiento > 90 else 'left', va='center', fontsize=7,
+                       color=color_texto, fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.3', facecolor=color_fondo, edgecolor=color_borde, linewidth=1.5))
 
         ax.set_yticks(y_pos)
         ax.set_yticklabels(auditores, fontsize=6)
-        ax.set_xlabel('Monto (S/)', fontsize=9, fontweight='bold')
+        ax.set_xlabel('Cumplimiento (%)', fontsize=9, fontweight='bold')
 
         # Título dinámico con el mes
         mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
         ax.set_title(f'Avance de Metas por Auditor (hasta {mes_nombre})', fontsize=11, fontweight='bold')
 
-        # Limitar el eje X a 110% de la meta más alta (evita que se vaya al infinito)
-        max_meta = max(meta) if meta else 1
-        limite_x = max_meta * 1.1
-        ax.set_xlim(0, limite_x)
+        # Escala fija de 0-110% para que todo entre en el cuadro
+        ax.set_xlim(0, 110)
 
         ax.legend(loc='lower right', fontsize=8)
         ax.grid(axis='x', alpha=0.3, linewidth=0.5)
@@ -13773,41 +13794,62 @@ def dashboard_avance_metas_ai():
 
         y_pos = range(len(auditores))
 
-        # Barras horizontales
-        bars_meta = ax.barh(y_pos, meta, color='#E5E7EB', label='Meta Acumulada', height=0.4, alpha=0.7)
-        bars_recaudado = ax.barh(y_pos, recaudado, color=COLOR_SECONDARY, label='Recaudado', height=0.4)
+        # Calcular porcentajes y limitar la visualización a 110%
+        porcentaje_recaudado = []
+        porcentaje_meta = []
+        for i in range(len(auditores)):
+            if meta[i] > 0:
+                pct = (recaudado[i] / meta[i]) * 100
+                porcentaje_recaudado.append(min(pct, 110))  # Limitar visualización a 110%
+                porcentaje_meta.append(100)  # Meta siempre es 100%
+            else:
+                porcentaje_recaudado.append(0)
+                porcentaje_meta.append(100)
+
+        # Barras horizontales (en porcentaje)
+        bars_meta = ax.barh(y_pos, porcentaje_meta, color='#E5E7EB', label='Meta (100%)', height=0.4, alpha=0.7)
+        bars_recaudado = ax.barh(y_pos, porcentaje_recaudado, color=COLOR_SECONDARY, label='Recaudado', height=0.4)
 
         # Añadir cifras en las barras con fondo
-        for i, (bar_meta, bar_rec) in enumerate(zip(bars_meta, bars_recaudado)):
+        for i in range(len(auditores)):
             cumplimiento = (recaudado[i] / meta[i] * 100) if meta[i] > 0 else 0
 
-            # Cifra de meta (al final de la barra gris) con fondo blanco
-            if meta[i] > 0:
-                ax.text(meta[i], bar_meta.get_y() + bar_meta.get_height()/2,
-                       f' S/ {meta[i]:,.0f} ',
-                       ha='left', va='center', fontsize=8, color='#374151', fontweight='bold',
-                       bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor='#D1D5DB', linewidth=1))
+            # Etiqueta de meta (100%) en la barra gris
+            ax.text(100, bars_meta[i].get_y() + bars_meta[i].get_height()/2,
+                   f' S/ {meta[i]:,.0f} ',
+                   ha='left', va='center', fontsize=7, color='#374151', fontweight='bold',
+                   bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='#D1D5DB', linewidth=1))
 
-            # Cifra de recaudado (al final de la barra azul) con fondo y % cumplimiento
-            if recaudado[i] > 0:
-                texto_recaudado = f' S/ {recaudado[i]:,.0f} ({cumplimiento:.1f}%) '
-                ax.text(recaudado[i], bar_rec.get_y() + bar_rec.get_height()/2,
-                       texto_recaudado,
-                       ha='left', va='center', fontsize=8, color='#1E3A8A', fontweight='bold',
-                       bbox=dict(boxstyle='round,pad=0.4', facecolor='#EFF6FF', edgecolor='#3B82F6', linewidth=1.5))
+            # Etiqueta de recaudado con porcentaje
+            if cumplimiento > 110:
+                # Si excede 110%, mostrar indicador compacto en el borde
+                ax.text(108, bars_recaudado[i].get_y() + bars_recaudado[i].get_height()/2,
+                       f'{cumplimiento:.0f}%',
+                       ha='center', va='center', fontsize=7, color='white', fontweight='bold',
+                       bbox=dict(boxstyle='square,pad=0.3', facecolor='#059669', edgecolor='#047857', linewidth=1.5))
+            elif cumplimiento > 0:
+                # Mostrar porcentaje normal
+                pos_x = min(porcentaje_recaudado[i], 105)
+                color_texto = '#1E3A8A' if cumplimiento < 100 else '#065F46'
+                color_fondo = '#EFF6FF' if cumplimiento < 100 else '#D1FAE5'
+                color_borde = '#3B82F6' if cumplimiento < 100 else '#10B981'
+
+                ax.text(pos_x, bars_recaudado[i].get_y() + bars_recaudado[i].get_height()/2,
+                       f' {cumplimiento:.1f}% ',
+                       ha='right' if cumplimiento > 90 else 'left', va='center', fontsize=7,
+                       color=color_texto, fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.3', facecolor=color_fondo, edgecolor=color_borde, linewidth=1.5))
 
         ax.set_yticks(y_pos)
         ax.set_yticklabels(auditores, fontsize=6)
-        ax.set_xlabel('Monto (S/)', fontsize=9, fontweight='bold')
+        ax.set_xlabel('Cumplimiento (%)', fontsize=9, fontweight='bold')
 
         # Título dinámico con el mes
         mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
         ax.set_title(f'Avance de Metas por Auditor (hasta {mes_nombre})', fontsize=11, fontweight='bold')
 
-        # Limitar el eje X a 110% de la meta más alta (evita que se vaya al infinito)
-        max_meta = max(meta) if meta else 1
-        limite_x = max_meta * 1.1
-        ax.set_xlim(0, limite_x)
+        # Escala fija de 0-110% para que todo entre en el cuadro
+        ax.set_xlim(0, 110)
 
         ax.legend(loc='lower right', fontsize=8)
         ax.grid(axis='x', alpha=0.3, linewidth=0.5)
