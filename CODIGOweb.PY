@@ -15,7 +15,93 @@ import numpy as np
 import os
 import json
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import mplcursors
+
+# ------------------------------
+# FUNCIONES HELPER PARA TOOLTIPS INTERACTIVOS
+# ------------------------------
+def agregar_tooltip_pastel(fig, ax, wedges, labels, valores, canvas_widget):
+    """Agrega tooltips interactivos a gráficos de pastel"""
+    annot = ax.annotate("", xy=(0,0), xytext=(20,20), textcoords="offset points",
+                        bbox=dict(boxstyle="round,pad=0.5", facecolor='#1E3A8A',
+                                 edgecolor='white', linewidth=2, alpha=0.9),
+                        color='white', fontsize=9, fontweight='bold',
+                        arrowprops=dict(arrowstyle="->", color='white', lw=1.5))
+    annot.set_visible(False)
+
+    def on_hover(event):
+        if event.inaxes == ax:
+            for i, wedge in enumerate(wedges):
+                if wedge.contains(event)[0]:
+                    total = sum(valores)
+                    porcentaje = (valores[i] / total) * 100 if total > 0 else 0
+                    texto = f"{labels[i]}\nCantidad: {valores[i]:,}\nPorcentaje: {porcentaje:.1f}%"
+                    annot.set_text(texto)
+                    annot.xy = (event.xdata, event.ydata)
+                    annot.set_visible(True)
+                    canvas_widget.draw_idle()
+                    return
+            annot.set_visible(False)
+            canvas_widget.draw_idle()
+
+    fig.canvas.mpl_connect('motion_notify_event', on_hover)
+
+def agregar_tooltip_barras(fig, ax, bars, labels, valores, canvas_widget, es_horizontal=False):
+    """Agrega tooltips interactivos a gráficos de barras"""
+    annot = ax.annotate("", xy=(0,0), xytext=(20,20), textcoords="offset points",
+                        bbox=dict(boxstyle="round,pad=0.5", facecolor='#1E3A8A',
+                                 edgecolor='white', linewidth=2, alpha=0.9),
+                        color='white', fontsize=9, fontweight='bold',
+                        arrowprops=dict(arrowstyle="->", color='white', lw=1.5))
+    annot.set_visible(False)
+
+    def on_hover(event):
+        if event.inaxes == ax:
+            for i, bar in enumerate(bars):
+                if bar.contains(event)[0]:
+                    label_text = labels[i] if i < len(labels) else f"Item {i+1}"
+                    valor = valores[i] if i < len(valores) else 0
+                    texto = f"{label_text}\nCantidad: {valor:,}"
+                    annot.set_text(texto)
+                    if es_horizontal:
+                        annot.xy = (valor, i)
+                    else:
+                        annot.xy = (i, valor)
+                    annot.set_visible(True)
+                    canvas_widget.draw_idle()
+                    return
+            annot.set_visible(False)
+            canvas_widget.draw_idle()
+
+    fig.canvas.mpl_connect('motion_notify_event', on_hover)
+
+def agregar_tooltip_linea(fig, ax, line, meses_nombres, valores, canvas_widget):
+    """Agrega tooltips interactivos a gráficos de línea/área"""
+    annot = ax.annotate("", xy=(0,0), xytext=(20,20), textcoords="offset points",
+                        bbox=dict(boxstyle="round,pad=0.5", facecolor='#1E3A8A',
+                                 edgecolor='white', linewidth=2, alpha=0.9),
+                        color='white', fontsize=9, fontweight='bold',
+                        arrowprops=dict(arrowstyle="->", color='white', lw=1.5))
+    annot.set_visible(False)
+
+    def on_hover(event):
+        if event.inaxes == ax and line.contains(event)[0]:
+            x, y = event.xdata, event.ydata
+            # Encontrar el punto más cercano
+            x_int = int(round(x))
+            if 1 <= x_int <= len(valores):
+                mes_nombre = meses_nombres[x_int - 1]
+                valor = valores[x_int - 1]
+                texto = f"{mes_nombre}\nCasos Resueltos: {valor:,}"
+                annot.set_text(texto)
+                annot.xy = (x_int, valor)
+                annot.set_visible(True)
+                canvas_widget.draw_idle()
+        else:
+            if annot.get_visible():
+                annot.set_visible(False)
+                canvas_widget.draw_idle()
+
+    fig.canvas.mpl_connect('motion_notify_event', on_hover)
 
 # ------------------------------
 # CONFIGURACIÓN DE CONEXIÓN
@@ -8192,32 +8278,14 @@ def mostrar_dashboard_completo(conexion=None):
 
                     plt.tight_layout()
 
-                    # Agregar tooltips interactivos
-                    cursor = mplcursors.cursor(wedges, hover=True)
-                    @cursor.connect("add")
-                    def on_add(sel):
-                        i = sel.index
-                        supervisor = df_det.iloc[i]['NOMBRE_SUPERVISOR']
-                        total = df_det.iloc[i]['total']
-                        porcentaje = (total / df_det['total'].sum()) * 100
-                        sel.annotation.set_text(
-                            f"{supervisor}\n"
-                            f"OFs: {total:,}\n"
-                            f"Porcentaje: {porcentaje:.1f}%"
-                        )
-                        sel.annotation.get_bbox_patch().set(
-                            boxstyle='round,pad=0.5',
-                            facecolor='#1E3A8A',
-                            alpha=0.9,
-                            edgecolor='white',
-                            linewidth=2
-                        )
-                        sel.annotation.set_fontsize(9)
-                        sel.annotation.set_color('white')
-
                     canvas_det = FigureCanvasTkAgg(fig_det, master=frame_determinativas)
                     canvas_det.draw()
                     canvas_det.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+                    # Agregar tooltips interactivos
+                    labels_det = df_det['NOMBRE_SUPERVISOR'].tolist()
+                    valores_det = df_det['total'].tolist()
+                    agregar_tooltip_pastel(fig_det, ax_det, wedges, labels_det, valores_det, canvas_det)
                     
                     # Botones de exportación
                     export_frame_det = ctk.CTkFrame(frame_determinativas, fg_color="transparent")
@@ -8452,9 +8520,9 @@ def mostrar_dashboard_completo(conexion=None):
                     fig_prog, ax_prog = plt.subplots(figsize=(5, 3.5), facecolor='white')
                     
                     ax_prog.fill_between(meses, valores, alpha=0.3, color='#8B5CF6', linewidth=0)
-                    ax_prog.plot(meses, valores, color='#8B5CF6', linewidth=2.5, marker='o', 
-                                markersize=6, markerfacecolor='#8B5CF6', markeredgecolor='white', 
-                                markeredgewidth=2)
+                    line_prog = ax_prog.plot(meses, valores, color='#8B5CF6', linewidth=2.5, marker='o',
+                                markersize=6, markerfacecolor='#8B5CF6', markeredgecolor='white',
+                                markeredgewidth=2)[0]
                     
                     ax_prog.set_xlabel('Mes', fontsize=9, fontweight='bold')
                     ax_prog.set_ylabel('Casos Resueltos', fontsize=9, fontweight='bold')
@@ -8475,33 +8543,14 @@ def mostrar_dashboard_completo(conexion=None):
 
                     plt.tight_layout()
 
-                    # Agregar tooltips interactivos
-                    cursor = mplcursors.cursor(ax_prog, hover=True)
-                    meses_nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-                    @cursor.connect("add")
-                    def on_add(sel):
-                        x_val = int(round(sel.target[0]))
-                        y_val = int(round(sel.target[1]))
-                        if 1 <= x_val <= 12:
-                            mes_nombre = meses_nombres[x_val - 1]
-                            sel.annotation.set_text(
-                                f"{mes_nombre}\n"
-                                f"Casos Resueltos: {y_val:,}"
-                            )
-                            sel.annotation.get_bbox_patch().set(
-                                boxstyle='round,pad=0.5',
-                                facecolor='#1E3A8A',
-                                alpha=0.9,
-                                edgecolor='white',
-                                linewidth=2
-                            )
-                            sel.annotation.set_fontsize(9)
-                            sel.annotation.set_color('white')
-
                     canvas_prog = FigureCanvasTkAgg(fig_prog, master=frame_progreso_det)
                     canvas_prog.draw()
                     canvas_prog.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+                    # Agregar tooltips interactivos
+                    meses_nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+                    agregar_tooltip_linea(fig_prog, ax_prog, line_prog, meses_nombres, valores, canvas_prog)
                     
                     # Botones exportación
                     export_frame_prog = ctk.CTkFrame(frame_progreso_det, fg_color="transparent")
@@ -8672,32 +8721,14 @@ def mostrar_dashboard_completo(conexion=None):
 
                     plt.tight_layout()
 
-                    # Agregar tooltips interactivos
-                    cursor = mplcursors.cursor(wedges, hover=True)
-                    @cursor.connect("add")
-                    def on_add(sel):
-                        i = sel.index
-                        supervisor = df_no_det.iloc[i]['NOMBRE_SUPERVISOR']
-                        total = df_no_det.iloc[i]['total']
-                        porcentaje = (total / df_no_det['total'].sum()) * 100
-                        sel.annotation.set_text(
-                            f"{supervisor}\n"
-                            f"OFs: {total:,}\n"
-                            f"Porcentaje: {porcentaje:.1f}%"
-                        )
-                        sel.annotation.get_bbox_patch().set(
-                            boxstyle='round,pad=0.5',
-                            facecolor='#1E3A8A',
-                            alpha=0.9,
-                            edgecolor='white',
-                            linewidth=2
-                        )
-                        sel.annotation.set_fontsize(9)
-                        sel.annotation.set_color('white')
-
                     canvas_no_det = FigureCanvasTkAgg(fig_no_det, master=frame_no_determinativas)
                     canvas_no_det.draw()
                     canvas_no_det.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+                    # Agregar tooltips interactivos
+                    labels_no_det = df_no_det['NOMBRE_SUPERVISOR'].tolist()
+                    valores_no_det = df_no_det['total'].tolist()
+                    agregar_tooltip_pastel(fig_no_det, ax_no_det, wedges, labels_no_det, valores_no_det, canvas_no_det)
                     
                     # Botones exportación
                     export_frame_no_det = ctk.CTkFrame(frame_no_determinativas, fg_color="transparent")
@@ -8931,9 +8962,9 @@ def mostrar_dashboard_completo(conexion=None):
                     fig_prog_no, ax_prog_no = plt.subplots(figsize=(5, 3.5), facecolor='white')
                     
                     ax_prog_no.fill_between(meses, valores, alpha=0.3, color='#06B6D4', linewidth=0)
-                    ax_prog_no.plot(meses, valores, color='#06B6D4', linewidth=2.5, marker='o', 
-                                   markersize=6, markerfacecolor='#06B6D4', markeredgecolor='white', 
-                                   markeredgewidth=2)
+                    line_prog_no = ax_prog_no.plot(meses, valores, color='#06B6D4', linewidth=2.5, marker='o',
+                                   markersize=6, markerfacecolor='#06B6D4', markeredgecolor='white',
+                                   markeredgewidth=2)[0]
                     
                     ax_prog_no.set_xlabel('Mes', fontsize=9, fontweight='bold')
                     ax_prog_no.set_ylabel('Casos Resueltos', fontsize=9, fontweight='bold')
@@ -8954,33 +8985,14 @@ def mostrar_dashboard_completo(conexion=None):
 
                     plt.tight_layout()
 
-                    # Agregar tooltips interactivos
-                    cursor = mplcursors.cursor(ax_prog_no, hover=True)
-                    meses_nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-                    @cursor.connect("add")
-                    def on_add(sel):
-                        x_val = int(round(sel.target[0]))
-                        y_val = int(round(sel.target[1]))
-                        if 1 <= x_val <= 12:
-                            mes_nombre = meses_nombres[x_val - 1]
-                            sel.annotation.set_text(
-                                f"{mes_nombre}\n"
-                                f"Casos Resueltos: {y_val:,}"
-                            )
-                            sel.annotation.get_bbox_patch().set(
-                                boxstyle='round,pad=0.5',
-                                facecolor='#1E3A8A',
-                                alpha=0.9,
-                                edgecolor='white',
-                                linewidth=2
-                            )
-                            sel.annotation.set_fontsize(9)
-                            sel.annotation.set_color('white')
-
                     canvas_prog_no = FigureCanvasTkAgg(fig_prog_no, master=frame_progreso_no_det)
                     canvas_prog_no.draw()
                     canvas_prog_no.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+                    # Agregar tooltips interactivos
+                    meses_nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+                    agregar_tooltip_linea(fig_prog_no, ax_prog_no, line_prog_no, meses_nombres, valores, canvas_prog_no)
                     
                     # Botones exportación
                     export_frame_prog_no = ctk.CTkFrame(frame_progreso_no_det, fg_color="transparent")
@@ -9151,32 +9163,14 @@ def mostrar_dashboard_completo(conexion=None):
 
                     plt.tight_layout()
 
-                    # Agregar tooltips interactivos
-                    cursor = mplcursors.cursor(wedges, hover=True)
-                    @cursor.connect("add")
-                    def on_add(sel):
-                        i = sel.index
-                        tipo = df_stock.iloc[i]['tipo']
-                        total = df_stock.iloc[i]['total']
-                        porcentaje = (total / df_stock['total'].sum()) * 100
-                        sel.annotation.set_text(
-                            f"Tipo {tipo}\n"
-                            f"Cantidad: {total:,}\n"
-                            f"Porcentaje: {porcentaje:.1f}%"
-                        )
-                        sel.annotation.get_bbox_patch().set(
-                            boxstyle='round,pad=0.5',
-                            facecolor='#1E3A8A',
-                            alpha=0.9,
-                            edgecolor='white',
-                            linewidth=2
-                        )
-                        sel.annotation.set_fontsize(9)
-                        sel.annotation.set_color('white')
-
                     canvas_stock = FigureCanvasTkAgg(fig_stock, master=frame_stock_pastel)
                     canvas_stock.draw()
                     canvas_stock.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+                    # Agregar tooltips interactivos
+                    labels_stock = [f'Tipo {t}' for t in df_stock['tipo']]
+                    valores_stock = df_stock['total'].tolist()
+                    agregar_tooltip_pastel(fig_stock, ax_stock, wedges, labels_stock, valores_stock, canvas_stock)
 
                     # Botones exportación
                     export_frame_stock = ctk.CTkFrame(frame_stock_pastel, fg_color="transparent")
@@ -10289,30 +10283,14 @@ def mostrar_dashboard_completo(conexion=None):
 
                     plt.tight_layout()
 
-                    # Agregar tooltips interactivos
-                    cursor = mplcursors.cursor(bars, hover=True)
-                    @cursor.connect("add")
-                    def on_add(sel):
-                        i = sel.index
-                        tipo_ai = df.iloc[i]['DES_TIPO_AI']
-                        total = df.iloc[i]['total']
-                        sel.annotation.set_text(
-                            f"{tipo_ai}\n"
-                            f"Cantidad: {total:,} AIs"
-                        )
-                        sel.annotation.get_bbox_patch().set(
-                            boxstyle='round,pad=0.5',
-                            facecolor='#1E3A8A',
-                            alpha=0.9,
-                            edgecolor='white',
-                            linewidth=2
-                        )
-                        sel.annotation.set_fontsize(9)
-                        sel.annotation.set_color('white')
-
                     canvas = FigureCanvasTkAgg(fig, frame_ais_asignadas)
                     canvas.draw()
                     canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=5)
+
+                    # Agregar tooltips interactivos
+                    labels_asig = df['DES_TIPO_AI'].tolist()
+                    valores_asig = df['total'].tolist()
+                    agregar_tooltip_barras(fig, ax, bars, labels_asig, valores_asig, canvas, es_horizontal=False)
                 else:
                     ctk.CTkLabel(
                         frame_ais_asignadas,
@@ -10719,32 +10697,14 @@ def mostrar_dashboard_completo(conexion=None):
 
                     plt.tight_layout()
 
-                    # Agregar tooltips interactivos
-                    cursor = mplcursors.cursor(wedges, hover=True)
-                    @cursor.connect("add")
-                    def on_add(sel):
-                        i = sel.index
-                        tipo_ai = df.iloc[i]['DES_TIPO_AI']
-                        total = df.iloc[i]['total']
-                        porcentaje = (total / df['total'].sum()) * 100
-                        sel.annotation.set_text(
-                            f"{tipo_ai}\n"
-                            f"Cantidad: {total:,}\n"
-                            f"Porcentaje: {porcentaje:.1f}%"
-                        )
-                        sel.annotation.get_bbox_patch().set(
-                            boxstyle='round,pad=0.5',
-                            facecolor='#1E3A8A',
-                            alpha=0.9,
-                            edgecolor='white',
-                            linewidth=2
-                        )
-                        sel.annotation.set_fontsize(9)
-                        sel.annotation.set_color('white')
-
                     canvas = FigureCanvasTkAgg(fig, frame_ais_terminadas)
                     canvas.draw()
                     canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=5)
+
+                    # Agregar tooltips interactivos
+                    labels_term = df['DES_TIPO_AI'].tolist()
+                    valores_term = df['total'].tolist()
+                    agregar_tooltip_pastel(fig, ax, wedges, labels_term, valores_term, canvas)
                 else:
                     ctk.CTkLabel(
                         frame_ais_terminadas,
