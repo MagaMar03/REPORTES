@@ -7699,22 +7699,6 @@ def mostrar_dashboard_completo(conexion=None):
     header_dash.pack(fill="x", padx=0, pady=0)
     header_dash.pack_propagate(False)
 
-    # Botón toggle menú
-    toggle_frame = ctk.CTkFrame(header_dash, fg_color="transparent")
-    toggle_frame.pack(side="left", padx=10)
-    
-    toggle_btn = ctk.CTkButton(
-        toggle_frame,
-        text="☰",
-        width=40,
-        height=40,
-        fg_color=COLOR_SECONDARY,
-        hover_color=COLOR_PRIMARY,
-        font=("Arial", 20),
-        command=toggle_menu
-    )
-    toggle_btn.pack()
-
     # Título principal
     title_container = ctk.CTkFrame(header_dash, fg_color="transparent")
     title_container.pack(side="left", padx=20)
@@ -7749,7 +7733,7 @@ def mostrar_dashboard_completo(conexion=None):
         active_tab["current"] = "AI"
         btn_ai.configure(fg_color=COLOR_ROSA, hover_color="#BE185D")
         btn_of.configure(fg_color="#6B7280", hover_color="#4B5563")
-        messagebox.showinfo("Información", "Vista de AIs - En desarrollo")
+        cargar_contenido_ai()
     
     btn_of = ctk.CTkButton(
         nav_frame,
@@ -9826,6 +9810,693 @@ def mostrar_dashboard_completo(conexion=None):
 
     # Cargar automáticamente el contenido OF
     cargar_contenido_of()
+
+    def cargar_contenido_ai():
+        """Carga el contenido principal del dashboard de AIs con gráficos de progreso"""
+
+        # Limpiar scroll_container
+        for widget in scroll_container.winfo_children():
+            widget.destroy()
+
+        # Mostrar indicador de carga
+        loading_frame = ctk.CTkFrame(scroll_container, fg_color="transparent")
+        loading_frame.pack(expand=True, pady=50)
+
+        ctk.CTkLabel(
+            loading_frame,
+            text="⏳ Cargando dashboard de AIs...",
+            font=("Arial", 14, "bold"),
+            text_color="#002e6d"
+        ).pack()
+
+        scroll_container.update()
+
+        # ===== CARGAR DATOS INICIALES =====
+        try:
+            # KPIs básicos
+            query_total = "SELECT COUNT(*) as total FROM fiscalizaciones3"
+            total_ais = pd.read_sql(query_total, DB_ENGINE).iloc[0, 0]
+
+            query_terminadas = "SELECT COUNT(*) as total FROM fiscalizaciones3 WHERE LOWER(Estado) = 'terminado'"
+            ais_terminadas = pd.read_sql(query_terminadas, DB_ENGINE).iloc[0, 0]
+
+            query_pendientes = "SELECT COUNT(*) as total FROM fiscalizaciones3 WHERE LOWER(Estado) = 'pendiente'"
+            ais_pendientes = pd.read_sql(query_pendientes, DB_ENGINE).iloc[0, 0]
+
+            # Años disponibles
+            df_anios_emis = pd.read_sql(
+                "SELECT DISTINCT Anio_Emis FROM fiscalizaciones3 WHERE Anio_Emis IS NOT NULL ORDER BY Anio_Emis DESC",
+                DB_ENGINE
+            )
+            anios_emision = [str(int(a)) for a in df_anios_emis['Anio_Emis'].tolist()]
+
+            df_anios_term = pd.read_sql(
+                "SELECT DISTINCT Anio_Termino FROM fiscalizaciones3 WHERE Anio_Termino IS NOT NULL ORDER BY Anio_Termino DESC",
+                DB_ENGINE
+            )
+            anios_termino = [str(int(a)) for a in df_anios_term['Anio_Termino'].tolist()]
+
+            # Estados disponibles
+            df_estados = pd.read_sql(
+                "SELECT DISTINCT Estado FROM fiscalizaciones3 WHERE Estado IS NOT NULL ORDER BY Estado",
+                DB_ENGINE
+            )
+            estados_disponibles = df_estados['Estado'].tolist()
+
+        except Exception as e:
+            print(f"Error cargando datos iniciales: {e}")
+            total_ais = 0
+            ais_terminadas = 0
+            ais_pendientes = 0
+            anios_emision = ["2025"]
+            anios_termino = ["2025"]
+            estados_disponibles = ["PENDIENTE", "TERMINADO"]
+
+        # Limpiar indicador de carga
+        loading_frame.destroy()
+
+        # ===== INDICADORES PRINCIPALES =====
+        kpi_row = ctk.CTkFrame(scroll_container, fg_color="transparent")
+        kpi_row.pack(fill="x", pady=(0, 15))
+
+        porc_terminadas = (ais_terminadas / total_ais * 100) if total_ais > 0 else 0
+        porc_pendientes = (ais_pendientes / total_ais * 100) if total_ais > 0 else 0
+
+        crear_kpi_card(
+            kpi_row,
+            "📊",
+            "Total Acciones Inductivas",
+            f"{total_ais:,}",
+            "Sistema Completo",
+            "#E0F2FE",
+            "#BAE6FD"
+        )
+
+        crear_kpi_card(
+            kpi_row,
+            "✅",
+            "AIs Terminadas",
+            f"{ais_terminadas:,}",
+            f"{porc_terminadas:.1f}% del total",
+            "#D1FAE5",
+            "#A7F3D0"
+        )
+
+        crear_kpi_card(
+            kpi_row,
+            "⏳",
+            "AIs Pendientes",
+            f"{ais_pendientes:,}",
+            f"{porc_pendientes:.1f}% del total",
+            "#FED7AA",
+            "#FDBA74"
+        )
+
+        # ===== ESTRUCTURA DE GRÁFICOS =====
+
+        # FILA 1: AIs Asignadas
+        fila1_container = ctk.CTkFrame(scroll_container, fg_color="transparent")
+        fila1_container.pack(fill="x", pady=(0, 15))
+
+        frame_ais_asignadas = ctk.CTkFrame(fila1_container, fg_color="white", corner_radius=12,
+                                           border_width=2, border_color="#E5E7EB")
+        frame_ais_asignadas.pack(fill="both", expand=True)
+
+        # FILA 2: AIs Pendientes
+        fila2_container = ctk.CTkFrame(scroll_container, fg_color="transparent")
+        fila2_container.pack(fill="x", pady=(0, 15))
+
+        frame_ais_pendientes = ctk.CTkFrame(fila2_container, fg_color="white", corner_radius=12,
+                                           border_width=2, border_color="#E5E7EB")
+        frame_ais_pendientes.pack(fill="both", expand=True)
+
+        # FILA 3: AIs Terminadas
+        fila3_container = ctk.CTkFrame(scroll_container, fg_color="transparent")
+        fila3_container.pack(fill="x", pady=(0, 15))
+
+        frame_ais_terminadas = ctk.CTkFrame(fila3_container, fg_color="white", corner_radius=12,
+                                           border_width=2, border_color="#E5E7EB")
+        frame_ais_terminadas.pack(fill="both", expand=True)
+
+        # FILA 4: AIs Rendimiento
+        fila4_container = ctk.CTkFrame(scroll_container, fg_color="transparent")
+        fila4_container.pack(fill="x", pady=(0, 15))
+
+        frame_ais_rendimiento = ctk.CTkFrame(fila4_container, fg_color="white", corner_radius=12,
+                                            border_width=2, border_color="#E5E7EB")
+        frame_ais_rendimiento.pack(fill="both", expand=True)
+
+        # ===================== ESTADO COMPARTIDO DE FILTROS =====================
+        estado_filtros_ai = {
+            'asignadas': {'anios': ['2025']},
+            'pendientes': {'estados': ['PENDIENTE'], 'anios': ['2025']},
+            'terminadas': {'estados': ['TERMINADO'], 'anios': ['2025']},
+            'rendimiento': {'estados': [], 'anios': ['2025']}
+        }
+
+        # ===================== GRÁFICO 1: AIs ASIGNADAS =====================
+        def actualizar_grafico_asignadas():
+            """Gráfico de barras - AIs Asignadas por Tipo de AI"""
+            anios_sel = estado_filtros_ai['asignadas']['anios']
+
+            if not anios_sel or len(anios_sel) == 0:
+                anios_sel = ['2025']
+                estado_filtros_ai['asignadas']['anios'] = ['2025']
+
+            for widget in frame_ais_asignadas.winfo_children():
+                widget.destroy()
+
+            header = ctk.CTkFrame(frame_ais_asignadas, fg_color="transparent")
+            header.pack(fill="x", padx=15, pady=(15, 5))
+
+            ctk.CTkLabel(
+                header,
+                text="📊 AIs Asignadas por Tipo",
+                font=("Arial", 12, "bold"),
+                text_color="#002e6d"
+            ).pack(anchor="center")
+
+            controles = ctk.CTkFrame(frame_ais_asignadas, fg_color="transparent")
+            controles.pack(pady=8)
+
+            filter_frame = ctk.CTkFrame(controles, fg_color="transparent")
+            filter_frame.pack(side="left", padx=5)
+
+            ctk.CTkLabel(filter_frame, text="📅 Años:", font=("Arial", 10, "bold")).pack(side="left", padx=(0, 5))
+
+            def on_anio_change():
+                anios_nuevos = multi_anio_asig.get_selected()
+                if anios_nuevos and len(anios_nuevos) > 0:
+                    estado_filtros_ai['asignadas']['anios'] = anios_nuevos
+                else:
+                    estado_filtros_ai['asignadas']['anios'] = ['2025']
+                actualizar_grafico_asignadas()
+
+            multi_anio_asig = MultiSelectCombobox(
+                filter_frame,
+                anios_emision,
+                default_text="Seleccionar años...",
+                width=150,
+                callback=on_anio_change
+            )
+            multi_anio_asig.selected_values = set(anios_sel)
+            multi_anio_asig.update_button_text()
+            multi_anio_asig.pack(side="left")
+
+            try:
+                anios_str = ", ".join([str(int(a)) for a in anios_sel])
+
+                query = f"""
+                    SELECT DES_TIPO_AI, COUNT(*) as total
+                    FROM fiscalizaciones3
+                    WHERE Anio_Emis IN ({anios_str})
+                    GROUP BY DES_TIPO_AI
+                    ORDER BY total DESC
+                """
+
+                df = pd.read_sql(query, DB_ENGINE)
+
+                if not df.empty:
+                    fig, ax = plt.subplots(figsize=(9, 4), facecolor='white')
+
+                    colores = ['#EC4899', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B']
+
+                    bars = ax.bar(
+                        range(len(df)),
+                        df['total'],
+                        color=colores[:len(df)],
+                        edgecolor='white',
+                        linewidth=2
+                    )
+
+                    # Agregar valores sobre las barras
+                    for i, (idx, row) in enumerate(df.iterrows()):
+                        ax.text(i, row['total'], str(int(row['total'])),
+                               ha='center', va='bottom', fontweight='bold', fontsize=9)
+
+                    ax.set_xticks(range(len(df)))
+                    ax.set_xticklabels(df['DES_TIPO_AI'].tolist(), rotation=45, ha='right', fontsize=8)
+                    ax.set_ylabel('Cantidad', fontsize=10, fontweight='bold')
+                    ax.grid(axis='y', alpha=0.3, linestyle='--')
+                    ax.spines['top'].set_visible(False)
+                    ax.spines['right'].set_visible(False)
+
+                    plt.tight_layout()
+
+                    canvas = FigureCanvasTkAgg(fig, frame_ais_asignadas)
+                    canvas.draw()
+                    canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=5)
+                else:
+                    ctk.CTkLabel(
+                        frame_ais_asignadas,
+                        text="No hay datos disponibles",
+                        font=("Arial", 11),
+                        text_color="#666666"
+                    ).pack(pady=20)
+
+            except Exception as e:
+                ctk.CTkLabel(
+                    frame_ais_asignadas,
+                    text=f"Error: {e}",
+                    font=("Arial", 10),
+                    text_color="red"
+                ).pack(pady=20)
+
+        # ===================== GRÁFICO 2: AIs PENDIENTES =====================
+        def actualizar_grafico_pendientes():
+            """Gráfico de barras - AIs Pendientes por Supervisor"""
+            estados_sel = estado_filtros_ai['pendientes']['estados']
+            anios_sel = estado_filtros_ai['pendientes']['anios']
+
+            if not anios_sel or len(anios_sel) == 0:
+                anios_sel = ['2025']
+                estado_filtros_ai['pendientes']['anios'] = ['2025']
+
+            for widget in frame_ais_pendientes.winfo_children():
+                widget.destroy()
+
+            header = ctk.CTkFrame(frame_ais_pendientes, fg_color="transparent")
+            header.pack(fill="x", padx=15, pady=(15, 5))
+
+            ctk.CTkLabel(
+                header,
+                text="📊 AIs Pendientes por Supervisor",
+                font=("Arial", 12, "bold"),
+                text_color="#002e6d"
+            ).pack(anchor="center")
+
+            controles = ctk.CTkFrame(frame_ais_pendientes, fg_color="transparent")
+            controles.pack(pady=8)
+
+            # Filtro Estado
+            filter_frame1 = ctk.CTkFrame(controles, fg_color="transparent")
+            filter_frame1.pack(side="left", padx=5)
+
+            ctk.CTkLabel(filter_frame1, text="🔎 Estados:", font=("Arial", 10, "bold")).pack(side="left", padx=(0, 5))
+
+            def on_estado_change():
+                estados_nuevos = multi_estado_pend.get_selected()
+                estado_filtros_ai['pendientes']['estados'] = list(estados_nuevos) if estados_nuevos else []
+                actualizar_grafico_pendientes()
+
+            multi_estado_pend = MultiSelectCombobox(
+                filter_frame1,
+                estados_disponibles,
+                default_text="Todos",
+                width=150,
+                callback=on_estado_change
+            )
+            multi_estado_pend.selected_values = set(estados_sel)
+            multi_estado_pend.update_button_text()
+            multi_estado_pend.pack(side="left")
+
+            # Filtro Año
+            filter_frame2 = ctk.CTkFrame(controles, fg_color="transparent")
+            filter_frame2.pack(side="left", padx=5)
+
+            ctk.CTkLabel(filter_frame2, text="📅 Años:", font=("Arial", 10, "bold")).pack(side="left", padx=(0, 5))
+
+            def on_anio_change():
+                anios_nuevos = multi_anio_pend.get_selected()
+                if anios_nuevos and len(anios_nuevos) > 0:
+                    estado_filtros_ai['pendientes']['anios'] = anios_nuevos
+                else:
+                    estado_filtros_ai['pendientes']['anios'] = ['2025']
+                actualizar_grafico_pendientes()
+
+            multi_anio_pend = MultiSelectCombobox(
+                filter_frame2,
+                anios_emision,
+                default_text="Seleccionar años...",
+                width=150,
+                callback=on_anio_change
+            )
+            multi_anio_pend.selected_values = set(anios_sel)
+            multi_anio_pend.update_button_text()
+            multi_anio_pend.pack(side="left")
+
+            try:
+                anios_str = ", ".join([str(int(a)) for a in anios_sel])
+
+                # Construir filtro de estados
+                if estados_sel:
+                    estados_quoted = ", ".join([f"'{e}'" for e in estados_sel])
+                    filtro_estado = f"AND Estado IN ({estados_quoted})"
+                else:
+                    filtro_estado = ""
+
+                query = f"""
+                    SELECT DES_NOMB_SUP, COUNT(*) as total
+                    FROM fiscalizaciones3
+                    WHERE Anio_Emis IN ({anios_str})
+                    {filtro_estado}
+                    GROUP BY DES_NOMB_SUP
+                    ORDER BY total DESC
+                    LIMIT 10
+                """
+
+                df = pd.read_sql(query, DB_ENGINE)
+
+                if not df.empty:
+                    fig, ax = plt.subplots(figsize=(9, 4), facecolor='white')
+
+                    colores = ['#EC4899', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B',
+                              '#06B6D4', '#F97316', '#14B8A6', '#8B5CF6', '#F43F5E']
+
+                    bars = ax.barh(
+                        range(len(df)),
+                        df['total'],
+                        color=colores[:len(df)],
+                        edgecolor='white',
+                        linewidth=2
+                    )
+
+                    # Agregar valores al final de las barras
+                    for i, (idx, row) in enumerate(df.iterrows()):
+                        ax.text(row['total'], i, f" {int(row['total'])}",
+                               va='center', fontweight='bold', fontsize=9)
+
+                    ax.set_yticks(range(len(df)))
+                    ax.set_yticklabels(df['DES_NOMB_SUP'].tolist(), fontsize=8)
+                    ax.set_xlabel('Cantidad', fontsize=10, fontweight='bold')
+                    ax.grid(axis='x', alpha=0.3, linestyle='--')
+                    ax.spines['top'].set_visible(False)
+                    ax.spines['right'].set_visible(False)
+                    ax.invert_yaxis()
+
+                    plt.tight_layout()
+
+                    canvas = FigureCanvasTkAgg(fig, frame_ais_pendientes)
+                    canvas.draw()
+                    canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=5)
+                else:
+                    ctk.CTkLabel(
+                        frame_ais_pendientes,
+                        text="No hay datos disponibles",
+                        font=("Arial", 11),
+                        text_color="#666666"
+                    ).pack(pady=20)
+
+            except Exception as e:
+                ctk.CTkLabel(
+                    frame_ais_pendientes,
+                    text=f"Error: {e}",
+                    font=("Arial", 10),
+                    text_color="red"
+                ).pack(pady=20)
+
+        # ===================== GRÁFICO 3: AIs TERMINADAS =====================
+        def actualizar_grafico_terminadas():
+            """Gráfico de pastel - AIs Terminadas por Tipo"""
+            estados_sel = estado_filtros_ai['terminadas']['estados']
+            anios_sel = estado_filtros_ai['terminadas']['anios']
+
+            if not anios_sel or len(anios_sel) == 0:
+                anios_sel = ['2025']
+                estado_filtros_ai['terminadas']['anios'] = ['2025']
+
+            for widget in frame_ais_terminadas.winfo_children():
+                widget.destroy()
+
+            header = ctk.CTkFrame(frame_ais_terminadas, fg_color="transparent")
+            header.pack(fill="x", padx=15, pady=(15, 5))
+
+            ctk.CTkLabel(
+                header,
+                text="📊 AIs Terminadas por Tipo",
+                font=("Arial", 12, "bold"),
+                text_color="#002e6d"
+            ).pack(anchor="center")
+
+            controles = ctk.CTkFrame(frame_ais_terminadas, fg_color="transparent")
+            controles.pack(pady=8)
+
+            # Filtro Estado
+            filter_frame1 = ctk.CTkFrame(controles, fg_color="transparent")
+            filter_frame1.pack(side="left", padx=5)
+
+            ctk.CTkLabel(filter_frame1, text="🔎 Estados:", font=("Arial", 10, "bold")).pack(side="left", padx=(0, 5))
+
+            def on_estado_change():
+                estados_nuevos = multi_estado_term.get_selected()
+                estado_filtros_ai['terminadas']['estados'] = list(estados_nuevos) if estados_nuevos else []
+                actualizar_grafico_terminadas()
+
+            multi_estado_term = MultiSelectCombobox(
+                filter_frame1,
+                estados_disponibles,
+                default_text="Todos",
+                width=150,
+                callback=on_estado_change
+            )
+            multi_estado_term.selected_values = set(estados_sel)
+            multi_estado_term.update_button_text()
+            multi_estado_term.pack(side="left")
+
+            # Filtro Año Término
+            filter_frame2 = ctk.CTkFrame(controles, fg_color="transparent")
+            filter_frame2.pack(side="left", padx=5)
+
+            ctk.CTkLabel(filter_frame2, text="📅 Año Término:", font=("Arial", 10, "bold")).pack(side="left", padx=(0, 5))
+
+            def on_anio_change():
+                anios_nuevos = multi_anio_term.get_selected()
+                if anios_nuevos and len(anios_nuevos) > 0:
+                    estado_filtros_ai['terminadas']['anios'] = anios_nuevos
+                else:
+                    estado_filtros_ai['terminadas']['anios'] = ['2025']
+                actualizar_grafico_terminadas()
+
+            multi_anio_term = MultiSelectCombobox(
+                filter_frame2,
+                anios_termino,
+                default_text="Seleccionar años...",
+                width=150,
+                callback=on_anio_change
+            )
+            multi_anio_term.selected_values = set(anios_sel)
+            multi_anio_term.update_button_text()
+            multi_anio_term.pack(side="left")
+
+            try:
+                anios_str = ", ".join([str(int(a)) for a in anios_sel])
+
+                # Construir filtro de estados
+                if estados_sel:
+                    estados_quoted = ", ".join([f"'{e}'" for e in estados_sel])
+                    filtro_estado = f"AND Estado IN ({estados_quoted})"
+                else:
+                    filtro_estado = ""
+
+                query = f"""
+                    SELECT DES_TIPO_AI, COUNT(*) as total
+                    FROM fiscalizaciones3
+                    WHERE Anio_Termino IN ({anios_str})
+                    {filtro_estado}
+                    GROUP BY DES_TIPO_AI
+                    ORDER BY total DESC
+                """
+
+                df = pd.read_sql(query, DB_ENGINE)
+
+                if not df.empty:
+                    fig, ax = plt.subplots(figsize=(6, 4), facecolor='white')
+
+                    colores = ['#EC4899', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B',
+                              '#06B6D4', '#F97316', '#14B8A6']
+
+                    wedges, texts, autotexts = ax.pie(
+                        df['total'],
+                        labels=None,
+                        autopct='%1.1f%%',
+                        colors=colores[:len(df)],
+                        startangle=90,
+                        wedgeprops=dict(width=0.4, edgecolor='white', linewidth=2)
+                    )
+
+                    for autotext in autotexts:
+                        autotext.set_color('white')
+                        autotext.set_fontsize(9)
+                        autotext.set_fontweight('bold')
+
+                    ax.legend(
+                        df['DES_TIPO_AI'].tolist(),
+                        loc='center left',
+                        bbox_to_anchor=(1, 0.5),
+                        fontsize=8,
+                        frameon=False
+                    )
+
+                    plt.tight_layout()
+
+                    canvas = FigureCanvasTkAgg(fig, frame_ais_terminadas)
+                    canvas.draw()
+                    canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=5)
+                else:
+                    ctk.CTkLabel(
+                        frame_ais_terminadas,
+                        text="No hay datos disponibles",
+                        font=("Arial", 11),
+                        text_color="#666666"
+                    ).pack(pady=20)
+
+            except Exception as e:
+                ctk.CTkLabel(
+                    frame_ais_terminadas,
+                    text=f"Error: {e}",
+                    font=("Arial", 10),
+                    text_color="red"
+                ).pack(pady=20)
+
+        # ===================== GRÁFICO 4: AIs RENDIMIENTO =====================
+        def actualizar_grafico_rendimiento():
+            """Gráfico de barras - Rendimiento por Auditor (Top 10)"""
+            estados_sel = estado_filtros_ai['rendimiento']['estados']
+            anios_sel = estado_filtros_ai['rendimiento']['anios']
+
+            if not anios_sel or len(anios_sel) == 0:
+                anios_sel = ['2025']
+                estado_filtros_ai['rendimiento']['anios'] = ['2025']
+
+            for widget in frame_ais_rendimiento.winfo_children():
+                widget.destroy()
+
+            header = ctk.CTkFrame(frame_ais_rendimiento, fg_color="transparent")
+            header.pack(fill="x", padx=15, pady=(15, 5))
+
+            ctk.CTkLabel(
+                header,
+                text="📊 Rendimiento por Auditor (Top 10)",
+                font=("Arial", 12, "bold"),
+                text_color="#002e6d"
+            ).pack(anchor="center")
+
+            controles = ctk.CTkFrame(frame_ais_rendimiento, fg_color="transparent")
+            controles.pack(pady=8)
+
+            # Filtro Estado
+            filter_frame1 = ctk.CTkFrame(controles, fg_color="transparent")
+            filter_frame1.pack(side="left", padx=5)
+
+            ctk.CTkLabel(filter_frame1, text="🔎 Estados:", font=("Arial", 10, "bold")).pack(side="left", padx=(0, 5))
+
+            def on_estado_change():
+                estados_nuevos = multi_estado_rend.get_selected()
+                estado_filtros_ai['rendimiento']['estados'] = list(estados_nuevos) if estados_nuevos else []
+                actualizar_grafico_rendimiento()
+
+            multi_estado_rend = MultiSelectCombobox(
+                filter_frame1,
+                estados_disponibles,
+                default_text="Todos",
+                width=150,
+                callback=on_estado_change
+            )
+            multi_estado_rend.selected_values = set(estados_sel)
+            multi_estado_rend.update_button_text()
+            multi_estado_rend.pack(side="left")
+
+            # Filtro Año Término
+            filter_frame2 = ctk.CTkFrame(controles, fg_color="transparent")
+            filter_frame2.pack(side="left", padx=5)
+
+            ctk.CTkLabel(filter_frame2, text="📅 Año Término:", font=("Arial", 10, "bold")).pack(side="left", padx=(0, 5))
+
+            def on_anio_change():
+                anios_nuevos = multi_anio_rend.get_selected()
+                if anios_nuevos and len(anios_nuevos) > 0:
+                    estado_filtros_ai['rendimiento']['anios'] = anios_nuevos
+                else:
+                    estado_filtros_ai['rendimiento']['anios'] = ['2025']
+                actualizar_grafico_rendimiento()
+
+            multi_anio_rend = MultiSelectCombobox(
+                filter_frame2,
+                anios_termino,
+                default_text="Seleccionar años...",
+                width=150,
+                callback=on_anio_change
+            )
+            multi_anio_rend.selected_values = set(anios_sel)
+            multi_anio_rend.update_button_text()
+            multi_anio_rend.pack(side="left")
+
+            try:
+                anios_str = ", ".join([str(int(a)) for a in anios_sel])
+
+                # Construir filtro de estados
+                if estados_sel:
+                    estados_quoted = ", ".join([f"'{e}'" for e in estados_sel])
+                    filtro_estado = f"AND Estado IN ({estados_quoted})"
+                else:
+                    filtro_estado = ""
+
+                query = f"""
+                    SELECT DES_NOMB_AUD, COUNT(*) as total
+                    FROM fiscalizaciones3
+                    WHERE Anio_Termino IN ({anios_str})
+                    {filtro_estado}
+                    GROUP BY DES_NOMB_AUD
+                    ORDER BY total DESC
+                    LIMIT 10
+                """
+
+                df = pd.read_sql(query, DB_ENGINE)
+
+                if not df.empty:
+                    fig, ax = plt.subplots(figsize=(9, 5), facecolor='white')
+
+                    colores = ['#EC4899', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B',
+                              '#06B6D4', '#F97316', '#14B8A6', '#8B5CF6', '#F43F5E']
+
+                    bars = ax.barh(
+                        range(len(df)),
+                        df['total'],
+                        color=colores[:len(df)],
+                        edgecolor='white',
+                        linewidth=2
+                    )
+
+                    # Agregar valores al final de las barras
+                    for i, (idx, row) in enumerate(df.iterrows()):
+                        ax.text(row['total'], i, f" {int(row['total'])}",
+                               va='center', fontweight='bold', fontsize=9)
+
+                    ax.set_yticks(range(len(df)))
+                    ax.set_yticklabels(df['DES_NOMB_AUD'].tolist(), fontsize=8)
+                    ax.set_xlabel('Cantidad de AIs', fontsize=10, fontweight='bold')
+                    ax.grid(axis='x', alpha=0.3, linestyle='--')
+                    ax.spines['top'].set_visible(False)
+                    ax.spines['right'].set_visible(False)
+                    ax.invert_yaxis()
+
+                    plt.tight_layout()
+
+                    canvas = FigureCanvasTkAgg(fig, frame_ais_rendimiento)
+                    canvas.draw()
+                    canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=5)
+                else:
+                    ctk.CTkLabel(
+                        frame_ais_rendimiento,
+                        text="No hay datos disponibles",
+                        font=("Arial", 11),
+                        text_color="#666666"
+                    ).pack(pady=20)
+
+            except Exception as e:
+                ctk.CTkLabel(
+                    frame_ais_rendimiento,
+                    text=f"Error: {e}",
+                    font=("Arial", 10),
+                    text_color="red"
+                ).pack(pady=20)
+
+        # Cargar todos los gráficos iniciales
+        actualizar_grafico_asignadas()
+        actualizar_grafico_pendientes()
+        actualizar_grafico_terminadas()
+        actualizar_grafico_rendimiento()
+
 # ============================================================================
 # CONTROL SALDO DETRACCIONES
 # ============================================================================
