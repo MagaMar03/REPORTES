@@ -9044,6 +9044,7 @@ def mostrar_dashboard_completo(conexion=None):
                         autotext.set_color('white')
                         autotext.set_fontsize(10)
                         autotext.set_fontweight('bold')
+                        autotext.set_bbox(dict(boxstyle='round,pad=0.3', facecolor='black', alpha=0.5, edgecolor='none'))
 
                     ax_stock.legend(
                         labels_stock,
@@ -10494,6 +10495,7 @@ def mostrar_dashboard_completo(conexion=None):
                         autotext.set_color('white')
                         autotext.set_fontsize(9)
                         autotext.set_fontweight('bold')
+                        autotext.set_bbox(dict(boxstyle='round,pad=0.3', facecolor='black', alpha=0.5, edgecolor='none'))
 
                     ax.legend(
                         df['DES_TIPO_AI'].tolist(),
