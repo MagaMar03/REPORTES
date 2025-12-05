@@ -7680,7 +7680,13 @@ def mostrar_dashboard_completo(conexion=None):
         header.pack_forget()
     except:
         pass
-    
+
+    # Ocultar banner de módulos (para que no aparezca el banner anterior)
+    try:
+        header_modulo.pack_forget()
+    except:
+        pass
+
     # Ocultar menú lateral
     ocultar_menu()
     
@@ -13024,7 +13030,19 @@ def mostrar_dashboard_metas():
         preview_frame.pack_forget()
     except Exception:
         pass
-    
+
+    # Ocultar banner principal
+    try:
+        header.pack_forget()
+    except:
+        pass
+
+    # Ocultar banner de módulos (para que no aparezca el banner anterior)
+    try:
+        header_modulo.pack_forget()
+    except:
+        pass
+
     dashboard_frame.pack(fill="both", expand=True, padx=10, pady=(5, 10))
     
     for widget in dashboard_frame.winfo_children():
