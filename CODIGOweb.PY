@@ -10003,6 +10003,19 @@ def mostrar_dashboard_completo(conexion=None):
             multi_anio_asig.update_button_text()
             multi_anio_asig.pack(side="left")
 
+            # Botones de exportación y ver tabla
+            btn_ver_tabla = ctk.CTkButton(
+                controles,
+                text="📋 Ver Tabla Completa",
+                width=140,
+                height=30,
+                fg_color="#3B82F6",
+                hover_color="#2563EB",
+                font=("Arial", 9, "bold"),
+                command=lambda: dashboard_acciones_inductivas()
+            )
+            btn_ver_tabla.pack(side="left", padx=5)
+
             try:
                 anios_str = ", ".join([str(int(a)) for a in anios_sel])
 
@@ -10016,10 +10029,64 @@ def mostrar_dashboard_completo(conexion=None):
 
                 df = pd.read_sql(query, DB_ENGINE)
 
+                # Botones de exportación (se crean después de tener los datos)
+                def exportar_png_asignadas():
+                    try:
+                        filepath = fd.filedialog.asksaveasfilename(
+                            defaultextension=".png",
+                            filetypes=[("PNG files", "*.png"), ("All files", "*.*")],
+                            initialfile=f"AIs_Asignadas_{anios_str.replace(', ', '_')}.png",
+                            title="Guardar gráfico como PNG"
+                        )
+                        if filepath:
+                            fig.savefig(filepath, dpi=300, bbox_inches='tight', facecolor='white')
+                            messagebox.showinfo("Éxito", f"Gráfico exportado correctamente:\n{os.path.basename(filepath)}")
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Error al exportar PNG: {e}")
+
+                def exportar_excel_asignadas():
+                    try:
+                        filepath = fd.filedialog.asksaveasfilename(
+                            defaultextension=".xlsx",
+                            filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+                            initialfile=f"AIs_Asignadas_{anios_str.replace(', ', '_')}.xlsx",
+                            title="Guardar datos como Excel"
+                        )
+                        if filepath:
+                            df.to_excel(filepath, index=False)
+                            messagebox.showinfo("Éxito", f"Datos exportados correctamente:\n{os.path.basename(filepath)}")
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Error al exportar Excel: {e}")
+
+                btn_export_png = ctk.CTkButton(
+                    controles,
+                    text="📷 PNG",
+                    width=80,
+                    height=30,
+                    fg_color="#10B981",
+                    hover_color="#059669",
+                    font=("Arial", 9, "bold"),
+                    command=exportar_png_asignadas
+                )
+                btn_export_png.pack(side="left", padx=2)
+
+                btn_export_excel = ctk.CTkButton(
+                    controles,
+                    text="📥 Excel",
+                    width=80,
+                    height=30,
+                    fg_color="#28a745",
+                    hover_color="#218838",
+                    font=("Arial", 9, "bold"),
+                    command=exportar_excel_asignadas
+                )
+                btn_export_excel.pack(side="left", padx=2)
+
                 if not df.empty:
                     fig, ax = plt.subplots(figsize=(9, 4), facecolor='white')
 
-                    colores = ['#EC4899', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B']
+                    colores = ['#A8DADC', '#457B9D', '#E8C1A0', '#B4C7E7', '#C9E4CA',
+                              '#F4A582', '#92C5DE', '#D4A5A5']
 
                     bars = ax.bar(
                         range(len(df)),
@@ -10160,8 +10227,8 @@ def mostrar_dashboard_completo(conexion=None):
                 if not df.empty:
                     fig, ax = plt.subplots(figsize=(9, 4), facecolor='white')
 
-                    colores = ['#EC4899', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B',
-                              '#06B6D4', '#F97316', '#14B8A6', '#8B5CF6', '#F43F5E']
+                    colores = ['#A8DADC', '#457B9D', '#E8C1A0', '#B4C7E7', '#C9E4CA',
+                              '#F4A582', '#92C5DE', '#D4A5A5', '#A3B4A3', '#C7CEEA']
 
                     bars = ax.barh(
                         range(len(df)),
@@ -10302,8 +10369,8 @@ def mostrar_dashboard_completo(conexion=None):
                 if not df.empty:
                     fig, ax = plt.subplots(figsize=(6, 4), facecolor='white')
 
-                    colores = ['#EC4899', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B',
-                              '#06B6D4', '#F97316', '#14B8A6']
+                    colores = ['#A8DADC', '#457B9D', '#E8C1A0', '#B4C7E7', '#C9E4CA',
+                              '#F4A582', '#92C5DE', '#D4A5A5']
 
                     wedges, texts, autotexts = ax.pie(
                         df['total'],
@@ -10432,11 +10499,11 @@ def mostrar_dashboard_completo(conexion=None):
                     filtro_estado = ""
 
                 query = f"""
-                    SELECT DES_NOMB_AUD, COUNT(*) as total
+                    SELECT DES_NOMB_VER, COUNT(*) as total
                     FROM fiscalizaciones3
                     WHERE Anio_Termino IN ({anios_str})
                     {filtro_estado}
-                    GROUP BY DES_NOMB_AUD
+                    GROUP BY DES_NOMB_VER
                     ORDER BY total DESC
                     LIMIT 10
                 """
@@ -10446,8 +10513,8 @@ def mostrar_dashboard_completo(conexion=None):
                 if not df.empty:
                     fig, ax = plt.subplots(figsize=(9, 5), facecolor='white')
 
-                    colores = ['#EC4899', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B',
-                              '#06B6D4', '#F97316', '#14B8A6', '#8B5CF6', '#F43F5E']
+                    colores = ['#A8DADC', '#457B9D', '#E8C1A0', '#B4C7E7', '#C9E4CA',
+                              '#F4A582', '#92C5DE', '#D4A5A5', '#A3B4A3', '#C7CEEA']
 
                     bars = ax.barh(
                         range(len(df)),
@@ -10463,7 +10530,7 @@ def mostrar_dashboard_completo(conexion=None):
                                va='center', fontweight='bold', fontsize=9)
 
                     ax.set_yticks(range(len(df)))
-                    ax.set_yticklabels(df['DES_NOMB_AUD'].tolist(), fontsize=8)
+                    ax.set_yticklabels(df['DES_NOMB_VER'].tolist(), fontsize=8)
                     ax.set_xlabel('Cantidad de AIs', fontsize=10, fontweight='bold')
                     ax.grid(axis='x', alpha=0.3, linestyle='--')
                     ax.spines['top'].set_visible(False)
