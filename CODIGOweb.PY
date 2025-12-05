@@ -7267,7 +7267,7 @@ ctk.CTkButton(menu_frame, text="⬅ Volver",
 
 # Configuración de colores del diseño
 # Configuración de colores del diseño
-COLOR_ROSA = '#EC4899'
+COLOR_ROSA = '#8B1538'  # Guindo elegante (antes era rosado)
 COLOR_AZUL = '#3B82F6'
 COLOR_MORADO = '#8B5CF6'
 COLOR_VERDE = '#10B981'
@@ -8173,6 +8173,7 @@ def mostrar_dashboard_completo(conexion=None):
                         autotext.set_color('white')
                         autotext.set_fontsize(8)
                         autotext.set_fontweight('bold')
+                        autotext.set_bbox(dict(boxstyle='round,pad=0.3', facecolor='black', alpha=0.5, edgecolor='none'))
                     
                     ax_det.legend(
                         df_det['NOMBRE_SUPERVISOR'].tolist(),
@@ -8605,6 +8606,7 @@ def mostrar_dashboard_completo(conexion=None):
                         autotext.set_color('white')
                         autotext.set_fontsize(8)
                         autotext.set_fontweight('bold')
+                        autotext.set_bbox(dict(boxstyle='round,pad=0.3', facecolor='black', alpha=0.5, edgecolor='none'))
                     
                     ax_no_det.legend(
                         df_no_det['NOMBRE_SUPERVISOR'].tolist(),
@@ -10202,6 +10204,19 @@ def mostrar_dashboard_completo(conexion=None):
             multi_anio_pend.update_button_text()
             multi_anio_pend.pack(side="left")
 
+            # Botones de exportación y ver tabla
+            btn_ver_tabla_pend = ctk.CTkButton(
+                controles,
+                text="📋 Ver Tabla Completa",
+                width=140,
+                height=30,
+                fg_color="#3B82F6",
+                hover_color="#2563EB",
+                font=("Arial", 9, "bold"),
+                command=lambda: dashboard_acciones_inductivas()
+            )
+            btn_ver_tabla_pend.pack(side="left", padx=5)
+
             try:
                 anios_str = ", ".join([str(int(a)) for a in anios_sel])
 
@@ -10223,6 +10238,59 @@ def mostrar_dashboard_completo(conexion=None):
                 """
 
                 df = pd.read_sql(query, DB_ENGINE)
+
+                # Botones de exportación
+                def exportar_png_pendientes():
+                    try:
+                        filepath = fd.asksaveasfilename(
+                            defaultextension=".png",
+                            filetypes=[("PNG files", "*.png"), ("All files", "*.*")],
+                            initialfile=f"AIs_Pendientes.png",
+                            title="Guardar gráfico como PNG"
+                        )
+                        if filepath:
+                            fig.savefig(filepath, dpi=300, bbox_inches='tight', facecolor='white')
+                            messagebox.showinfo("Éxito", f"Gráfico exportado correctamente:\n{os.path.basename(filepath)}")
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Error al exportar PNG: {e}")
+
+                def exportar_excel_pendientes():
+                    try:
+                        filepath = fd.asksaveasfilename(
+                            defaultextension=".xlsx",
+                            filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+                            initialfile=f"AIs_Pendientes.xlsx",
+                            title="Guardar datos como Excel"
+                        )
+                        if filepath:
+                            df.to_excel(filepath, index=False)
+                            messagebox.showinfo("Éxito", f"Datos exportados correctamente:\n{os.path.basename(filepath)}")
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Error al exportar Excel: {e}")
+
+                btn_export_png_pend = ctk.CTkButton(
+                    controles,
+                    text="📷 PNG",
+                    width=80,
+                    height=30,
+                    fg_color="#10B981",
+                    hover_color="#059669",
+                    font=("Arial", 9, "bold"),
+                    command=exportar_png_pendientes
+                )
+                btn_export_png_pend.pack(side="left", padx=2)
+
+                btn_export_excel_pend = ctk.CTkButton(
+                    controles,
+                    text="📥 Excel",
+                    width=80,
+                    height=30,
+                    fg_color="#28a745",
+                    hover_color="#218838",
+                    font=("Arial", 9, "bold"),
+                    command=exportar_excel_pendientes
+                )
+                btn_export_excel_pend.pack(side="left", padx=2)
 
                 if not df.empty:
                     fig, ax = plt.subplots(figsize=(9, 4), facecolor='white')
