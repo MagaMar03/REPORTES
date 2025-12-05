@@ -10413,6 +10413,18 @@ def mostrar_dashboard_completo(conexion=None):
             multi_anio_term.update_button_text()
             multi_anio_term.pack(side="left")
 
+            # Botones de exportación y ver tabla
+            ctk.CTkButton(
+                controles,
+                text="📋 Ver Tabla",
+                width=120,
+                height=30,
+                fg_color="#3B82F6",
+                hover_color="#2563EB",
+                font=("Arial", 9, "bold"),
+                command=lambda: dashboard_acciones_inductivas()
+            ).pack(side="left", padx=5)
+
             try:
                 anios_str = ", ".join([str(int(a)) for a in anios_sel])
 
@@ -10433,6 +10445,29 @@ def mostrar_dashboard_completo(conexion=None):
                 """
 
                 df = pd.read_sql(query, DB_ENGINE)
+
+                # Botones de exportación
+                ctk.CTkButton(
+                    controles,
+                    text="📷 PNG",
+                    width=80,
+                    height=30,
+                    fg_color="#10B981",
+                    hover_color="#059669",
+                    font=("Arial", 9, "bold"),
+                    command=lambda: [fd.asksaveasfilename(defaultextension=".png", filetypes=[("PNG", "*.png")], initialfile="AIs_Terminadas.png") and fig.savefig(fd.asksaveasfilename(), dpi=300, bbox_inches='tight')]
+                ).pack(side="left", padx=2)
+
+                ctk.CTkButton(
+                    controles,
+                    text="📥 Excel",
+                    width=80,
+                    height=30,
+                    fg_color="#28a745",
+                    hover_color="#218838",
+                    font=("Arial", 9, "bold"),
+                    command=lambda: df.to_excel(fd.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel", "*.xlsx")], initialfile="AIs_Terminadas.xlsx") or "temp.xlsx", index=False) if not df.empty else None
+                ).pack(side="left", padx=2)
 
                 if not df.empty:
                     fig, ax = plt.subplots(figsize=(6, 4), facecolor='white')
@@ -10556,6 +10591,18 @@ def mostrar_dashboard_completo(conexion=None):
             multi_anio_rend.update_button_text()
             multi_anio_rend.pack(side="left")
 
+            # Botones de exportación y ver tabla
+            ctk.CTkButton(
+                controles,
+                text="📋 Ver Tabla",
+                width=120,
+                height=30,
+                fg_color="#3B82F6",
+                hover_color="#2563EB",
+                font=("Arial", 9, "bold"),
+                command=lambda: dashboard_acciones_inductivas()
+            ).pack(side="left", padx=5)
+
             try:
                 anios_str = ", ".join([str(int(a)) for a in anios_sel])
 
@@ -10577,6 +10624,29 @@ def mostrar_dashboard_completo(conexion=None):
                 """
 
                 df = pd.read_sql(query, DB_ENGINE)
+
+                # Botones de exportación
+                ctk.CTkButton(
+                    controles,
+                    text="📷 PNG",
+                    width=80,
+                    height=30,
+                    fg_color="#10B981",
+                    hover_color="#059669",
+                    font=("Arial", 9, "bold"),
+                    command=lambda: [fd.asksaveasfilename(defaultextension=".png", initialfile="AIs_Rendimiento.png") and fig.savefig(fd.asksaveasfilename(), dpi=300, bbox_inches='tight')]
+                ).pack(side="left", padx=2)
+
+                ctk.CTkButton(
+                    controles,
+                    text="📥 Excel",
+                    width=80,
+                    height=30,
+                    fg_color="#28a745",
+                    hover_color="#218838",
+                    font=("Arial", 9, "bold"),
+                    command=lambda: df.to_excel(fd.asksaveasfilename(defaultextension=".xlsx", initialfile="AIs_Rendimiento.xlsx") or "temp.xlsx", index=False) if not df.empty else None
+                ).pack(side="left", padx=2)
 
                 if not df.empty:
                     fig, ax = plt.subplots(figsize=(9, 5), facecolor='white')
