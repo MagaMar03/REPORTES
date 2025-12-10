@@ -12826,9 +12826,20 @@ def dashboard_avance_metas_of():
 
         y_pos = range(len(auditores))
 
-        # Barras horizontales
+        # Calcular colores según cumplimiento
+        colores_barras = []
+        for i in range(len(auditores)):
+            cumplimiento = (recaudado[i] / meta[i] * 100) if meta[i] > 0 else 0
+            if cumplimiento >= 100:
+                colores_barras.append('#10B981')  # Verde - Cumplió o superó
+            elif cumplimiento >= 50:
+                colores_barras.append('#F59E0B')  # Amarillo - Cerca
+            else:
+                colores_barras.append('#EF4444')  # Rojo - Muy por debajo
+
+        # Barras horizontales con colores condicionales
         bars_meta = ax.barh(y_pos, meta, color='#E5E7EB', label='Meta Acumulada', height=0.4, alpha=0.7)
-        bars_recaudado = ax.barh(y_pos, recaudado, color=COLOR_SECONDARY, label='Recaudado', height=0.4)
+        bars_recaudado = ax.barh(y_pos, recaudado, color=colores_barras, height=0.4)
 
         # Añadir cifras en las barras con fondo
         for i, (bar_meta, bar_rec) in enumerate(zip(bars_meta, bars_recaudado)):
@@ -12836,35 +12847,61 @@ def dashboard_avance_metas_of():
 
             # Cifra de meta (al final de la barra gris) con fondo blanco
             if meta[i] > 0:
-                ax.text(meta[i], bar_meta.get_y() + bar_meta.get_height()/2,
+                # Calcular posición para la etiqueta de meta
+                pos_x_meta = min(meta[i], max(meta) * 1.05)  # Limitar posición
+                ax.text(pos_x_meta, bar_meta.get_y() + bar_meta.get_height()/2,
                        f' S/ {meta[i]:,.0f} ',
-                       ha='left', va='center', fontsize=8, color='#374151', fontweight='bold',
-                       bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor='#D1D5DB', linewidth=1))
+                       ha='left', va='center', fontsize=7, color='#374151', fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='#D1D5DB', linewidth=1))
 
-            # Cifra de recaudado (al final de la barra azul) con fondo y % cumplimiento
+            # Cifra de recaudado con color según cumplimiento
             if recaudado[i] > 0:
+                # Determinar colores del texto según cumplimiento
+                if cumplimiento >= 100:
+                    color_texto = '#065F46'  # Verde oscuro
+                    color_fondo = '#D1FAE5'  # Verde claro
+                    color_borde = '#10B981'  # Verde
+                elif cumplimiento >= 50:
+                    color_texto = '#92400E'  # Amarillo oscuro
+                    color_fondo = '#FEF3C7'  # Amarillo claro
+                    color_borde = '#F59E0B'  # Amarillo
+                else:
+                    color_texto = '#991B1B'  # Rojo oscuro
+                    color_fondo = '#FEE2E2'  # Rojo claro
+                    color_borde = '#EF4444'  # Rojo
+
                 texto_recaudado = f' S/ {recaudado[i]:,.0f} ({cumplimiento:.1f}%) '
-                ax.text(recaudado[i], bar_rec.get_y() + bar_rec.get_height()/2,
+                # Calcular posición para evitar que se salga
+                pos_x_rec = min(recaudado[i], max(meta) * 1.05)
+                ax.text(pos_x_rec, bar_rec.get_y() + bar_rec.get_height()/2,
                        texto_recaudado,
-                       ha='left', va='center', fontsize=8, color='#1E3A8A', fontweight='bold',
-                       bbox=dict(boxstyle='round,pad=0.4', facecolor='#EFF6FF', edgecolor='#3B82F6', linewidth=1.5))
+                       ha='left', va='center', fontsize=7, color=color_texto, fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.3', facecolor=color_fondo, edgecolor=color_borde, linewidth=1.5))
 
         ax.set_yticks(y_pos)
-        ax.set_yticklabels(auditores, fontsize=8)
+        ax.set_yticklabels(auditores, fontsize=9, fontweight='normal')  # Aumentado tamaño de fuente
         ax.set_xlabel('Monto (S/)', fontsize=9, fontweight='bold')
 
         # Título dinámico con el mes
         mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
         ax.set_title(f'Avance de Metas por Auditor (hasta {mes_nombre})', fontsize=11, fontweight='bold')
 
-        # Limitar el eje X para que no se extienda demasiado cuando se excede la meta
+        # Limitar el eje X para que no se extienda demasiado
         max_meta = max(meta) if meta else 1
         max_recaudado = max(recaudado) if recaudado else 1
-        # Usar el mayor valor, pero limitar a máximo 120% de la meta más alta
-        limite_x = max(max_meta * 1.2, min(max_recaudado, max_meta * 1.5))
+        # Limitar a máximo 110% de la meta más alta para evitar que se salga
+        limite_x = max(max_meta * 1.10, min(max_recaudado * 1.05, max_meta * 1.15))
         ax.set_xlim(0, limite_x)
 
-        ax.legend(loc='lower right', fontsize=8)
+        # Leyenda personalizada con los colores
+        from matplotlib.patches import Patch
+        legend_elements = [
+            Patch(facecolor='#E5E7EB', label='Meta Acumulada'),
+            Patch(facecolor='#10B981', label='≥100% (Cumplió)'),
+            Patch(facecolor='#F59E0B', label='50-99% (Cerca)'),
+            Patch(facecolor='#EF4444', label='<50% (Por debajo)')
+        ]
+        ax.legend(handles=legend_elements, loc='lower right', fontsize=7)
         ax.grid(axis='x', alpha=0.3, linewidth=0.5)
 
         plt.tight_layout(pad=0.5)
@@ -13752,9 +13789,20 @@ def dashboard_avance_metas_ai():
 
         y_pos = range(len(auditores))
 
-        # Barras horizontales
+        # Calcular colores según cumplimiento
+        colores_barras = []
+        for i in range(len(auditores)):
+            cumplimiento = (recaudado[i] / meta[i] * 100) if meta[i] > 0 else 0
+            if cumplimiento >= 100:
+                colores_barras.append('#10B981')  # Verde - Cumplió o superó
+            elif cumplimiento >= 50:
+                colores_barras.append('#F59E0B')  # Amarillo - Cerca
+            else:
+                colores_barras.append('#EF4444')  # Rojo - Muy por debajo
+
+        # Barras horizontales con colores condicionales
         bars_meta = ax.barh(y_pos, meta, color='#E5E7EB', label='Meta Acumulada', height=0.4, alpha=0.7)
-        bars_recaudado = ax.barh(y_pos, recaudado, color=COLOR_SECONDARY, label='Recaudado', height=0.4)
+        bars_recaudado = ax.barh(y_pos, recaudado, color=colores_barras, height=0.4)
 
         # Añadir cifras en las barras con fondo
         for i, (bar_meta, bar_rec) in enumerate(zip(bars_meta, bars_recaudado)):
@@ -13762,35 +13810,61 @@ def dashboard_avance_metas_ai():
 
             # Cifra de meta (al final de la barra gris) con fondo blanco
             if meta[i] > 0:
-                ax.text(meta[i], bar_meta.get_y() + bar_meta.get_height()/2,
+                # Calcular posición para la etiqueta de meta
+                pos_x_meta = min(meta[i], max(meta) * 1.05)  # Limitar posición
+                ax.text(pos_x_meta, bar_meta.get_y() + bar_meta.get_height()/2,
                        f' S/ {meta[i]:,.0f} ',
-                       ha='left', va='center', fontsize=8, color='#374151', fontweight='bold',
-                       bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor='#D1D5DB', linewidth=1))
+                       ha='left', va='center', fontsize=7, color='#374151', fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='#D1D5DB', linewidth=1))
 
-            # Cifra de recaudado (al final de la barra azul) con fondo y % cumplimiento
+            # Cifra de recaudado con color según cumplimiento
             if recaudado[i] > 0:
+                # Determinar colores del texto según cumplimiento
+                if cumplimiento >= 100:
+                    color_texto = '#065F46'  # Verde oscuro
+                    color_fondo = '#D1FAE5'  # Verde claro
+                    color_borde = '#10B981'  # Verde
+                elif cumplimiento >= 50:
+                    color_texto = '#92400E'  # Amarillo oscuro
+                    color_fondo = '#FEF3C7'  # Amarillo claro
+                    color_borde = '#F59E0B'  # Amarillo
+                else:
+                    color_texto = '#991B1B'  # Rojo oscuro
+                    color_fondo = '#FEE2E2'  # Rojo claro
+                    color_borde = '#EF4444'  # Rojo
+
                 texto_recaudado = f' S/ {recaudado[i]:,.0f} ({cumplimiento:.1f}%) '
-                ax.text(recaudado[i], bar_rec.get_y() + bar_rec.get_height()/2,
+                # Calcular posición para evitar que se salga
+                pos_x_rec = min(recaudado[i], max(meta) * 1.05)
+                ax.text(pos_x_rec, bar_rec.get_y() + bar_rec.get_height()/2,
                        texto_recaudado,
-                       ha='left', va='center', fontsize=8, color='#1E3A8A', fontweight='bold',
-                       bbox=dict(boxstyle='round,pad=0.4', facecolor='#EFF6FF', edgecolor='#3B82F6', linewidth=1.5))
+                       ha='left', va='center', fontsize=7, color=color_texto, fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.3', facecolor=color_fondo, edgecolor=color_borde, linewidth=1.5))
 
         ax.set_yticks(y_pos)
-        ax.set_yticklabels(auditores, fontsize=8)
+        ax.set_yticklabels(auditores, fontsize=9, fontweight='normal')  # Aumentado tamaño de fuente
         ax.set_xlabel('Monto (S/)', fontsize=9, fontweight='bold')
 
         # Título dinámico con el mes
         mes_nombre = meses_nombres[mes_hasta - 1] if mes_hasta <= 12 else "DIC"
         ax.set_title(f'Avance de Metas por Auditor (hasta {mes_nombre})', fontsize=11, fontweight='bold')
 
-        # Limitar el eje X para que no se extienda demasiado cuando se excede la meta
+        # Limitar el eje X para que no se extienda demasiado
         max_meta = max(meta) if meta else 1
         max_recaudado = max(recaudado) if recaudado else 1
-        # Usar el mayor valor, pero limitar a máximo 120% de la meta más alta
-        limite_x = max(max_meta * 1.2, min(max_recaudado, max_meta * 1.5))
+        # Limitar a máximo 110% de la meta más alta para evitar que se salga
+        limite_x = max(max_meta * 1.10, min(max_recaudado * 1.05, max_meta * 1.15))
         ax.set_xlim(0, limite_x)
 
-        ax.legend(loc='lower right', fontsize=8)
+        # Leyenda personalizada con los colores
+        from matplotlib.patches import Patch
+        legend_elements = [
+            Patch(facecolor='#E5E7EB', label='Meta Acumulada'),
+            Patch(facecolor='#10B981', label='≥100% (Cumplió)'),
+            Patch(facecolor='#F59E0B', label='50-99% (Cerca)'),
+            Patch(facecolor='#EF4444', label='<50% (Por debajo)')
+        ]
+        ax.legend(handles=legend_elements, loc='lower right', fontsize=7)
         ax.grid(axis='x', alpha=0.3, linewidth=0.5)
 
         plt.tight_layout(pad=0.5)
