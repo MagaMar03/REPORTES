@@ -12935,17 +12935,23 @@ def dashboard_avance_metas_of():
                         xlim = ax.get_xlim()
                         ylim = ax.get_ylim()
 
-                        # Calcular posición relativa normalizada (0 = abajo, 1 = arriba)
-                        y_rel = (event.ydata - ylim[0]) / (ylim[1] - ylim[0])
+                        # Usar índice del auditor para detectar posición en la lista
+                        total_auditores = len(auditores)
+                        posicion_relativa = i / total_auditores if total_auditores > 0 else 0
+
+                        # Calcular posición X relativa
                         x_rel = (event.xdata - xlim[0]) / (xlim[1] - xlim[0])
 
-                        # Determinar offset vertical (más sensible en los bordes)
-                        if y_rel > 0.5:  # Mitad superior - tooltip hacia ABAJO
-                            offset_y = -100  # Más abajo para evitar corte
-                        else:  # Mitad inferior - tooltip hacia ARRIBA
-                            offset_y = 20
+                        # Determinar offset vertical basado en índice del auditor
+                        # Primeros auditores (top) - tooltip hacia ABAJO con offset grande
+                        if posicion_relativa < 0.35:  # Top 35% - primeros auditores
+                            offset_y = -130  # Muy abajo para evitar corte
+                        elif posicion_relativa > 0.65:  # Bottom 35% - últimos auditores
+                            offset_y = 20  # Hacia arriba
+                        else:  # Centro - hacia abajo moderado
+                            offset_y = -80
 
-                        # Determinar offset horizontal (más sensible en los bordes)
+                        # Determinar offset horizontal
                         if x_rel > 0.6:  # Parte derecha - tooltip hacia IZQUIERDA
                             offset_x = -160
                         else:  # Parte izquierda/centro - tooltip hacia DERECHA
@@ -13919,17 +13925,23 @@ def dashboard_avance_metas_ai():
                         xlim = ax.get_xlim()
                         ylim = ax.get_ylim()
 
-                        # Calcular posición relativa normalizada (0 = abajo, 1 = arriba)
-                        y_rel = (event.ydata - ylim[0]) / (ylim[1] - ylim[0])
+                        # Usar índice del auditor para detectar posición en la lista
+                        total_auditores = len(auditores)
+                        posicion_relativa = i / total_auditores if total_auditores > 0 else 0
+
+                        # Calcular posición X relativa
                         x_rel = (event.xdata - xlim[0]) / (xlim[1] - xlim[0])
 
-                        # Determinar offset vertical (más sensible en los bordes)
-                        if y_rel > 0.5:  # Mitad superior - tooltip hacia ABAJO
-                            offset_y = -100  # Más abajo para evitar corte
-                        else:  # Mitad inferior - tooltip hacia ARRIBA
-                            offset_y = 20
+                        # Determinar offset vertical basado en índice del auditor
+                        # Primeros auditores (top) - tooltip hacia ABAJO con offset grande
+                        if posicion_relativa < 0.35:  # Top 35% - primeros auditores
+                            offset_y = -130  # Muy abajo para evitar corte
+                        elif posicion_relativa > 0.65:  # Bottom 35% - últimos auditores
+                            offset_y = 20  # Hacia arriba
+                        else:  # Centro - hacia abajo moderado
+                            offset_y = -80
 
-                        # Determinar offset horizontal (más sensible en los bordes)
+                        # Determinar offset horizontal
                         if x_rel > 0.6:  # Parte derecha - tooltip hacia IZQUIERDA
                             offset_x = -160
                         else:  # Parte izquierda/centro - tooltip hacia DERECHA
