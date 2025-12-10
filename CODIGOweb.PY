@@ -12931,7 +12931,23 @@ def dashboard_avance_metas_of():
                         texto += f"Recaudado: S/ {recaudado[i]:,.2f}\n"
                         texto += f"Cumplimiento: {cumplimiento:.1f}%"
 
+                        # Ajustar posición del tooltip según ubicación del mouse para que no se corte
+                        xlim = ax.get_xlim()
+                        ylim = ax.get_ylim()
+
+                        # Determinar offset dinámico para evitar que se salga de los bordes
+                        if event.ydata > (ylim[1] - ylim[0]) * 0.7:  # Parte superior
+                            offset_y = -80
+                        else:  # Parte inferior/media
+                            offset_y = 20
+
+                        if event.xdata > (xlim[1] - xlim[0]) * 0.7:  # Parte derecha
+                            offset_x = -150
+                        else:  # Parte izquierda/media
+                            offset_x = 20
+
                         annot.xy = (event.xdata, event.ydata)
+                        annot.xytext = (offset_x, offset_y)
                         annot.set_text(texto)
                         annot.set_visible(True)
                         fig.canvas.draw_idle()
@@ -13894,7 +13910,23 @@ def dashboard_avance_metas_ai():
                         texto += f"Recaudado: S/ {recaudado[i]:,.2f}\n"
                         texto += f"Cumplimiento: {cumplimiento:.1f}%"
 
+                        # Ajustar posición del tooltip según ubicación del mouse para que no se corte
+                        xlim = ax.get_xlim()
+                        ylim = ax.get_ylim()
+
+                        # Determinar offset dinámico para evitar que se salga de los bordes
+                        if event.ydata > (ylim[1] - ylim[0]) * 0.7:  # Parte superior
+                            offset_y = -80
+                        else:  # Parte inferior/media
+                            offset_y = 20
+
+                        if event.xdata > (xlim[1] - xlim[0]) * 0.7:  # Parte derecha
+                            offset_x = -150
+                        else:  # Parte izquierda/media
+                            offset_x = 20
+
                         annot.xy = (event.xdata, event.ydata)
+                        annot.xytext = (offset_x, offset_y)
                         annot.set_text(texto)
                         annot.set_visible(True)
                         fig.canvas.draw_idle()
