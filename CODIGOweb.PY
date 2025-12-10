@@ -12935,15 +12935,20 @@ def dashboard_avance_metas_of():
                         xlim = ax.get_xlim()
                         ylim = ax.get_ylim()
 
-                        # Determinar offset dinámico para evitar que se salga de los bordes
-                        if event.ydata > (ylim[1] - ylim[0]) * 0.7:  # Parte superior
-                            offset_y = -80
-                        else:  # Parte inferior/media
+                        # Calcular posición relativa normalizada (0 = abajo, 1 = arriba)
+                        y_rel = (event.ydata - ylim[0]) / (ylim[1] - ylim[0])
+                        x_rel = (event.xdata - xlim[0]) / (xlim[1] - xlim[0])
+
+                        # Determinar offset vertical (más sensible en los bordes)
+                        if y_rel > 0.5:  # Mitad superior - tooltip hacia ABAJO
+                            offset_y = -100  # Más abajo para evitar corte
+                        else:  # Mitad inferior - tooltip hacia ARRIBA
                             offset_y = 20
 
-                        if event.xdata > (xlim[1] - xlim[0]) * 0.7:  # Parte derecha
-                            offset_x = -150
-                        else:  # Parte izquierda/media
+                        # Determinar offset horizontal (más sensible en los bordes)
+                        if x_rel > 0.6:  # Parte derecha - tooltip hacia IZQUIERDA
+                            offset_x = -160
+                        else:  # Parte izquierda/centro - tooltip hacia DERECHA
                             offset_x = 20
 
                         annot.xy = (event.xdata, event.ydata)
@@ -13914,15 +13919,20 @@ def dashboard_avance_metas_ai():
                         xlim = ax.get_xlim()
                         ylim = ax.get_ylim()
 
-                        # Determinar offset dinámico para evitar que se salga de los bordes
-                        if event.ydata > (ylim[1] - ylim[0]) * 0.7:  # Parte superior
-                            offset_y = -80
-                        else:  # Parte inferior/media
+                        # Calcular posición relativa normalizada (0 = abajo, 1 = arriba)
+                        y_rel = (event.ydata - ylim[0]) / (ylim[1] - ylim[0])
+                        x_rel = (event.xdata - xlim[0]) / (xlim[1] - xlim[0])
+
+                        # Determinar offset vertical (más sensible en los bordes)
+                        if y_rel > 0.5:  # Mitad superior - tooltip hacia ABAJO
+                            offset_y = -100  # Más abajo para evitar corte
+                        else:  # Mitad inferior - tooltip hacia ARRIBA
                             offset_y = 20
 
-                        if event.xdata > (xlim[1] - xlim[0]) * 0.7:  # Parte derecha
-                            offset_x = -150
-                        else:  # Parte izquierda/media
+                        # Determinar offset horizontal (más sensible en los bordes)
+                        if x_rel > 0.6:  # Parte derecha - tooltip hacia IZQUIERDA
+                            offset_x = -160
+                        else:  # Parte izquierda/centro - tooltip hacia DERECHA
                             offset_x = 20
 
                         annot.xy = (event.xdata, event.ydata)
