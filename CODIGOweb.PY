@@ -13519,7 +13519,7 @@ def dashboard_avance_metas_ai():
             query_sup_aud = """
                 SELECT DISTINCT f1.NOMBRE_SUPERVISOR, f1.REG_AUDITOR, f5.nomb_ver
                 FROM fiscalizaciones1 f1
-                LEFT JOIN fiscalizaciones5 f5 ON f1.REG_AUDITOR = f5.COD_REG_AC
+                LEFT JOIN fiscalizaciones5 f5 ON f1.REG_AUDITOR = f5.COD_REG_VE
                 WHERE f1.Anio_Emis = %s AND f1.Mes_Emis = %s
                   AND f1.NOMBRE_SUPERVISOR IS NOT NULL
                   AND f5.nomb_ver IS NOT NULL
