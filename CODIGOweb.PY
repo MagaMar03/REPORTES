@@ -12986,6 +12986,16 @@ def dashboard_avance_metas_of():
         fig.canvas.mpl_connect("motion_notify_event", mostrar_tooltip)
         fig.canvas.mpl_connect("axes_leave_event", ocultar_tooltip)
 
+        # CRÍTICO: Ocultar tooltip al cambiar de aplicación o perder foco
+        canvas_widget = canvas_grafico.get_tk_widget()
+        canvas_widget.bind("<Leave>", ocultar_tooltip)
+        canvas_widget.bind("<FocusOut>", ocultar_tooltip)
+
+        # Ocultar cuando la ventana principal pierde el foco
+        root_window = canvas_widget.winfo_toplevel()
+        root_window.bind("<FocusOut>", ocultar_tooltip, add="+")
+        root_window.bind("<Unmap>", ocultar_tooltip, add="+")
+
         # Guardar figura para exportación (NO cerrarla)
         grafico_fig["fig"] = fig
         datos_exportar["grafico"] = datos
@@ -13991,6 +14001,16 @@ def dashboard_avance_metas_ai():
 
         fig.canvas.mpl_connect("motion_notify_event", mostrar_tooltip)
         fig.canvas.mpl_connect("axes_leave_event", ocultar_tooltip)
+
+        # CRÍTICO: Ocultar tooltip al cambiar de aplicación o perder foco
+        canvas_widget = canvas_grafico.get_tk_widget()
+        canvas_widget.bind("<Leave>", ocultar_tooltip)
+        canvas_widget.bind("<FocusOut>", ocultar_tooltip)
+
+        # Ocultar cuando la ventana principal pierde el foco
+        root_window = canvas_widget.winfo_toplevel()
+        root_window.bind("<FocusOut>", ocultar_tooltip, add="+")
+        root_window.bind("<Unmap>", ocultar_tooltip, add="+")
 
         # Guardar figura para exportación (NO cerrarla)
         grafico_fig["fig"] = fig
