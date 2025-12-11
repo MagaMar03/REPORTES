@@ -12946,8 +12946,29 @@ def dashboard_avance_metas_of():
                         tooltip_window.wm_overrideredirect(True)
                         tooltip_window.attributes('-topmost', True)
 
+                        # Contenedor principal
+                        main_container = tk.Frame(tooltip_window, bg="transparent")
+                        main_container.pack()
+
+                        # Determinar posición del auditor
+                        total_auditores = len(auditores)
+                        posicion_relativa = i / total_auditores if total_auditores > 0 else 0
+
+                        # Flecha ARRIBA (si tooltip está abajo - primeros auditores)
+                        if posicion_relativa < 0.3:
+                            arrow_canvas = tk.Canvas(main_container, width=20, height=10,
+                                                    bg="transparent", highlightthickness=0)
+                            arrow_canvas.pack()
+                            # Triángulo apuntando arriba: pico arriba, base abajo
+                            arrow_canvas.create_polygon(10, 0, 0, 10, 20, 10,
+                                                       fill="#1E40AF", outline="#1E40AF")
+
+                        # Frame del tooltip
+                        tooltip_frame = tk.Frame(main_container, bg="transparent")
+                        tooltip_frame.pack()
+
                         # Frame exterior con borde
-                        outer_frame = tk.Frame(tooltip_window, bg="#1E40AF", bd=0)
+                        outer_frame = tk.Frame(tooltip_frame, bg="#1E40AF", bd=0)
                         outer_frame.pack(padx=2, pady=2)
 
                         # Frame interior
@@ -12960,10 +12981,16 @@ def dashboard_avance_metas_of():
                                        padx=16, pady=12, relief="flat")
                         label.pack()
 
-                        # Posicionar según índice del auditor
-                        total_auditores = len(auditores)
-                        posicion_relativa = i / total_auditores if total_auditores > 0 else 0
+                        # Flecha ABAJO (si tooltip está arriba - centro y últimos auditores)
+                        if posicion_relativa >= 0.3:
+                            arrow_canvas = tk.Canvas(main_container, width=20, height=10,
+                                                    bg="transparent", highlightthickness=0)
+                            arrow_canvas.pack()
+                            # Triángulo apuntando abajo: base arriba, pico abajo
+                            arrow_canvas.create_polygon(0, 0, 20, 0, 10, 10,
+                                                       fill="#1E40AF", outline="#1E40AF")
 
+                        # Posicionar tooltip
                         if posicion_relativa < 0.3:
                             y_offset = 15
                         elif posicion_relativa > 0.7:
@@ -13962,8 +13989,29 @@ def dashboard_avance_metas_ai():
                         tooltip_window.wm_overrideredirect(True)
                         tooltip_window.attributes('-topmost', True)
 
+                        # Contenedor principal
+                        main_container = tk.Frame(tooltip_window, bg="transparent")
+                        main_container.pack()
+
+                        # Determinar posición del auditor
+                        total_auditores = len(auditores)
+                        posicion_relativa = i / total_auditores if total_auditores > 0 else 0
+
+                        # Flecha ARRIBA (si tooltip está abajo - primeros auditores)
+                        if posicion_relativa < 0.3:
+                            arrow_canvas = tk.Canvas(main_container, width=20, height=10,
+                                                    bg="transparent", highlightthickness=0)
+                            arrow_canvas.pack()
+                            # Triángulo apuntando arriba: pico arriba, base abajo
+                            arrow_canvas.create_polygon(10, 0, 0, 10, 20, 10,
+                                                       fill="#1E40AF", outline="#1E40AF")
+
+                        # Frame del tooltip
+                        tooltip_frame = tk.Frame(main_container, bg="transparent")
+                        tooltip_frame.pack()
+
                         # Frame exterior con borde
-                        outer_frame = tk.Frame(tooltip_window, bg="#1E40AF", bd=0)
+                        outer_frame = tk.Frame(tooltip_frame, bg="#1E40AF", bd=0)
                         outer_frame.pack(padx=2, pady=2)
 
                         # Frame interior
@@ -13976,10 +14024,16 @@ def dashboard_avance_metas_ai():
                                        padx=16, pady=12, relief="flat")
                         label.pack()
 
-                        # Posicionar según índice del auditor
-                        total_auditores = len(auditores)
-                        posicion_relativa = i / total_auditores if total_auditores > 0 else 0
+                        # Flecha ABAJO (si tooltip está arriba - centro y últimos auditores)
+                        if posicion_relativa >= 0.3:
+                            arrow_canvas = tk.Canvas(main_container, width=20, height=10,
+                                                    bg="transparent", highlightthickness=0)
+                            arrow_canvas.pack()
+                            # Triángulo apuntando abajo: base arriba, pico abajo
+                            arrow_canvas.create_polygon(0, 0, 20, 0, 10, 10,
+                                                       fill="#1E40AF", outline="#1E40AF")
 
+                        # Posicionar tooltip
                         if posicion_relativa < 0.3:
                             y_offset = 15
                         elif posicion_relativa > 0.7:
