@@ -12911,14 +12911,12 @@ def dashboard_avance_metas_of():
         canvas_grafico.draw()
         canvas_grafico.get_tk_widget().pack(fill="both", expand=True, padx=5, pady=5)
 
-        # Añadir tooltip interactivo con hover
-        annot = ax.annotate("", xy=(0,0), xytext=(20,20), textcoords="offset points",
-                           bbox=dict(boxstyle="round,pad=0.8", fc="#1E3A8A", ec="#1E40AF", lw=2, alpha=0.95),
-                           arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0", color="#1E40AF", lw=2),
-                           fontsize=10, color='white', fontweight='bold', visible=False)
+        # Tooltip con Toplevel de tkinter que se superpone a todo
+        tooltip_window = None
 
-        def hover(event):
-            vis = annot.get_visible()
+        def mostrar_tooltip(event):
+            nonlocal tooltip_window
+
             if event.inaxes == ax:
                 for i, (bar_r, bar_m) in enumerate(zip(bars_recaudado, bars_meta)):
                     cont_r, _ = bar_r.contains(event)
@@ -12931,44 +12929,62 @@ def dashboard_avance_metas_of():
                         texto += f"Recaudado: S/ {recaudado[i]:,.2f}\n"
                         texto += f"Cumplimiento: {cumplimiento:.1f}%"
 
-                        # Ajustar posición del tooltip según ubicación del mouse para que no se corte
-                        xlim = ax.get_xlim()
-                        ylim = ax.get_ylim()
+                        # Obtener coordenadas del mouse en pantalla
+                        try:
+                            x_root = event.guiEvent.x_root
+                            y_root = event.guiEvent.y_root
+                        except:
+                            x_root = canvas_grafico.get_tk_widget().winfo_pointerx()
+                            y_root = canvas_grafico.get_tk_widget().winfo_pointery()
 
-                        # Usar índice del auditor para detectar posición en la lista
+                        # Destruir tooltip anterior si existe
+                        if tooltip_window is not None:
+                            tooltip_window.destroy()
+
+                        # Crear tooltip nuevo
+                        tooltip_window = tk.Toplevel()
+                        tooltip_window.wm_overrideredirect(True)
+                        tooltip_window.attributes('-topmost', True)
+
+                        # Frame exterior con borde
+                        outer_frame = tk.Frame(tooltip_window, bg="#1E40AF", bd=0)
+                        outer_frame.pack(padx=2, pady=2)
+
+                        # Frame interior
+                        inner_frame = tk.Frame(outer_frame, bg="#1E3A8A", bd=0)
+                        inner_frame.pack(padx=2, pady=2)
+
+                        # Label con texto
+                        label = tk.Label(inner_frame, text=texto, bg="#1E3A8A", fg="white",
+                                       font=("Segoe UI", 10, "bold"), justify="left",
+                                       padx=16, pady=12, relief="flat")
+                        label.pack()
+
+                        # Posicionar según índice del auditor
                         total_auditores = len(auditores)
                         posicion_relativa = i / total_auditores if total_auditores > 0 else 0
 
-                        # Calcular posición X relativa
-                        x_rel = (event.xdata - xlim[0]) / (xlim[1] - xlim[0])
+                        if posicion_relativa < 0.3:
+                            y_offset = 15
+                        elif posicion_relativa > 0.7:
+                            y_offset = -100
+                        else:
+                            y_offset = -50
 
-                        # Determinar offset vertical basado en índice del auditor
-                        # Primeros auditores (top) - tooltip hacia ABAJO con offset grande
-                        if posicion_relativa < 0.35:  # Top 35% - primeros auditores
-                            offset_y = -130  # Muy abajo para evitar corte
-                        elif posicion_relativa > 0.65:  # Bottom 35% - últimos auditores
-                            offset_y = 20  # Hacia arriba
-                        else:  # Centro - hacia abajo moderado
-                            offset_y = -80
-
-                        # Determinar offset horizontal
-                        if x_rel > 0.6:  # Parte derecha - tooltip hacia IZQUIERDA
-                            offset_x = -160
-                        else:  # Parte izquierda/centro - tooltip hacia DERECHA
-                            offset_x = 20
-
-                        annot.xy = (event.xdata, event.ydata)
-                        annot.xytext = (offset_x, offset_y)
-                        annot.set_text(texto)
-                        annot.set_visible(True)
-                        fig.canvas.draw_idle()
+                        tooltip_window.wm_geometry(f"+{x_root + 15}+{y_root + y_offset}")
                         return
 
-            if vis:
-                annot.set_visible(False)
-                fig.canvas.draw_idle()
+            # Ocultar tooltip si no está sobre ninguna barra
+            ocultar_tooltip()
 
-        fig.canvas.mpl_connect("motion_notify_event", hover)
+        def ocultar_tooltip(event=None):
+            nonlocal tooltip_window
+            if tooltip_window is not None:
+                tooltip_window.destroy()
+                tooltip_window = None
+
+        fig.canvas.mpl_connect("motion_notify_event", mostrar_tooltip)
+        fig.canvas.mpl_connect("axes_leave_event", ocultar_tooltip)
 
         # Guardar figura para exportación (NO cerrarla)
         grafico_fig["fig"] = fig
@@ -13901,14 +13917,12 @@ def dashboard_avance_metas_ai():
         canvas_grafico.draw()
         canvas_grafico.get_tk_widget().pack(fill="both", expand=True, padx=5, pady=5)
 
-        # Añadir tooltip interactivo con hover
-        annot = ax.annotate("", xy=(0,0), xytext=(20,20), textcoords="offset points",
-                           bbox=dict(boxstyle="round,pad=0.8", fc="#1E3A8A", ec="#1E40AF", lw=2, alpha=0.95),
-                           arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0", color="#1E40AF", lw=2),
-                           fontsize=10, color='white', fontweight='bold', visible=False)
+        # Tooltip con Toplevel de tkinter que se superpone a todo
+        tooltip_window = None
 
-        def hover(event):
-            vis = annot.get_visible()
+        def mostrar_tooltip(event):
+            nonlocal tooltip_window
+
             if event.inaxes == ax:
                 for i, (bar_r, bar_m) in enumerate(zip(bars_recaudado, bars_meta)):
                     cont_r, _ = bar_r.contains(event)
@@ -13921,44 +13935,62 @@ def dashboard_avance_metas_ai():
                         texto += f"Recaudado: S/ {recaudado[i]:,.2f}\n"
                         texto += f"Cumplimiento: {cumplimiento:.1f}%"
 
-                        # Ajustar posición del tooltip según ubicación del mouse para que no se corte
-                        xlim = ax.get_xlim()
-                        ylim = ax.get_ylim()
+                        # Obtener coordenadas del mouse en pantalla
+                        try:
+                            x_root = event.guiEvent.x_root
+                            y_root = event.guiEvent.y_root
+                        except:
+                            x_root = canvas_grafico.get_tk_widget().winfo_pointerx()
+                            y_root = canvas_grafico.get_tk_widget().winfo_pointery()
 
-                        # Usar índice del auditor para detectar posición en la lista
+                        # Destruir tooltip anterior si existe
+                        if tooltip_window is not None:
+                            tooltip_window.destroy()
+
+                        # Crear tooltip nuevo
+                        tooltip_window = tk.Toplevel()
+                        tooltip_window.wm_overrideredirect(True)
+                        tooltip_window.attributes('-topmost', True)
+
+                        # Frame exterior con borde
+                        outer_frame = tk.Frame(tooltip_window, bg="#1E40AF", bd=0)
+                        outer_frame.pack(padx=2, pady=2)
+
+                        # Frame interior
+                        inner_frame = tk.Frame(outer_frame, bg="#1E3A8A", bd=0)
+                        inner_frame.pack(padx=2, pady=2)
+
+                        # Label con texto
+                        label = tk.Label(inner_frame, text=texto, bg="#1E3A8A", fg="white",
+                                       font=("Segoe UI", 10, "bold"), justify="left",
+                                       padx=16, pady=12, relief="flat")
+                        label.pack()
+
+                        # Posicionar según índice del auditor
                         total_auditores = len(auditores)
                         posicion_relativa = i / total_auditores if total_auditores > 0 else 0
 
-                        # Calcular posición X relativa
-                        x_rel = (event.xdata - xlim[0]) / (xlim[1] - xlim[0])
+                        if posicion_relativa < 0.3:
+                            y_offset = 15
+                        elif posicion_relativa > 0.7:
+                            y_offset = -100
+                        else:
+                            y_offset = -50
 
-                        # Determinar offset vertical basado en índice del auditor
-                        # Primeros auditores (top) - tooltip hacia ABAJO con offset grande
-                        if posicion_relativa < 0.35:  # Top 35% - primeros auditores
-                            offset_y = -130  # Muy abajo para evitar corte
-                        elif posicion_relativa > 0.65:  # Bottom 35% - últimos auditores
-                            offset_y = 20  # Hacia arriba
-                        else:  # Centro - hacia abajo moderado
-                            offset_y = -80
-
-                        # Determinar offset horizontal
-                        if x_rel > 0.6:  # Parte derecha - tooltip hacia IZQUIERDA
-                            offset_x = -160
-                        else:  # Parte izquierda/centro - tooltip hacia DERECHA
-                            offset_x = 20
-
-                        annot.xy = (event.xdata, event.ydata)
-                        annot.xytext = (offset_x, offset_y)
-                        annot.set_text(texto)
-                        annot.set_visible(True)
-                        fig.canvas.draw_idle()
+                        tooltip_window.wm_geometry(f"+{x_root + 15}+{y_root + y_offset}")
                         return
 
-            if vis:
-                annot.set_visible(False)
-                fig.canvas.draw_idle()
+            # Ocultar tooltip si no está sobre ninguna barra
+            ocultar_tooltip()
 
-        fig.canvas.mpl_connect("motion_notify_event", hover)
+        def ocultar_tooltip(event=None):
+            nonlocal tooltip_window
+            if tooltip_window is not None:
+                tooltip_window.destroy()
+                tooltip_window = None
+
+        fig.canvas.mpl_connect("motion_notify_event", mostrar_tooltip)
+        fig.canvas.mpl_connect("axes_leave_event", ocultar_tooltip)
 
         # Guardar figura para exportación (NO cerrarla)
         grafico_fig["fig"] = fig
