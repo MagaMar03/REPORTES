@@ -15,6 +15,7 @@ import numpy as np
 import os
 import json
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import mplcursors
 
 # ------------------------------
 # CONFIGURACIÓN DE CONEXIÓN
@@ -8199,7 +8200,30 @@ def mostrar_dashboard_completo(conexion=None):
                     )
                     
                     plt.tight_layout()
-                    
+
+                    # Agregar tooltips interactivos
+                    cursor = mplcursors.cursor(wedges, hover=True)
+                    @cursor.connect("add")
+                    def on_add(sel):
+                        i = sel.index
+                        supervisor = df_det.iloc[i]['NOMBRE_SUPERVISOR']
+                        total = df_det.iloc[i]['total']
+                        porcentaje = (total / df_det['total'].sum()) * 100
+                        sel.annotation.set_text(
+                            f"{supervisor}\n"
+                            f"OFs: {total:,}\n"
+                            f"Porcentaje: {porcentaje:.1f}%"
+                        )
+                        sel.annotation.get_bbox_patch().set(
+                            boxstyle='round,pad=0.5',
+                            facecolor='#1E3A8A',
+                            alpha=0.9,
+                            edgecolor='white',
+                            linewidth=2
+                        )
+                        sel.annotation.set_fontsize(9)
+                        sel.annotation.set_color('white')
+
                     canvas_det = FigureCanvasTkAgg(fig_det, master=frame_determinativas)
                     canvas_det.draw()
                     canvas_det.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
@@ -8459,7 +8483,31 @@ def mostrar_dashboard_completo(conexion=None):
                     ax_prog.spines['bottom'].set_color('#D1D5DB')
                     
                     plt.tight_layout()
-                    
+
+                    # Agregar tooltips interactivos
+                    cursor = mplcursors.cursor(ax_prog, hover=True)
+                    meses_nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+                    @cursor.connect("add")
+                    def on_add(sel):
+                        x_val = int(round(sel.target[0]))
+                        y_val = int(round(sel.target[1]))
+                        if 1 <= x_val <= 12:
+                            mes_nombre = meses_nombres[x_val - 1]
+                            sel.annotation.set_text(
+                                f"{mes_nombre}\n"
+                                f"Casos Resueltos: {y_val:,}"
+                            )
+                            sel.annotation.get_bbox_patch().set(
+                                boxstyle='round,pad=0.5',
+                                facecolor='#1E3A8A',
+                                alpha=0.9,
+                                edgecolor='white',
+                                linewidth=2
+                            )
+                            sel.annotation.set_fontsize(9)
+                            sel.annotation.set_color('white')
+
                     canvas_prog = FigureCanvasTkAgg(fig_prog, master=frame_progreso_det)
                     canvas_prog.draw()
                     canvas_prog.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
@@ -8631,7 +8679,30 @@ def mostrar_dashboard_completo(conexion=None):
                     )
                     
                     plt.tight_layout()
-                    
+
+                    # Agregar tooltips interactivos
+                    cursor = mplcursors.cursor(wedges, hover=True)
+                    @cursor.connect("add")
+                    def on_add(sel):
+                        i = sel.index
+                        supervisor = df_no_det.iloc[i]['NOMBRE_SUPERVISOR']
+                        total = df_no_det.iloc[i]['total']
+                        porcentaje = (total / df_no_det['total'].sum()) * 100
+                        sel.annotation.set_text(
+                            f"{supervisor}\n"
+                            f"OFs: {total:,}\n"
+                            f"Porcentaje: {porcentaje:.1f}%"
+                        )
+                        sel.annotation.get_bbox_patch().set(
+                            boxstyle='round,pad=0.5',
+                            facecolor='#1E3A8A',
+                            alpha=0.9,
+                            edgecolor='white',
+                            linewidth=2
+                        )
+                        sel.annotation.set_fontsize(9)
+                        sel.annotation.set_color('white')
+
                     canvas_no_det = FigureCanvasTkAgg(fig_no_det, master=frame_no_determinativas)
                     canvas_no_det.draw()
                     canvas_no_det.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
@@ -8890,7 +8961,31 @@ def mostrar_dashboard_completo(conexion=None):
                     ax_prog_no.spines['bottom'].set_color('#D1D5DB')
                     
                     plt.tight_layout()
-                    
+
+                    # Agregar tooltips interactivos
+                    cursor = mplcursors.cursor(ax_prog_no, hover=True)
+                    meses_nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+                    @cursor.connect("add")
+                    def on_add(sel):
+                        x_val = int(round(sel.target[0]))
+                        y_val = int(round(sel.target[1]))
+                        if 1 <= x_val <= 12:
+                            mes_nombre = meses_nombres[x_val - 1]
+                            sel.annotation.set_text(
+                                f"{mes_nombre}\n"
+                                f"Casos Resueltos: {y_val:,}"
+                            )
+                            sel.annotation.get_bbox_patch().set(
+                                boxstyle='round,pad=0.5',
+                                facecolor='#1E3A8A',
+                                alpha=0.9,
+                                edgecolor='white',
+                                linewidth=2
+                            )
+                            sel.annotation.set_fontsize(9)
+                            sel.annotation.set_color('white')
+
                     canvas_prog_no = FigureCanvasTkAgg(fig_prog_no, master=frame_progreso_no_det)
                     canvas_prog_no.draw()
                     canvas_prog_no.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
@@ -9062,6 +9157,29 @@ def mostrar_dashboard_completo(conexion=None):
                     )
 
                     plt.tight_layout()
+
+                    # Agregar tooltips interactivos
+                    cursor = mplcursors.cursor(wedges, hover=True)
+                    @cursor.connect("add")
+                    def on_add(sel):
+                        i = sel.index
+                        tipo = df_stock.iloc[i]['tipo']
+                        total = df_stock.iloc[i]['total']
+                        porcentaje = (total / df_stock['total'].sum()) * 100
+                        sel.annotation.set_text(
+                            f"Tipo {tipo}\n"
+                            f"Cantidad: {total:,}\n"
+                            f"Porcentaje: {porcentaje:.1f}%"
+                        )
+                        sel.annotation.get_bbox_patch().set(
+                            boxstyle='round,pad=0.5',
+                            facecolor='#1E3A8A',
+                            alpha=0.9,
+                            edgecolor='white',
+                            linewidth=2
+                        )
+                        sel.annotation.set_fontsize(9)
+                        sel.annotation.set_color('white')
 
                     canvas_stock = FigureCanvasTkAgg(fig_stock, master=frame_stock_pastel)
                     canvas_stock.draw()
@@ -9370,6 +9488,32 @@ def mostrar_dashboard_completo(conexion=None):
                     ax_barras.spines['right'].set_visible(False)
 
                     plt.tight_layout()
+
+                    # Agregar tooltips interactivos
+                    cursor = mplcursors.cursor(ax_barras, hover=True)
+                    meses_nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+                    @cursor.connect("add")
+                    def on_add(sel):
+                        bar = sel.artist
+                        label = bar.get_label()
+                        height = sel.target[1]
+                        x_index = int(round(sel.target[0]))
+                        if 0 <= x_index < len(meses_nombres):
+                            mes_nombre = meses_nombres[x_index]
+                            sel.annotation.set_text(
+                                f"{label} - {mes_nombre}\n"
+                                f"Cantidad: {int(height):,}"
+                            )
+                            sel.annotation.get_bbox_patch().set(
+                                boxstyle='round,pad=0.5',
+                                facecolor='#1E3A8A',
+                                alpha=0.9,
+                                edgecolor='white',
+                                linewidth=2
+                            )
+                            sel.annotation.set_fontsize(9)
+                            sel.annotation.set_color('white')
 
                     canvas_barras = FigureCanvasTkAgg(fig_barras, master=frame_stock_barras)
                     canvas_barras.draw()
@@ -9701,6 +9845,32 @@ def mostrar_dashboard_completo(conexion=None):
                     ax_rend.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
 
                     plt.tight_layout()
+
+                    # Agregar tooltips interactivos
+                    cursor = mplcursors.cursor(ax_rend, hover=True)
+                    meses_nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+                    @cursor.connect("add")
+                    def on_add(sel):
+                        bar = sel.artist
+                        label = bar.get_label()
+                        height = sel.target[1]
+                        x_index = int(round(sel.target[0]))
+                        if 0 <= x_index < len(meses_nombres):
+                            mes_nombre = meses_nombres[x_index]
+                            sel.annotation.set_text(
+                                f"{label} - {mes_nombre}\n"
+                                f"Monto: S/ {int(height):,}"
+                            )
+                            sel.annotation.get_bbox_patch().set(
+                                boxstyle='round,pad=0.5',
+                                facecolor='#1E3A8A',
+                                alpha=0.9,
+                                edgecolor='white',
+                                linewidth=2
+                            )
+                            sel.annotation.set_fontsize(9)
+                            sel.annotation.set_color('white')
 
                     canvas_rend = FigureCanvasTkAgg(fig_rend, master=frame_rendimiento)
                     canvas_rend.draw()
